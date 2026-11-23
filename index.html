@@ -79,7 +79,25 @@ label.chk{flex-direction:row;align-items:center;gap:10px;font-size:.88rem;color:
 .app.mini .rot{transform:scaleX(-1)}
 .main{flex:1;min-width:0;background:var(--panel);border-radius:24px;padding:24px}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-.top{display:none}
+.top{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:-8px 0 6px}
+.top .brand-top,.top .so-mob{display:none}
+.conta{position:relative}
+.conta-btn{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 10px 4px 4px;min-height:44px;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:var(--shadow);max-width:280px}
+.conta-btn:hover{border-color:var(--field)}
+.conta-av{flex:0 0 36px;width:36px;height:36px}
+.conta-txt{display:flex;flex-direction:column;line-height:1.2;text-align:left;min-width:0}
+.conta-txt b,.conta-cab b{font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conta-txt small,.conta-cab small{font-size:.74rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.conta-seta{flex:0 0 16px;color:var(--muted);transition:transform .2s}
+.conta-btn[aria-expanded="true"] .conta-seta{transform:rotate(180deg)}
+.conta-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);width:270px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:8px;z-index:60}
+.conta-menu.aberto{display:block}
+.conta-cab{display:flex;gap:10px;align-items:center;padding:8px 8px 10px}
+.conta-menu a,.conta-item{font:inherit;width:100%;display:flex;align-items:center;gap:12px;min-height:44px;padding:0 10px;border-radius:12px;color:var(--fg);text-decoration:none;background:transparent;border:0;cursor:pointer;font-weight:600;text-align:left}
+.conta-menu a:hover,.conta-item:hover,.conta-menu a.on{background:var(--accent-soft);color:var(--accent-ink)}
+.conta-menu hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+.conta-menu .chave{background:var(--field)}
+.conta-menu .tema[aria-checked="true"] .chave{background:var(--accent)}
 .phead{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end}
 .phead p{margin:4px 0 0;color:var(--muted)}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -186,7 +204,11 @@ textarea{min-height:70px;resize:vertical}
   .nav a.on::before{display:none}
   .nav .dot{display:block;left:calc(50% + 4px)}
   .main{border-radius:0;padding-block:16px;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
-  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .top{justify-content:space-between;margin:0 0 12px}
+  .top .brand-top,.top .so-mob{display:flex}
+  .conta-txt,.conta-seta{display:none}
+  .conta-btn{padding:3px;min-height:44px}
+  .conta-menu{width:min(270px,calc(100vw - 32px))}
   .doc{padding:24px 18px}
   .week{grid-template-columns:repeat(7,minmax(40px,1fr));overflow-x:auto}
 }
@@ -234,7 +256,7 @@ textarea{min-height:70px;resize:vertical}
 .chave i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .tema[aria-checked="true"] .chave{background:rgba(255,255,255,.55)}
 .tema[aria-checked="true"] .chave i{transform:translateX(18px)}
-.app.mini .chave{display:none}
+
 @media (min-width:761px){
   .app{gap:0}
   .side{background:var(--grad);color:#fff;z-index:2;padding:20px 0 20px 12px;scrollbar-gutter:auto}
@@ -284,12 +306,17 @@ textarea{min-height:70px;resize:vertical}
     <div class="side-top"><div class="brand" id="brand"><span class="logo" aria-hidden="true">L</span><b>Lexa</b></div>
       <button class="colap" id="miniBtn" type="button" aria-label="Recolher menu" title="Recolher menu"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
     <nav class="nav" id="nav" aria-label="Menu principal"></nav>
-    <div class="side-foot">
-      <button class="side-btn tema" id="themeBtn" type="button" role="switch" aria-checked="false"></button>
-    </div>
   </aside>
   <main class="main">
-    <div class="top"><div class="row brand-top" id="brandTop" style="gap:10px"><span class="logo" aria-hidden="true">L</span><strong class="mk-nome">Lexa</strong></div><div class="row"><button class="btn sm soft" id="themeBtnM" type="button" aria-label="Alternar tema"></button><button class="btn sm soft" id="menuBtn" type="button">Mais</button></div></div>
+    <div class="top"><div class="row brand-top" id="brandTop" style="gap:10px"><span class="logo" aria-hidden="true">L</span><strong class="mk-nome">Lexa</strong></div>
+      <div class="row top-dir"><button class="btn sm soft so-mob" id="menuBtn" type="button">Mais</button>
+        <div class="conta"><button class="conta-btn" id="contaBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="contaMenu"></button>
+          <div class="conta-menu" id="contaMenu" role="menu" aria-label="Conta e ajustes">
+            <div class="conta-cab" id="contaCab"></div>
+            <a href="#perfil" role="menuitem" data-conta="perfil"></a><a href="#aparencia" role="menuitem" data-conta="aparencia"></a><a href="#backup" role="menuitem" data-conta="backup"></a>
+            <hr>
+            <button class="conta-item tema" id="themeBtn" type="button" role="switch" aria-checked="false"></button>
+          </div></div></div></div>
     <div class="wrap" id="view"></div>
   </main>
 </div>
@@ -427,8 +454,7 @@ const NAV=[
   ['painel','Pauta'],
   ['g','Clientes'],['novo-cliente','Novo cliente'],['clientes','Clientes','atraso'],['atraso','Em atraso'],['quitados','Quitados'],['aniversariantes','Aniversariantes'],
   ['g','Rotina'],['agenda','Agenda'],['ajuizar','Ações a ajuizar','ajuizar'],
-  ['g','Dinheiro'],['financeiro','Financeiro'],['cobrancas','Cobrança de empresas'],['relatorios','Relatórios'],
-  ['g','Ajustes'],['perfil','Meus dados'],['aparencia','Aparência'],['backup','Backup'],
+  ['g','Dinheiro'],['financeiro','Financeiro'],['cobrancas','Cobrança de empresas'],['relatorios','Relatórios']
 ];
 function renderNav(r){
   const nAtraso=S.clientes.filter(c=>resumoCliente(c).atras.length).length;
@@ -442,7 +468,7 @@ function renderNav(r){
     html+=item(k,t,c)});
   if(dentro)html+='</div>';
   $('#nav').innerHTML=html;
-  $('#foldBtn').onclick=()=>{const ab=!$('#foldAj').classList.contains('aberto');pref('lexa-ajustes',ab?'1':'0');$('#foldAj').classList.toggle('aberto',ab);$('#foldBtn').setAttribute('aria-expanded',ab)};
+  $('#foldBtn')&&($('#foldBtn').onclick=()=>{const ab=!$('#foldAj').classList.contains('aberto');pref('lexa-ajustes',ab?'1':'0');$('#foldAj').classList.toggle('aberto',ab);$('#foldBtn').setAttribute('aria-expanded',ab)});
   function item(k,t,c){
     const on=r===k||(k==='clientes'&&/^(cliente|editar|documentos)-/.test(r));
     const n=c==='atraso'?nAtraso:c==='ajuizar'?nAj:0;
@@ -456,9 +482,20 @@ $('#miniBtn').onclick=()=>{pref('lexa-mini',pref('lexa-mini')==='1'?'0':'1');apl
 const escuroAgora=()=>{const t=pref('lexa-tema');if(t==='dark')return true;if(t==='light')return false;return !!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)};
 function aplicaTema(){const t=pref('lexa-tema');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme');
   const esc=escuroAgora();$('#themeBtn').innerHTML=`${svg(IC.lua)}<span class="lbl">Modo escuro</span><span class="chave" aria-hidden="true"><i></i></span>`;$('#themeBtn').setAttribute('aria-checked',esc);$('#themeBtn').title=esc?'Desligar modo escuro':'Ligar modo escuro';
-  $('#themeBtnM').innerHTML=svg(IC[esc?'sol':'lua']);$('#themeBtnM').setAttribute('aria-label',esc?'Desligar modo escuro':'Ligar modo escuro')}
+}
 const trocaTema=()=>{pref('lexa-tema',escuroAgora()?'light':'dark');aplicaTema()};
-$('#themeBtn').onclick=trocaTema;$('#themeBtnM').onclick=trocaTema;
+$('#themeBtn').onclick=e=>{e.stopPropagation();trocaTema()};
+/* área da conta (canto superior direito): dados do advogado, ajustes e modo escuro */
+function renderConta(r){const p=S.perfil,mk=marca();const nome=(p.nome||'Minha conta').trim();
+  const ini=nome.replace(/^(dra?\.?|dr\.?)\s+/i,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+  $('#contaBtn').innerHTML=`<span class="av conta-av">${esc(ini)}</span><span class="conta-txt"><b>${esc(nome)}</b><small>${esc(p.oab||mk.nome)}</small></span><svg class="conta-seta" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>`;
+  $('#contaBtn').setAttribute('aria-label',`Conta de ${nome}`);
+  $('#contaCab').innerHTML=`<span class="av conta-av">${esc(ini)}</span><div style="min-width:0"><b>${esc(nome)}</b><small>${esc(p.email||p.oab||'Preencha seus dados')}</small></div>`;
+  [['perfil','Meus dados'],['aparencia','Aparência'],['backup','Backup']].forEach(([k,t])=>{const a=document.querySelector(`[data-conta="${k}"]`);a.innerHTML=`${svg(IC[k])}<span>${t}</span>`;a.classList.toggle('on',r===k);a.toggleAttribute('aria-current',r===k)})}
+function contaAbre(ab){$('#contaMenu').classList.toggle('aberto',ab);$('#contaBtn').setAttribute('aria-expanded',ab)}
+$('#contaBtn').onclick=e=>{e.stopPropagation();contaAbre(!$('#contaMenu').classList.contains('aberto'))};
+document.addEventListener('click',e=>{if(!e.target.closest('.conta'))contaAbre(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#contaMenu').classList.contains('aberto')){contaAbre(false);$('#contaBtn').focus()}});
 function toast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
 function modal(html,wide){$('#modalRoot').innerHTML=`<div class="modal-bg" data-close="1"><div class="modal ${wide?'wide':''}" role="dialog" aria-modal="true">${html}</div></div>`;const f=$('#modalRoot input:not([readonly]),#modalRoot select,#modalRoot textarea');f&&f.focus()}
 function fechar(){$('#modalRoot').innerHTML=''}
@@ -473,7 +510,7 @@ aplicaMini();aplicaTema();
 const ROUTES={};
 function go(){
   const r=(location.hash||'#painel').slice(1)||'painel';
-  renderNav(r);$('#side').classList.remove('open');fechar();
+  renderNav(r);renderConta(r);contaAbre(false);$('#side').classList.remove('open');fechar();
   if(r!=='aparencia'&&rascMarca){rascMarca=null;aplicaMarca()}
   document.body.classList.toggle('hide-money',hideMoney);
   let fn=ROUTES[r];let arg=null;
