@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="tema-neutro">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
@@ -43,6 +43,50 @@
   --ok:#8fd9ae; --ok-soft:#1f3328; --warn:#f0c66b; --warn-soft:#3a2f17; --bad:#ff9a8f; --bad-soft:#3d1f1c; --info:#a9c4ff; --info-soft:#1d2a40; --due:#f5b979; --due-soft:#3a2a17;
   --shadow:0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark}
+/* Identidade neutra (padrão): fundo areia, cartões marfim, destaque em preto */
+html.tema-neutro{
+  --bg:#ebe8e0; --panel:#f4f2ed; --surface:#fcfbf8; --surface-2:#efece5; --line:#dcd7cd;
+  --fg:#151515; --muted:#5f5b54; --field:#cdc7bb; --accent:#151515; --accent-ink:#151515; --accent-fg:#ffffff; --accent-soft:#e6e2d9;
+  --grad:linear-gradient(135deg,#0c0c0c 0%,#151515 55%,#2b2a27 100%);
+  --grad-dark:radial-gradient(120% 140% at 100% 0%,#3a3834 0%,#1a1918 55%,#0c0c0b 100%);
+  --on-grad-muted:#d6d1c7; --hatch:#d3cdc1; --bar:#5f5b54;
+  --shadow:0 1px 2px rgba(40,34,24,.07);
+  --side-bg:#ebe8e0; --side-fg:#2a2825; --side-muted:#6f6a61; --side-hover:rgba(21,21,21,.06); --ind:#151515; --ind-fg:#ffffff}
+@media (prefers-color-scheme: dark){html.tema-neutro:not([data-theme="light"]){
+  --bg:#000000; --panel:#0b0b0b; --surface:#151515; --surface-2:#1e1e1e; --line:#2a2a2a;
+  --fg:#ededed; --muted:#a9a49b; --field:#3a3a3a; --accent:#ededed; --accent-ink:#f4f2ed; --accent-fg:#151515; --accent-soft:#242321;
+  --grad:linear-gradient(135deg,#262523 0%,#33312e 55%,#4a4743 100%);
+  --grad-dark:radial-gradient(120% 140% at 100% 0%,#3a3834 0%,#171615 55%,#0a0a0a 100%);
+  --on-grad-muted:#cfcac0; --hatch:#3a3835; --bar:#8a857b;
+  --side-bg:#151515; --side-fg:#e4e1da; --side-muted:#8f8a81; --side-hover:rgba(255,255,255,.07); --ind:#ededed; --ind-fg:#151515}}
+html.tema-neutro[data-theme="dark"]{
+  --bg:#000000; --panel:#0b0b0b; --surface:#151515; --surface-2:#1e1e1e; --line:#2a2a2a;
+  --fg:#ededed; --muted:#a9a49b; --field:#3a3a3a; --accent:#ededed; --accent-ink:#f4f2ed; --accent-fg:#151515; --accent-soft:#242321;
+  --grad:linear-gradient(135deg,#262523 0%,#33312e 55%,#4a4743 100%);
+  --grad-dark:radial-gradient(120% 140% at 100% 0%,#3a3834 0%,#171615 55%,#0a0a0a 100%);
+  --on-grad-muted:#cfcac0; --hatch:#3a3835; --bar:#8a857b;
+  --side-bg:#151515; --side-fg:#e4e1da; --side-muted:#8f8a81; --side-hover:rgba(255,255,255,.07); --ind:#ededed; --ind-fg:#151515}
+@media (min-width:761px){
+  html.tema-neutro .side{background:var(--side-bg);color:var(--side-fg)}
+  html.tema-neutro .nav .grp{color:var(--side-muted)}
+  html.tema-neutro .nav .fold-btn:hover{color:var(--side-fg)}
+  html.tema-neutro .nav a{color:var(--side-fg);margin-left:12px}
+  html.tema-neutro .nav a:hover{background:var(--side-hover);color:var(--side-fg)}
+  html.tema-neutro .nav a.on,html.tema-neutro .nav a.on svg{color:var(--ind-fg)}
+  html.tema-neutro .nav a.on{margin-right:12px;border-radius:14px}
+  html.tema-neutro .nav-ind{background:var(--ind);border-radius:14px;margin-right:12px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  html.tema-neutro .nav-ind::before,html.tema-neutro .nav-ind::after{display:none}
+  html.tema-neutro .nav .cnt{background:var(--ind);color:var(--ind-fg)}
+  html.tema-neutro .nav a.on .cnt{background:var(--ind-fg);color:var(--ind)}
+  html.tema-neutro .side-btn{color:var(--side-fg)}
+  html.tema-neutro .side-btn:hover{background:var(--side-hover);color:var(--side-fg)}
+  html.tema-neutro .side .logo{background:var(--ind);color:var(--ind-fg)}
+  html.tema-neutro .side .logo.img{background:transparent}
+  html.tema-neutro .chave{background:rgba(0,0,0,.15)}
+  html.tema-neutro .tema[aria-checked="true"] .chave{background:rgba(0,0,0,.45)}
+}
+html.tema-neutro .side .logo-honra{background:var(--ind)}
+html.tema-neutro .side .logo-honra svg{color:var(--ind-fg)}
 *{box-sizing:border-box}
 html,body{min-height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
@@ -461,7 +505,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 ul.acessos{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 ul.acessos li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 ul.acessos li span:first-child{text-transform:capitalize;font-weight:600}
-#carregando{position:fixed;inset:0;z-index:350;display:grid;place-items:center;color:#eaf5ee;background:radial-gradient(120% 90% at 50% 0%,#2a8a5a 0%,#14563a 35%,#0b2e20 72%,#06180f 100%);animation:surge .35s ease both}
+#carregando{position:fixed;inset:0;z-index:350;display:grid;place-items:center;color:#f4f2ed;background:radial-gradient(120% 90% at 50% 0%,#4a4741 0%,#262522 35%,#151515 72%,#0b0b0b 100%);animation:surge .35s ease both}
 #carregando[hidden]{display:none}
 #carregando.sai{animation:cgSai .55s cubic-bezier(.6,0,.3,1) forwards}
 .cg-centro{display:grid;justify-items:center;gap:22px;text-align:center;padding:24px}
@@ -485,7 +529,7 @@ body.entrando .main>*:nth-child(3){animation-delay:.16s}
 body.entrando .main>*:nth-child(n+4){animation-delay:.24s}
 #gate{position:fixed;inset:0;z-index:300;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);background:var(--bg);overflow:auto}
 #gate[hidden]{display:none}
-.gl-arte{position:relative;overflow:hidden;color:#eaf5ee;padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(120% 80% at 0% 0%,#2a8a5a 0%,#14563a 38%,#0b2e20 75%,#06180f 100%)}
+.gl-arte{position:relative;overflow:hidden;color:#f4f2ed;padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(120% 80% at 0% 0%,#4a4741 0%,#262522 38%,#151515 75%,#0b0b0b 100%)}
 .gl-arte::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 85% 15%,rgba(255,255,255,.10),transparent 60%),radial-gradient(50% 40% at 10% 95%,rgba(58,154,102,.35),transparent 70%);pointer-events:none}
 .gl-arte::after{content:"";position:absolute;right:-120px;bottom:-120px;width:420px;height:420px;border-radius:50%;border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 60px rgba(255,255,255,.025),0 0 0 120px rgba(255,255,255,.02)}
 .gl-arte>*{position:relative;z-index:1}
@@ -911,10 +955,10 @@ ROUTES.painel=()=>{
 const iniciais=n=>n.replace(/^Exemplo · /,'').split(/\s+/).filter(w=>w.length>2||/^[A-Z]/.test(w)).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 const addDias=(s,n)=>{const d=parseISO(s);d.setDate(d.getDate()+n);return iso(d)};
 /* ---------- Marca do escritório (cor, logo, nome) ---------- */
-const COR_PADRAO='#1f6b45';
+const COR_PADRAO='#151515';
 const MARCA_PADRAO={nome:'Honra',cor:COR_PADRAO,logo:'',icone:'',fundo:'nenhum',mostraNome:true};
-const CORES=[['Verde','#1f6b45'],['Azul','#1f4f8f'],['Marinho','#1c2b4a'],['Vinho','#7a1f33'],['Bordô','#5c1a2b'],['Grafite','#2f3437'],['Petróleo','#14606b'],['Dourado','#9a7420'],['Terracota','#a2482a'],['Roxo','#5a3a8c']];
-const marca=()=>{const m=Object.assign({},MARCA_PADRAO,S.marca||{});if(m.nome==='Lexa')m.nome='Honra';return m};
+const CORES=[['Preto (padrão)','#151515'],['Verde','#22704a'],['Azul','#1f4f8f'],['Marinho','#1c2b4a'],['Vinho','#7a1f33'],['Bordô','#5c1a2b'],['Grafite','#2f3437'],['Petróleo','#14606b'],['Dourado','#9a7420'],['Terracota','#a2482a'],['Roxo','#5a3a8c']];
+const marca=()=>{const m=Object.assign({},MARCA_PADRAO,S.marca||{});if(m.nome==='Lexa')m.nome='Honra';if((m.cor||'').toLowerCase()==='#1f6b45')m.cor=COR_PADRAO;return m};
 const hx=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return[0,2,4].map(i=>parseInt(h.slice(i,i+2),16))};
 const toHex=a=>'#'+a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
 const mix=(a,b,t)=>{const x=hx(a),y=hx(b);return toHex(x.map((v,i)=>v+(y[i]-v)*t))};
@@ -957,7 +1001,7 @@ function logoFalhou(img,ehIcone){const mk=rascMarca||marca();const e=document.cr
 function aplicaMarca(mk){
   mk=mk||marca();
   let st=document.getElementById('marcaCss');if(!st){st=document.createElement('style');st.id='marcaCss';document.head.appendChild(st)}
-  st.textContent=cssMarca(mk.cor);
+  st.textContent=cssMarca(mk.cor);document.documentElement.classList.toggle('tema-neutro',!/^#[0-9a-f]{6}$/i.test(mk.cor||'')||mk.cor.toLowerCase()===COR_PADRAO);
   $('#brand').innerHTML=htmlMarca(mk);$('#brand').classList.toggle('tem-logo',!!mk.logo);
   $('#brandTop').innerHTML=htmlMarca(mk,true);
   document.title=mk.nome&&mk.nome!=='Honra'?`${mk.nome} · Honra`:'Honra · Gestão para advogados';
