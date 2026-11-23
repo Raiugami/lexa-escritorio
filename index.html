@@ -35,7 +35,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark}
 *{box-sizing:border-box}
-html,body{min-height:100%}
+html,body{min-height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:700}
 h1{font-size:2rem;font-weight:800;letter-spacing:-.02em} h2{font-size:1rem} h3{font-size:.95rem}
@@ -270,7 +270,10 @@ textarea{min-height:70px;resize:vertical}
   .side-foot{flex:0 0 auto}
   .side-foot .side-btn{min-height:clamp(32px,4.6vh,40px)}
   .side .nav{padding-right:0}
-  .main{margin-left:-24px;padding-left:48px}
+  /* menu preenche toda a lateral, de cima a baixo, encostado na borda da janela */
+  .app{padding:0}
+  .side{top:0;height:100vh;border-radius:0}
+  .main{margin:16px 16px 16px -24px;padding-left:48px;min-height:calc(100vh - 32px)}
   .side .logo{background:rgba(255,255,255,.18)}
   .side .logo.img{background:transparent}
   .side-top{padding-right:12px}
