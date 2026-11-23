@@ -2,6 +2,10 @@
 <html lang="pt-BR">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Lexa Escritório</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -312,6 +316,24 @@ textarea{min-height:70px;resize:vertical}
   .nav a{min-height:24px}
   .side{overflow-y:auto}
 }
+.fab{display:none}
+body:has(#modalRoot .modal-bg) .fab{display:none!important}
+@media (max-width:760px){
+  .fab{display:flex;position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(88px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--grad);color:#fff;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:45;cursor:pointer}
+  .app{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+  .tbl{overflow:visible}
+  .tbl table,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl thead{display:none}
+  .tbl tr{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 14px;margin-bottom:10px}
+  .tbl td{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0!important;border:0!important;text-align:right;min-height:30px}
+  .tbl td::before{content:attr(data-label);color:var(--muted);font-size:.8rem;font-weight:600;text-align:left}
+  .tbl td:not([data-label])::before{content:none}
+  .tbl td:not([data-label]){justify-content:flex-end}
+  .tbl td:first-child{display:block;text-align:left;font-size:1rem;font-weight:700;padding-bottom:8px!important}
+  .tbl td:first-child::before{content:none}
+  .tbl td input{max-width:60%}
+  .panel:has(> .tbl){background:transparent;padding:0;box-shadow:none}
+}
 @media print{ .side,.top,.noprint{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} .doc{padding:0} }
 </style>
 
@@ -335,6 +357,7 @@ textarea{min-height:70px;resize:vertical}
     <div class="wrap" id="view"></div>
   </main>
 </div>
+<button class="fab" id="fab" type="button" aria-label="Ações rápidas"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <div id="modalRoot"></div>
 
 <script>
@@ -541,10 +564,21 @@ function go(){
   if(!fn&&mt&&ROUTES[mt[1]+'-']){fn=ROUTES[mt[1]+'-'];arg=+mt[2]}
   $('#view').innerHTML=(fn||ROUTES.painel)(arg);
   (AFTER[r]||AFTER[mt?mt[1]+'-':'']||(()=>{}))(arg);
+  rotulaTabelas();
   window.scrollTo(0,0);
 }
 const AFTER={};
+/* no celular as tabelas viram cartões: cada célula ganha o nome da coluna */
+function rotulaTabelas(){document.querySelectorAll('#view .tbl table').forEach(t=>{const hs=[...t.querySelectorAll('thead th')].map(h=>h.textContent.trim());t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{if(hs[i])td.dataset.label=hs[i]}))})}
+const vigia=new MutationObserver(()=>{vigia.disconnect();rotulaTabelas();vigia.observe($('#view'),{childList:true,subtree:true})});
+vigia.observe(document.getElementById('view'),{childList:true,subtree:true});
 window.addEventListener('hashchange',go);
+$('#fab').onclick=()=>modal(`<h2>Ações rápidas</h2><div class="mais">
+  <a href="#novo-cliente">${svg(IC['novo-cliente'])}<span>Novo cliente</span></a>
+  <button class="conta-item" data-act="avulso" type="button">${svg(IC.financeiro)}<span>Recebimento avulso</span></button>
+  <button class="conta-item" data-act="novo-comp" type="button">${svg(IC.agenda)}<span>Novo compromisso</span></button>
+  <a href="#atraso">${svg(IC.atraso)}<span>Dar baixa em parcelas em atraso</span></a></div>
+  <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-close="1" type="button">Fechar</button></div>`);
 $('#menuBtn').onclick=()=>{const r=(location.hash||'#painel').slice(1);modal(`<h2>Menu</h2><div class="mais">${NAV.map(([k,t])=>k==='g'?`<div class="grp">${t}</div>`:`<a href="#${k}" class="${r===k?'on':''}">${svg(IC[k])}<span>${t}</span></a>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-close="1" type="button">Fechar</button></div>`)};
 
 const bannerEx=()=>S.exemplo?`<div class="banner noprint"><span>Você está vendo <strong>dados de exemplo</strong>. Explore à vontade e apague quando for cadastrar os seus.</span><button class="btn sm" data-act="limpar-exemplo" type="button">Apagar exemplos e começar</button></div>`:'';
@@ -843,7 +877,7 @@ ROUTES['cliente-']=id=>{
   const r=resumoCliente(c);
   const ender=[c.end,c.num].filter(Boolean).join(', ')+(c.bairro?' · '+c.bairro:'');
   return `<div class="phead"><div><a href="#clientes" class="note">← Clientes</a><h1>${esc(c.nome)}</h1><p>${areaTag(c.area)} · cliente desde ${br(c.criado)}</p></div>
-  <div class="row"><a class="btn" href="#editar-${c.id}">Editar</a><a class="btn" href="#documentos-${c.id}">Gerar documentos</a><button class="btn" data-act="parcela-extra" data-id="${c.id}" type="button">Lançar parcela</button><button class="btn danger" data-act="excluir-cliente" data-id="${c.id}" type="button">Excluir</button></div></div>
+  <div class="row">${c.tel?`<a class="btn pri" href="https://wa.me/55${c.tel}" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+55${c.tel}">Ligar</a>`:''}<a class="btn" href="#editar-${c.id}">Editar</a><a class="btn" href="#documentos-${c.id}">Gerar documentos</a><button class="btn" data-act="parcela-extra" data-id="${c.id}" type="button">Lançar parcela</button><button class="btn danger" data-act="excluir-cliente" data-id="${c.id}" type="button">Excluir</button></div></div>
   <div class="kpis">
     <div class="kpi"><span class="lb">Honorários</span><span class="v">${c.tipoHon==='exito'?esc(c.exitoPct)+'%':m(r.total)}</span><span class="s">${c.tipoHon==='exito'?'sobre o proveito econômico':c.forma==='vista'?'à vista':`${c.entrada?brl(c.entrada)+' de entrada + ':''}${c.nParcelas}x`}</span></div>
     <div class="kpi ok"><span class="lb">Recebido</span><span class="v">${m(r.pago)}</span><span class="s">${r.ps.filter(p=>situacao(p)==='pago').length} parcela(s) quitada(s)</span></div>
@@ -1183,4 +1217,6 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fechar()});
 
 carregar();aplicaMarca();go();
+// app instalável: só registra quando servido por https (GitHub Pages), não dentro do visualizador
+try{if('serviceWorker' in navigator&&location.protocol==='https:'&&standalone&&!/claude\.ai|claudeusercontent/.test(location.host))navigator.serviceWorker.register('sw.js')}catch(e){}
 </script>
