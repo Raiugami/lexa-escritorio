@@ -437,6 +437,16 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 .ico-btn{min-width:32px;padding:0 8px!important;font-size:1rem}
 @media screen and (max-width:1280px){.grid3{grid-template-columns:1fr}}
 @media screen and (max-width:760px){.tbl-parc .venc{align-items:flex-end}.tbl-parc .obs-in{text-align:right}.tbl-parc .obs-in:focus{margin-left:0}}
+.trancado .app,.trancado #modalRoot,.trancado .fab{visibility:hidden}
+#gate{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:radial-gradient(120% 90% at 0% 0%,#1f6b45 0%,#0e3a25 55%,#071f15 100%);overflow:auto}
+#gate[hidden]{display:none}
+.gate-caixa{width:100%;max-width:420px;background:var(--surface);border-radius:24px;padding:32px 28px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.gate-marca{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.gate-logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#0e3a25,#3a9a66)}
+.gate-caixa h1{font-size:1.5rem;margin:0 0 8px}
+.gate-form{display:grid;gap:10px;margin-top:16px}
+.gate-form input{width:100%}
+.gate-msg{margin-top:14px}
 @media print{ .side,.top,.noprint,#fab,.toast{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} }
 @page{size:A4;margin:0}
 #printRoot{display:none}
@@ -485,6 +495,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
   </main>
 </div>
 <button class="fab" id="fab" type="button" aria-label="Ações rápidas"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<div id="gate" hidden></div>
 <div id="modalRoot"></div>
 
 <script>
@@ -1436,7 +1447,16 @@ const SB_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd
 let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false;
 const nuvemDisponivel=()=>/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const nuvemHora=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-function nuvemAtualiza(){if(location.hash.startsWith('#backup'))go()}
+function nuvemAtualiza(){renderGate();if(location.hash.startsWith('#backup'))go()}
+function renderGate(){const g=$('#gate');if(!g)return;
+  if(!nuvemDisponivel()||nuvemUser){g.hidden=true;g.innerHTML='';document.body.classList.remove('trancado');return}
+  document.body.classList.add('trancado');g.hidden=false;
+  const pronto=!!sb;
+  g.innerHTML=`<div class="gate-caixa"><div class="gate-marca"><span class="gate-logo">H</span><b>Honra</b></div>
+    <h1>Entre para acessar</h1>
+    <p class="note">Os dados do escritório ficam na nuvem e só aparecem depois do login. Enviamos um link para o seu e-mail, sem senha.</p>
+    ${pronto?`<form class="gate-form" onsubmit="event.preventDefault();document.querySelector('[data-act=nuvem-entrar]').click()"><input id="gt_email" type="email" placeholder="seu@email.com" autocomplete="email" required><button class="btn pri" data-act="nuvem-entrar" type="submit">Enviar link de acesso</button></form>`:`<p class="note">Conectando ao serviço de acesso…</p>`}
+    ${nuvemMsg?`<p class="note gate-msg">${esc(nuvemMsg)}</p>`:''}</div>`}
 function salvarLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promise((ok,er)=>{const sc=document.createElement('script');sc.src=SB_SRC;sc.onload=ok;sc.onerror=()=>er(new Error('não consegui carregar o serviço de login'));document.head.appendChild(sc)})}
 async function nuvemIniciar(){if(!nuvemDisponivel())return;
@@ -1445,30 +1465,34 @@ async function nuvemIniciar(){if(!nuvemDisponivel())return;
     sb.auth.onAuthStateChange((ev,ses)=>{const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes)nuvemSincronizar(true);if(ev==='SIGNED_OUT')nuvemAtualiza()});
     const {data}=await sb.auth.getSession();nuvemUser=data.session?data.session.user:null;
     if(nuvemUser)await nuvemSincronizar(false);
-  }catch(e){nuvemMsg='Nuvem indisponível: '+e.message;nuvemAtualiza()}
+    nuvemAtualiza();
+  }catch(e){nuvemMsg='Não foi possível conectar ao serviço de acesso. Tente de novo mais tarde.';nuvemAtualiza()}
 }
 async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado)return;nuvemOcupado=true;nuvemMsg='Sincronizando…';nuvemAtualiza();
   try{const {data,error}=await sb.from('escritorios').select('dados').eq('dono',nuvemUser.id).maybeSingle();if(error)throw error;
     if(data&&data.dados&&Object.keys(data.dados).length){
       try{localStorage.setItem('lexa-antes-da-nuvem',localStorage.getItem(KEY)||'')}catch(e){}
-      S=Object.assign(vazio(),data.dados);salvarLocal();nuvemMsg='Dados carregados da nuvem às '+nuvemHora()+'.';aplicaMarca();go();
+      S=Object.assign(vazio(),data.dados);salvarLocal();nuvemMsg='Dados carregados da nuvem às '+nuvemHora()+'.';aplicaMarca();
     }else{const {error:e2}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(e2)throw e2;nuvemMsg='Dados enviados para a nuvem às '+nuvemHora()+'.'}
   }catch(e){nuvemMsg='Não consegui sincronizar: '+e.message}
-  finally{nuvemOcupado=false;nuvemAtualiza()}
+  finally{nuvemOcupado=false;nuvemAtualiza();if(!$('#gate')||$('#gate').hidden)go()}
 }
 function nuvemAgenda(){if(!sb||!nuvemUser)return;clearTimeout(nuvemTimer);nuvemTimer=setTimeout(nuvemEnviar,1200)}
 async function nuvemEnviar(){if(!sb||!nuvemUser)return;
   try{const {error}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(error)throw error;nuvemMsg='Salvo na nuvem às '+nuvemHora()+'.'}
   catch(e){nuvemMsg='Não foi possível salvar na nuvem agora ('+e.message+'). Os dados continuam neste navegador e tentam de novo na próxima alteração.'}
   nuvemAtualiza()}
-async function nuvemEntrar(){const em=(($('#nv_email')||{}).value||'').trim();if(!/@/.test(em)){toast('Digite um e-mail válido');return}
+async function nuvemEntrar(){const em=((($('#gt_email')||$('#nv_email'))||{}).value||'').trim();if(!/@/.test(em)){toast('Digite um e-mail válido');return}
   try{if(!sb)await nuvemIniciar();if(!sb)throw new Error('serviço indisponível');
     const {error}=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;
     nuvemMsg='Enviei um link de acesso para '+em+'. Abra o e-mail neste mesmo navegador e clique no link.'}
   catch(e){nuvemMsg='Não consegui enviar o link: '+e.message}
   nuvemAtualiza()}
-async function nuvemSair(){if(!sb)return;try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemMsg='Desconectado. Os dados continuam neste navegador.';nuvemAtualiza()}
+async function nuvemSair(){if(!sb)return;try{await sb.auth.signOut()}catch(e){}nuvemUser=null;
+  try{localStorage.removeItem(KEY);localStorage.removeItem('lexa-antes-da-nuvem')}catch(e){}
+  S=vazio();nuvemMsg='Você saiu. Entre de novo para acessar os dados.';nuvemAtualiza();go()}
 function nuvemPainel(){
+  if(nuvemDisponivel()&&!nuvemUser)return'';
   const caixa=(t,corpo)=>`<div class="panel" style="margin-bottom:14px"><h2>${t}</h2>${corpo}</div>`;
   if(!nuvemDisponivel())return caixa('Sincronização na nuvem','<p class="note">Disponível na versão publicada no GitHub Pages.</p>');
   if(nuvemUser)return caixa('Sincronização na nuvem',`<p class="note">Conectado como ${esc(nuvemUser.email||'')}. Cada alteração é salva na nuvem sozinha.</p>${nuvemMsg?`<p class="note">${esc(nuvemMsg)}</p>`:''}<div class="row" style="margin-top:10px"><button class="btn" data-act="nuvem-sincar" type="button">Sincronizar agora</button><button class="btn ghost danger" data-act="nuvem-sair" type="button">Sair</button></div>`);
@@ -1541,7 +1565,8 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fechar()});
 
-carregar();aplicaMarca();go();nuvemIniciar();
+carregar();aplicaMarca();go();if(nuvemDisponivel()){document.body.classList.add('trancado');renderGate()}
+nuvemIniciar();
 // app instalável: só registra quando servido por https (GitHub Pages), não dentro do visualizador
 try{if('serviceWorker' in navigator&&location.protocol==='https:'&&standalone&&!/claude\.ai|claudeusercontent/.test(location.host))navigator.serviceWorker.register('sw.js')}catch(e){}
 </script>
