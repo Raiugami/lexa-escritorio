@@ -1510,7 +1510,8 @@ ROUTES.backup=()=>`<div class="phead"><div><h1>Backup</h1><p>Nesta versão os da
 const SB_URL='https://dwyalxrzljotekooqpto.supabase.co';
 const SB_KEY='sb_publishable_uoCXERCLpJy_jHDjaRlSug_nhvEL6vv';
 const SB_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js';
-let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar',gateRec=false;
+let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar',gateRec=/[?&]recuperar=1/.test(location.search);
+if(/error_code=/.test(location.href)){gateRec=false;nuvemMsg=/otp_expired/.test(location.href)?'Esse link expirou ou já foi usado. Peça um novo.':'Não foi possível validar o link. Peça um novo.';try{history.replaceState(null,'',location.pathname)}catch(e){}}
 const nuvemDisponivel=()=>/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const nuvemHora=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 function nuvemAtualiza(){renderGate();try{renderContaNuvem()}catch(e){}if(location.hash.startsWith('#backup'))go()}
@@ -1580,7 +1581,7 @@ function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promi
 async function nuvemIniciar(){if(!nuvemDisponivel())return;
   try{await nuvemLib();
     sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{flowType:'pkce',persistSession:true,detectSessionInUrl:true}});
-    sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=null;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes)nuvemSincronizar(true);if(ev==='SIGNED_OUT')nuvemAtualiza()});
+    sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=ses?ses.user:nuvemUser;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes)nuvemSincronizar(true);if(ev==='SIGNED_OUT')nuvemAtualiza()});
     const {data}=await sb.auth.getSession();nuvemUser=data.session?data.session.user:null;
     if(nuvemUser)await nuvemSincronizar(false);
     nuvemAtualiza();
@@ -1605,10 +1606,11 @@ async function nuvemEntrar(){
   const em=val('gt_email'),senha=(($('#gt_senha')||{}).value||''),senha2=(($('#gt_senha2')||{}).value||'');
   try{if(!sb)await nuvemIniciar();if(!sb)throw new Error('serviço indisponível');
     if(gateRec){
+      if(!nuvemUser){nuvemMsg='Esse link de redefinição expirou ou já foi usado. Peça um novo em "Esqueci minha senha".';gateRec=false;try{history.replaceState(null,'',location.pathname)}catch(e){}nuvemAtualiza();return}
       if(senha.length<8){toast('A senha precisa de pelo menos 8 caracteres');return}
       if(senha!==senha2){toast('As senhas não conferem');return}
       const {error}=await sb.auth.updateUser({password:senha});if(error)throw error;
-      gateRec=false;nuvemMsg='Senha alterada. Você já está dentro.';nuvemAtualiza();return}
+      gateRec=false;try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}nuvemMsg='Senha alterada.';toast('Senha alterada');nuvemAtualiza();go();return}
     if(!/@/.test(em)){toast('Digite um e-mail válido');return}
     if(!senha){toast('Digite a senha');return}
     if(gateModo==='criar'){
@@ -1628,7 +1630,7 @@ async function nuvemEntrar(){
   nuvemAtualiza()}
 async function nuvemEsqueci(){const em=((($('#gt_email'))||{}).value||'').trim();
   if(!/@/.test(em)){toast('Digite seu e-mail primeiro');return}
-  try{if(!sb)await nuvemIniciar();const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(error)throw error;
+  try{if(!sb)await nuvemIniciar();const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname+'?recuperar=1'});if(error)throw error;
     nuvemMsg='Enviamos um link para redefinir a senha para '+em+'.'}catch(e){nuvemMsg='Não consegui enviar: '+e.message}
   nuvemAtualiza()}
 
