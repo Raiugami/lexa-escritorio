@@ -17,20 +17,20 @@
   --r:20px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0b0f0d; --panel:#121815; --surface:#1a211d; --surface-2:#232c27; --line:#2b3530;
-  --fg:#e6ece8; --muted:#9aa79f; --accent:#5fbf8a; --accent-ink:#8fd9ae; --accent-fg:#06140c; --accent-soft:#1f3328;
+  --bg:#000000; --panel:#0b0b0b; --surface:#151515; --surface-2:#1e1e1e; --line:#2a2a2a;
+  --fg:#ededed; --muted:#a0a0a0; --accent:#5fbf8a; --accent-ink:#8fd9ae; --accent-fg:#06140c; --accent-soft:#16291f;
   --grad:linear-gradient(135deg,#0f4a2e 0%,#1f7a4c 55%,#45b077 100%);
   --grad-dark:radial-gradient(120% 140% at 100% 0%,#2a7a52 0%,#0d2e1e 55%,#06120c 100%);
-  --on-grad-muted:#cfe9da; --hatch:#3a4741; --bar:#3f8f63;
+  --on-grad-muted:#cfe9da; --hatch:#3a3a3a; --bar:#3f8f63;
   --ok:#8fd9ae; --ok-soft:#1f3328; --warn:#f0c66b; --warn-soft:#3a2f17; --bad:#ff9a8f; --bad-soft:#3d1f1c; --info:#a9c4ff; --info-soft:#1d2a40; --due:#f5b979; --due-soft:#3a2a17;
   --shadow:0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0b0f0d; --panel:#121815; --surface:#1a211d; --surface-2:#232c27; --line:#2b3530;
-  --fg:#e6ece8; --muted:#9aa79f; --accent:#5fbf8a; --accent-ink:#8fd9ae; --accent-fg:#06140c; --accent-soft:#1f3328;
+  --bg:#000000; --panel:#0b0b0b; --surface:#151515; --surface-2:#1e1e1e; --line:#2a2a2a;
+  --fg:#ededed; --muted:#a0a0a0; --accent:#5fbf8a; --accent-ink:#8fd9ae; --accent-fg:#06140c; --accent-soft:#16291f;
   --grad:linear-gradient(135deg,#0f4a2e 0%,#1f7a4c 55%,#45b077 100%);
   --grad-dark:radial-gradient(120% 140% at 100% 0%,#2a7a52 0%,#0d2e1e 55%,#06120c 100%);
-  --on-grad-muted:#cfe9da; --hatch:#3a4741; --bar:#3f8f63;
+  --on-grad-muted:#cfe9da; --hatch:#3a3a3a; --bar:#3f8f63;
   --ok:#8fd9ae; --ok-soft:#1f3328; --warn:#f0c66b; --warn-soft:#3a2f17; --bad:#ff9a8f; --bad-soft:#3d1f1c; --info:#a9c4ff; --info-soft:#1d2a40; --due:#f5b979; --due-soft:#3a2a17;
   --shadow:0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark}
@@ -504,14 +504,14 @@ function cssMarca(cor){
     '--grad-dark':`radial-gradient(120% 140% at 100% 0%,${mix(base,'#ffffff',.15)} 0%,${mix(base,'#000000',.5)} 55%,${mix(base,'#000000',.78)} 100%)`,
     '--on-grad-muted':mix(base,'#ffffff',.82),'--bar':mix(cor,'#ffffff',.4),
     '--bg':mix(cor,'#e9eaea',.95),'--panel':mix(cor,'#f7f7f7',.975),'--surface-2':mix(cor,'#eff0f0',.96),'--line':mix(cor,'#e5e7e6',.95),'--hatch':mix(cor,'#d3d6d5',.92),'--fg':mix(cor,'#16191a',.92)};
-  const sf='#1b1e1f';const ac=ate(cor,'#ffffff',sf,5);
+  const sf='#151515';const ac=ate(cor,'#ffffff',sf,5);
   const D={'--accent':ac,'--accent-ink':ate(cor,'#ffffff',sf,8),'--accent-fg':mix(cor,'#000000',.85),'--accent-soft':mix(cor,sf,.78),
     '--grad':`linear-gradient(135deg,${mix(base,'#000000',.45)} 0%,${mix(base,'#000000',.1)} 55%,${mix(base,'#ffffff',.18)} 100%)`,
     '--grad-dark':`radial-gradient(120% 140% at 100% 0%,${mix(base,'#000000',.15)} 0%,${mix(base,'#000000',.62)} 55%,${mix(base,'#000000',.85)} 100%)`,
     '--on-grad-muted':mix(base,'#ffffff',.82),'--bar':mix(cor,'#000000',.25),
-    '--bg':mix(cor,'#0c0d0d',.95),'--panel':mix(cor,'#131515',.95),'--surface':mix(cor,sf,.96),'--surface-2':mix(cor,'#242728',.95),'--line':mix(cor,'#2d3132',.94),'--hatch':mix(cor,'#3d4243',.92),'--fg':mix(cor,'#e8eaea',.95)};
+    '--fg':'#ededed'};
   const b=o=>Object.entries(o).map(([k,v])=>`${k}:${v}`).join(';');
-  return `:root{${b(L)}}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${b(D)}}}:root[data-theme="dark"]{${b(D)}}`;
+  return `html:root{${b(L)}}@media (prefers-color-scheme: dark){html:root:not([data-theme="light"]){${b(D)}}}html:root[data-theme="dark"]{${b(D)}}`;
 }
 const iniciaisMarca=n=>(n||'L').replace(/advocacia|advogados|associados|sociedade|escrit[óo]rio|&|\be\b|\bde\b|\bdo\b|\bda\b/gi,' ').trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'L';
 function htmlMarca(mk,top){
