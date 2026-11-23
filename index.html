@@ -451,6 +451,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 .gate-aba{flex:1;border:0;background:none;border-radius:99px;padding:9px 12px;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
 .gate-aba.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12)}
 .gate-form label{display:grid;gap:4px;font-size:.84rem;font-weight:600}
+.gate-link{justify-self:end;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:700;cursor:pointer;padding:0}
 @media print{ .side,.top,.noprint,#fab,.toast{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} }
 @page{size:A4;margin:0}
 #printRoot{display:none}
@@ -1448,25 +1449,35 @@ ROUTES.backup=()=>`<div class="phead"><div><h1>Backup</h1><p>Nesta versão os da
 const SB_URL='https://dwyalxrzljotekooqpto.supabase.co';
 const SB_KEY='sb_publishable_uoCXERCLpJy_jHDjaRlSug_nhvEL6vv';
 const SB_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js';
-let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar';
+let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar',gateRec=false;
 const nuvemDisponivel=()=>/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const nuvemHora=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 function nuvemAtualiza(){renderGate();if(location.hash.startsWith('#backup'))go()}
 function renderGate(){const g=$('#gate');if(!g)return;
-  if(!nuvemDisponivel()||nuvemUser){g.hidden=true;g.innerHTML='';document.body.classList.remove('trancado');return}
+  if(!nuvemDisponivel()||(nuvemUser&&!gateRec)){g.hidden=true;g.innerHTML='';document.body.classList.remove('trancado');return}
   document.body.classList.add('trancado');g.hidden=false;
-  const criar=gateModo==='criar';
   const aba=(k,t)=>`<button type="button" class="gate-aba ${gateModo===k?'on':''}" data-act="gate-modo" data-modo="${k}">${t}</button>`;
-  const campos=criar?`<label>Nome completo *<input id="gt_nome" required autocomplete="name" placeholder="Dra. Maria Silva"></label>
+  const pronto=!!sb;let corpo,titulo,sub,botao;
+  if(gateRec){titulo='Crie uma nova senha';sub='Escolha uma senha nova para a sua conta.';
+    corpo=`<label>Nova senha *<input id="gt_senha" type="password" required minlength="8" autocomplete="new-password"></label><label>Repita a senha *<input id="gt_senha2" type="password" required minlength="8" autocomplete="new-password"></label>`;
+    botao='Salvar nova senha';
+  }else if(gateModo==='criar'){titulo='Crie sua conta';sub='Use seu e-mail profissional. Você vai confirmar o e-mail antes de entrar.';
+    corpo=`<label>Nome completo *<input id="gt_nome" required autocomplete="name" placeholder="Dra. Maria Silva"></label>
       <label>OAB (opcional)<input id="gt_oab" placeholder="OAB/SP 000.000"></label>
-      <label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>`
-    :`<label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>`;
-  const pronto=!!sb;
+      <label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>
+      <label>Senha * <span class="note">(mínimo de 8 caracteres)</span><input id="gt_senha" type="password" required minlength="8" autocomplete="new-password"></label>
+      <label>Repita a senha *<input id="gt_senha2" type="password" required minlength="8" autocomplete="new-password"></label>`;
+    botao='Criar conta';
+  }else{titulo='Bem-vindo de volta';sub='Entre com seu e-mail e sua senha.';
+    corpo=`<label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>
+      <label>Senha *<input id="gt_senha" type="password" required autocomplete="current-password"></label>
+      <button type="button" class="gate-link" data-act="gate-esqueci">Esqueci a senha</button>`;
+    botao='Entrar';
+  }
   g.innerHTML=`<div class="gate-caixa"><div class="gate-marca"><span class="gate-logo">H</span><b>Honra</b></div>
-    <div class="gate-abas">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>
-    <h1>${criar?'Crie sua conta':'Bem-vindo de volta'}</h1>
-    <p class="note">${criar?'Use seu e-mail profissional. Enviamos um link para confirmar e entrar, sem senha.':'Digite o e-mail da sua conta. Enviamos um link de acesso, sem senha.'}</p>
-    ${pronto?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()">${campos}<button class="btn pri" type="submit">${criar?'Criar conta e receber link':'Enviar link de acesso'}</button></form>`:`<p class="note">Conectando ao serviço de acesso…</p>`}
+    ${gateRec?'':`<div class="gate-abas">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>`}
+    <h1>${titulo}</h1><p class="note">${sub}</p>
+    ${pronto?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()">${corpo}<button class="btn pri" type="submit">${botao}</button></form>`:`<p class="note">Conectando ao serviço de acesso…</p>`}
     ${nuvemMsg?`<p class="note gate-msg">${esc(nuvemMsg)}</p>`:''}</div>`}
 
 function salvarLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -1474,7 +1485,7 @@ function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promi
 async function nuvemIniciar(){if(!nuvemDisponivel())return;
   try{await nuvemLib();
     sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{flowType:'pkce',persistSession:true,detectSessionInUrl:true}});
-    sb.auth.onAuthStateChange((ev,ses)=>{const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes)nuvemSincronizar(true);if(ev==='SIGNED_OUT')nuvemAtualiza()});
+    sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=null;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes)nuvemSincronizar(true);if(ev==='SIGNED_OUT')nuvemAtualiza()});
     const {data}=await sb.auth.getSession();nuvemUser=data.session?data.session.user:null;
     if(nuvemUser)await nuvemSincronizar(false);
     nuvemAtualiza();
@@ -1494,15 +1505,36 @@ async function nuvemEnviar(){if(!sb||!nuvemUser)return;
   try{const {error}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(error)throw error;nuvemMsg='Salvo na nuvem às '+nuvemHora()+'.'}
   catch(e){nuvemMsg='Não foi possível salvar na nuvem agora ('+e.message+'). Os dados continuam neste navegador e tentam de novo na próxima alteração.'}
   nuvemAtualiza()}
-async function nuvemEntrar(){const em=((($('#gt_email')||$('#nv_email'))||{}).value||'').trim();const criar=gateModo==='criar';
-  const nome=(($('#gt_nome')||{}).value||'').trim();const oab=(($('#gt_oab')||{}).value||'').trim();
-  if(!/@/.test(em)){toast('Digite um e-mail válido');return}
-  if(criar&&!nome){toast('Digite seu nome completo');return}
+async function nuvemEntrar(){
+  const val=id=>((($('#'+id))||{}).value||'').trim();
+  const em=val('gt_email'),senha=(($('#gt_senha')||{}).value||''),senha2=(($('#gt_senha2')||{}).value||'');
   try{if(!sb)await nuvemIniciar();if(!sb)throw new Error('serviço indisponível');
-    const {error}=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:criar,data:criar?{nome,oab}:undefined}});
-    if(error)throw error;
-    nuvemMsg=(criar?'Conta criada. Enviamos um link para ':'Enviamos um link de acesso para ')+em+'. Abra o e-mail neste mesmo navegador e clique no link.'}
-  catch(e){const m=String(e.message||e);nuvemMsg=!criar&&/signups? not allowed|not found|Signups/i.test(m)?'Não encontramos uma conta com esse e-mail. Use "Criar conta" primeiro.':'Não consegui enviar o link: '+m}
+    if(gateRec){
+      if(senha.length<8){toast('A senha precisa de pelo menos 8 caracteres');return}
+      if(senha!==senha2){toast('As senhas não conferem');return}
+      const {error}=await sb.auth.updateUser({password:senha});if(error)throw error;
+      gateRec=false;nuvemMsg='Senha alterada. Você já está dentro.';nuvemAtualiza();return}
+    if(!/@/.test(em)){toast('Digite um e-mail válido');return}
+    if(!senha){toast('Digite a senha');return}
+    if(gateModo==='criar'){
+      const nome=val('gt_nome'),oab=val('gt_oab');
+      if(!nome){toast('Digite seu nome completo');return}
+      if(senha.length<8){toast('A senha precisa de pelo menos 8 caracteres');return}
+      if(senha!==senha2){toast('As senhas não conferem');return}
+      const {data,error}=await sb.auth.signUp({email:em,password:senha,options:{emailRedirectTo:location.origin+location.pathname,data:{nome,oab}}});
+      if(error)throw error;
+      nuvemMsg=data.session?'Conta criada. Entrando…':'Conta criada. Enviamos um e-mail para '+em+'. Clique no link para confirmar e depois entre com sua senha.';
+      if(!data.session){gateModo='entrar'}
+    }else{
+      const {error}=await sb.auth.signInWithPassword({email:em,password:senha});if(error)throw error;
+    }
+  }catch(e){const m=String(e.message||e);
+    nuvemMsg=/invalid login|invalid credentials/i.test(m)?'E-mail ou senha incorretos.':/already registered|already been registered/i.test(m)?'Já existe uma conta com esse e-mail. Use "Entrar".':/email not confirmed/i.test(m)?'Confirme seu e-mail pelo link que enviamos, depois entre.':/rate limit|too many/i.test(m)?'Muitas tentativas. Espere alguns minutos e tente de novo.':'Não consegui: '+m}
+  nuvemAtualiza()}
+async function nuvemEsqueci(){const em=((($('#gt_email'))||{}).value||'').trim();
+  if(!/@/.test(em)){toast('Digite seu e-mail primeiro');return}
+  try{if(!sb)await nuvemIniciar();const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(error)throw error;
+    nuvemMsg='Enviamos um link para redefinir a senha para '+em+'.'}catch(e){nuvemMsg='Não consegui enviar: '+e.message}
   nuvemAtualiza()}
 
 async function nuvemSair(){if(!sb)return;try{await sb.auth.signOut()}catch(e){}nuvemUser=null;
@@ -1555,6 +1587,7 @@ document.addEventListener('click',e=>{
     case 'del-comp':confirmar('Excluir este compromisso?','Excluir',()=>{const x=S.agenda.find(y=>y.id===id);if(x&&x.gid){gcfg().apagar=(gcfg().apagar||[]).concat(x.gid)}S.agenda=S.agenda.filter(x=>x.id!==id);salvar();go();gAuto()});break;
     case 'nuvem-entrar':nuvemEntrar();break;
     case 'gate-modo':gateModo=ds.modo;nuvemMsg='';renderGate();break;
+    case 'gate-esqueci':nuvemEsqueci();break;
     case 'nuvem-sair':nuvemSair();break;
     case 'nuvem-sincar':nuvemSincronizar(true);break;
     case 'exp-ics':exportaIcs();break;
