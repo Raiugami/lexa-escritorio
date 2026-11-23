@@ -415,6 +415,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
   .app{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:360px){ .kpis{grid-template-columns:1fr} }
+.g-panel{margin-bottom:14px}.g-row{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.g-row .note{margin-top:2px}.g-ok{color:var(--accent-ink);font-weight:600}
 @media print{ .side,.top,.noprint{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} .doc{padding:0} }
 </style>
 
@@ -1117,14 +1118,108 @@ ROUTES.agenda=()=>{
   const h=hoje();let l=[...S.agenda];
   if(agDia)l=l.filter(a=>a.data===agDia);else if(agFiltro==='proximos')l=l.filter(a=>a.data>=h);else if(agFiltro==='semana')l=l.filter(a=>a.data>=h&&a.data<=addDias(h,7));
   l.sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
-  return `<div class="phead"><div><h1>Agenda</h1><p>Audiências, prazos e reuniões.</p></div><button class="btn pri" data-act="novo-comp" type="button">Novo compromisso</button></div>
+  return `<div class="phead"><div><h1>Agenda</h1><p>Audiências, prazos e reuniões.</p></div><div class="row"><button class="btn" data-act="exp-ics" type="button">Exportar agenda</button><button class="btn pri" data-act="novo-comp" type="button">Novo compromisso</button></div></div>
+  ${painelGoogle()}
   <div class="panel"><div class="chips" style="margin-bottom:12px">${agDia?`<button class="chip on" data-ag="limpa" type="button">${br(agDia)} ✕</button>`:''}${[['proximos','Próximos'],['semana','Próximos 7 dias'],['todos','Todos']].map(([k,t])=>`<button class="chip ${!agDia&&agFiltro===k?'on':''}" data-ag="${k}" type="button">${t}</button>`).join('')}</div>
-  ${l.length?`<div class="list">${l.map(a=>`<div class="li"><div><div class="t">${esc(a.titulo)}</div><div class="s">${br(a.data)} às ${esc(a.hora)}${a.desc?' · '+esc(a.desc):''}</div></div><div class="row">${a.data<h?'<span class="pill p-pendente">Passado</span>':a.data===h?'<span class="pill p-acc">Hoje</span>':''}<button class="btn sm" data-act="edit-comp" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger" data-act="del-comp" data-id="${a.id}" type="button">Excluir</button></div></div>`).join('')}</div>`:'<div class="empty">Nenhum compromisso aqui. Use "Novo compromisso" para agendar.</div>'}</div>`;
+  ${l.length?`<div class="list">${l.map(a=>`<div class="li"><div><div class="t">${esc(a.titulo)}</div><div class="s">${br(a.data)}${a.hora?' às '+esc(a.hora):' · dia inteiro'}${a.desc?' · '+esc(a.desc):''}${a.gid?' · <span class="g-ok">no Google</span>':''}</div></div><div class="row">${a.data<h?'<span class="pill p-pendente">Passado</span>':a.data===h?'<span class="pill p-acc">Hoje</span>':''}<a class="btn sm" href="${gcalLink(a)}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda">+ Google</a><button class="btn sm" data-act="edit-comp" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger" data-act="del-comp" data-id="${a.id}" type="button">Excluir</button></div></div>`).join('')}</div>`:'<div class="empty">Nenhum compromisso aqui. Use "Novo compromisso" para agendar.</div>'}</div>`;
 };
 function modalComp(a){a=a||{data:agDia||hoje(),hora:'09:00'};
   modal(`<h2>${a.id?'Editar':'Novo'} compromisso</h2><form id="fC" class="fs" style="grid-template-columns:1fr 1fr"><label style="grid-column:1/-1">Título *<input id="a_t" required value="${esc(a.titulo||'')}"></label><label>Data *<input id="a_d" type="date" required value="${a.data}"></label><label>Hora *<input id="a_h" type="time" required value="${a.hora}"></label><label style="grid-column:1/-1">Descrição<textarea id="a_desc">${esc(a.desc||'')}</textarea></label><div class="row" style="grid-column:1/-1;justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
-  $('#fC').onsubmit=e=>{e.preventDefault();const d={titulo:$('#a_t').value.trim(),data:$('#a_d').value,hora:$('#a_h').value,desc:$('#a_desc').value.trim()};if(a.id)Object.assign(a,d);else S.agenda.push(Object.assign({id:nid()},d));salvar();fechar();toast('Compromisso salvo');go()};
+  $('#fC').onsubmit=e=>{e.preventDefault();const d={titulo:$('#a_t').value.trim(),data:$('#a_d').value,hora:$('#a_h').value,desc:$('#a_desc').value.trim()};if(a.id)Object.assign(a,d);else S.agenda.push(Object.assign({id:nid()},d));salvar();fechar();toast('Compromisso salvo');go();gAuto()};
 }
+
+
+/* ---------- Google Agenda ---------- */
+const TZ=(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Sao_Paulo'}catch(e){return'America/Sao_Paulo'}})();
+const gcfg=()=>S.google||(S.google={});
+const compactDT=(d,h)=>d.replace(/-/g,'')+'T'+(h||'00:00').replace(':','')+'00';
+function fimDe(a){const t=new Date(a.data+'T'+(a.hora||'00:00')+':00');t.setHours(t.getHours()+1);return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate())+'T'+pad(t.getHours())+':'+pad(t.getMinutes())}
+function gcalLink(a){
+  let datas;if(a.hora){const f=fimDe(a);datas=compactDT(a.data,a.hora)+'/'+compactDT(f.slice(0,10),f.slice(11))}else{datas=a.data.replace(/-/g,'')+'/'+addDias(a.data,1).replace(/-/g,'')}
+  const q=new URLSearchParams({action:'TEMPLATE',text:a.titulo,dates:datas,details:a.desc||'',ctz:TZ});
+  return 'https://calendar.google.com/calendar/render?'+q.toString()}
+function icsEsc(t){return String(t||'').replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
+function exportaIcs(){
+  const l=S.agenda;if(!l.length){toast('A agenda está vazia');return}
+  const agora=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  const ev=l.map(a=>{const f=a.hora?fimDe(a):null;return['BEGIN:VEVENT','UID:honra-'+a.id+'@honra',
+    'DTSTAMP:'+agora,
+    a.hora?'DTSTART;TZID='+TZ+':'+compactDT(a.data,a.hora):'DTSTART;VALUE=DATE:'+a.data.replace(/-/g,''),
+    a.hora?'DTEND;TZID='+TZ+':'+compactDT(f.slice(0,10),f.slice(11)):'DTEND;VALUE=DATE:'+addDias(a.data,1).replace(/-/g,''),
+    'SUMMARY:'+icsEsc(a.titulo),a.desc?'DESCRIPTION:'+icsEsc(a.desc):null,'END:VEVENT'].filter(Boolean).join('\r\n')});
+  const txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Honra//Agenda//PT-BR','CALSCALE:GREGORIAN','X-WR-CALNAME:'+icsEsc(marca().nome+' · agenda'),...ev,'END:VCALENDAR'].join('\r\n');
+  const b=new Blob([txt],{type:'text/calendar'});const x=document.createElement('a');x.href=URL.createObjectURL(b);x.download=`agenda-${hoje()}.ics`;x.click();
+  toast('Arquivo da agenda baixado')}
+
+/* Sincronização nos dois sentidos (precisa do ID de cliente OAuth do Google Cloud) */
+let gToken=null,gTokenFim=0,gCliente=null,gOcupado=false,gUltErro='';
+const gHash=a=>[a.titulo,a.data,a.hora,a.desc||''].join('|');
+function painelGoogle(){const c=gcfg();
+  if(!c.clientId)return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">Use "+ Google" em cada compromisso, ou exporte a agenda. Para sincronizar automaticamente nos dois sentidos, configure a conexão.</div></div><button class="btn" data-act="g-config" type="button">Configurar sincronização</button></div></div>`;
+  const quando=c.ultima?new Date(c.ultima).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'nunca';
+  return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">${c.ligado?`Sincronizando com ${c.conta?esc(c.conta):'sua conta Google'}. Última vez: ${quando}.`:'Conexão configurada. Entre com a conta Google para começar.'}${gUltErro?`<br><span style="color:var(--danger)">${esc(gUltErro)}</span>`:''}</div></div><div class="row"><button class="btn pri" data-act="g-sync" type="button">${gOcupado?'Sincronizando…':c.ligado?'Sincronizar agora':'Entrar com Google'}</button><button class="btn ghost" data-act="g-config" type="button">Ajustes</button>${c.ligado?'<button class="btn ghost" data-act="g-sair" type="button">Desligar</button>':''}</div></div></div>`}
+function modalGoogle(){const c=gcfg();
+  modal(`<h2>Sincronizar com o Google Agenda</h2><p class="note">Cole o ID de cliente OAuth criado no Google Cloud (termina em <code>.apps.googleusercontent.com</code>). Ele não é senha: só diz ao Google qual aplicativo está pedindo acesso. Cada pessoa entra com a própria conta.</p><form id="fG" class="fs"><label>ID de cliente OAuth<input id="g_id" value="${esc(c.clientId||'')}" placeholder="123456-abc.apps.googleusercontent.com"></label><label>Agenda<select id="g_cal"><option value="primary">Agenda principal da conta</option></select></label><div class="row" style="justify-content:flex-end">${c.clientId?'<button class="btn ghost danger" id="g_rm" type="button">Remover</button>':''}<button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
+  $('#fG').onsubmit=e=>{e.preventDefault();const v=$('#g_id').value.trim();if(v&&!/\.apps\.googleusercontent\.com$/.test(v)){toast('Esse ID não parece um ID de cliente do Google');return}c.clientId=v;c.cal='primary';salvar();fechar();toast(v?'Conexão configurada':'Conexão removida');go()};
+  const rm=$('#g_rm');if(rm)rm.onclick=()=>{S.google={};gToken=null;salvar();fechar();toast('Conexão removida');go()}}
+function gScript(){return new Promise((ok,erro)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.onload=()=>ok();sc.onerror=()=>erro(new Error('Não foi possível carregar o login do Google'));document.head.appendChild(sc)})}
+function gPedeToken(interativo){const c=gcfg();
+  if(window.__gMock)return Promise.resolve(window.__gMock.token);
+  if(gToken&&Date.now()<gTokenFim)return Promise.resolve(gToken);
+  if(!interativo)return Promise.reject(new Error('login'));
+  return gScript().then(()=>new Promise((ok,erro)=>{
+    gCliente=google.accounts.oauth2.initTokenClient({client_id:c.clientId,scope:'https://www.googleapis.com/auth/calendar.events',
+      callback:r=>{if(r.error)return erro(new Error('O Google recusou o acesso ('+r.error+')'));gToken=r.access_token;gTokenFim=Date.now()+(r.expires_in-60)*1000;ok(gToken)},
+      error_callback:r=>erro(new Error(r&&r.type==='popup_closed'?'A janela do Google foi fechada':'Não foi possível entrar no Google'))});
+    gCliente.requestAccessToken({prompt:c.ligado?'':'consent'})}))}
+async function gApi(met,caminho,corpo){
+  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(gcfg().cal||'primary')+caminho;
+  const f=window.__gMock?window.__gMock.fetch:fetch;
+  const r=await f(url,{method:met,headers:{Authorization:'Bearer '+gToken,'Content-Type':'application/json'},body:corpo?JSON.stringify(corpo):undefined});
+  if(r.status===401){gToken=null;throw new Error('login')}
+  if(r.status===404||r.status===410)return null;
+  if(!r.ok)throw new Error('O Google respondeu com erro '+r.status);
+  return r.status===204?null:r.json()}
+function gEvento(a){const corpo={summary:a.titulo,description:a.desc||'',extendedProperties:{private:{honra:'1'}}};
+  if(a.hora){const f=fimDe(a);corpo.start={dateTime:a.data+'T'+a.hora+':00',timeZone:TZ};corpo.end={dateTime:f+':00',timeZone:TZ}}
+  else{corpo.start={date:a.data};corpo.end={date:addDias(a.data,1)}}return corpo}
+function gLocal(g){const st=g.start||{};let data,hora='';
+  if(st.dateTime){const t=new Date(st.dateTime);data=t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());hora=pad(t.getHours())+':'+pad(t.getMinutes())}else data=st.date;
+  return{titulo:g.summary||'(sem título)',desc:g.description||'',data,hora}}
+async function gSync(interativo){const c=gcfg();if(!c.clientId||gOcupado)return;
+  gOcupado=true;gUltErro='';if(location.hash.startsWith('#agenda'))go();
+  try{
+    gToken=await gPedeToken(interativo);
+    if(!c.conta&&!window.__gMock){try{const u=await (await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList/primary',{headers:{Authorization:'Bearer '+gToken}})).json();c.conta=u.id||''}catch(e){}}
+    // 1) apagados aqui
+    for(const id of (c.apagar||[]))await gApi('DELETE','/events/'+encodeURIComponent(id));
+    c.apagar=[];
+    // 2) eventos do Google numa janela de tempo
+    const ini=new Date(Date.now()-60*864e5).toISOString(),fim=new Date(Date.now()+400*864e5).toISOString();
+    let lista=[],pt='';do{const q=new URLSearchParams({timeMin:ini,timeMax:fim,singleEvents:'true',showDeleted:'true',maxResults:'2500'});if(pt)q.set('pageToken',pt);
+      const r=await gApi('GET','/events?'+q);lista=lista.concat((r&&r.items)||[]);pt=r&&r.nextPageToken}while(pt);
+    const porId=new Map(lista.map(g=>[g.id,g]));
+    let env=0,rec=0;
+    for(const a of [...S.agenda]){
+      if(!a.gid){if(a.data<ini.slice(0,10))continue;const g=await gApi('POST','/events',gEvento(a));a.gid=g.id;a.gsync=gHash(a);a.gupd=g.updated;env++;continue}
+      const g=porId.get(a.gid);const mudouAqui=gHash(a)!==a.gsync;
+      if(!g){if(a.data<ini.slice(0,10)||a.data>fim.slice(0,10))continue;
+        const x=await gApi('GET','/events/'+encodeURIComponent(a.gid));
+        if(x&&x.status!=='cancelled'){porId.set(x.id,x)}else{if(mudouAqui){delete a.gid;const n=await gApi('POST','/events',gEvento(a));a.gid=n.id;a.gsync=gHash(a);a.gupd=n.updated;env++}else{S.agenda=S.agenda.filter(y=>y!==a);rec++}continue}}
+      const gg=porId.get(a.gid);
+      if(gg.status==='cancelled'){if(mudouAqui){delete a.gid;const n=await gApi('POST','/events',gEvento(a));a.gid=n.id;a.gsync=gHash(a);a.gupd=n.updated;env++}else{S.agenda=S.agenda.filter(y=>y!==a);rec++}continue}
+      if(mudouAqui){const n=await gApi('PATCH','/events/'+encodeURIComponent(a.gid),gEvento(a));a.gsync=gHash(a);a.gupd=n&&n.updated;env++}
+      else if(gg.updated!==a.gupd){Object.assign(a,gLocal(gg));a.gsync=gHash(a);a.gupd=gg.updated;rec++}
+    }
+    // 3) novos no Google
+    const ligados=new Set(S.agenda.map(a=>a.gid).filter(Boolean));
+    for(const g of lista){if(g.status==='cancelled'||ligados.has(g.id)||!g.start)continue;const a=Object.assign({id:nid(),gid:g.id,gupd:g.updated,origem:'google'},gLocal(g));a.gsync=gHash(a);S.agenda.push(a);rec++}
+    c.ligado=true;c.ultima=Date.now();salvar();
+    if(interativo)toast(env||rec?`Sincronizado: ${env} enviado(s), ${rec} recebido(s)`:'Agenda já estava em dia');
+  }catch(e){if(e.message==='login'){if(interativo)gUltErro='Entre de novo com o Google para continuar.'}else{gUltErro=e.message;if(interativo)toast(e.message)}}
+  finally{gOcupado=false;if(location.hash.startsWith('#agenda')||location.hash===''||location.hash==='#painel')go()}}
+function gAuto(){const c=gcfg();if(c.clientId&&c.ligado&&(gToken||window.__gMock))gSync(false)}
+function gSair(){const c=gcfg();if(gToken&&window.google&&google.accounts)try{google.accounts.oauth2.revoke(gToken,()=>{})}catch(e){}gToken=null;c.ligado=false;c.conta='';salvar();toast('Sincronização desligada');go()}
 
 /* ---------- Ações a ajuizar ---------- */
 const PRI={alta:['Alta','p-atrasado',0],media:['Média','p-parcial',1],normal:['Normal','p-pendente',2]};
@@ -1288,7 +1383,11 @@ document.addEventListener('click',e=>{
     case 'excluir-cliente':{const c=S.clientes.find(x=>x.id===id);confirmar(`Excluir <strong>${esc(c.nome)}</strong> e todas as parcelas e pagamentos? Não dá para desfazer.`,'Excluir cliente',()=>{S.clientes=S.clientes.filter(x=>x.id!==id);S.parcelas=S.parcelas.filter(p=>p.clienteId!==id);salvar();toast('Cliente excluído');location.hash='#clientes'});break}
     case 'novo-comp':modalComp();break;
     case 'edit-comp':modalComp(S.agenda.find(x=>x.id===id));break;
-    case 'del-comp':confirmar('Excluir este compromisso?','Excluir',()=>{S.agenda=S.agenda.filter(x=>x.id!==id);salvar();go()});break;
+    case 'del-comp':confirmar('Excluir este compromisso?','Excluir',()=>{const x=S.agenda.find(y=>y.id===id);if(x&&x.gid){gcfg().apagar=(gcfg().apagar||[]).concat(x.gid)}S.agenda=S.agenda.filter(x=>x.id!==id);salvar();go();gAuto()});break;
+    case 'exp-ics':exportaIcs();break;
+    case 'g-config':modalGoogle();break;
+    case 'g-sync':gSync(true);break;
+    case 'g-sair':gSair();break;
     case 'nova-acao':modalAcao();break;
     case 'edit-acao':modalAcao(S.acoes.find(x=>x.id===id));break;
     case 'del-acao':confirmar('Excluir esta ação da fila?','Excluir',()=>{S.acoes=S.acoes.filter(x=>x.id!==id);salvar();go()});break;

@@ -38,3 +38,19 @@ O sistema também tem tema claro, escuro ou automático (segue o aparelho), no b
 ## Celular
 
 No celular o sistema usa uma barra de ícones embaixo, tabelas em formato de cartão e um botão "+" com ações rápidas. Pelo navegador do celular dá para instalar o sistema na tela inicial ("Adicionar à tela inicial"), e ele abre como um app, mesmo sem internet.
+
+## Google Agenda
+
+- Cada compromisso tem o botão **+ Google**, que abre o Google Agenda já preenchido.
+- **Exportar agenda** baixa um arquivo `.ics` que o Google Agenda, o Outlook e o iPhone importam.
+- **Sincronização nos dois sentidos:** em Agenda, "Configurar sincronização", cole o ID de cliente OAuth do Google Cloud e clique em "Entrar com Google". Compromissos criados, editados ou apagados de um lado aparecem do outro (janela de 60 dias para trás até cerca de 1 ano para frente).
+
+### Como criar o ID de cliente no Google Cloud
+
+1. Em console.cloud.google.com, crie um projeto (ex.: "Honra").
+2. Em "APIs e serviços" → "Biblioteca", ative a **Google Calendar API**.
+3. Em "Tela de consentimento OAuth", escolha "Externo", preencha nome do app e e-mail, adicione o escopo `.../auth/calendar.events` e, enquanto estiver em teste, adicione os e-mails que vão usar em "Usuários de teste".
+4. Em "Credenciais" → "Criar credenciais" → "ID do cliente OAuth" → tipo "Aplicativo da Web". Em "Origens JavaScript autorizadas" coloque `https://raiugami.github.io`.
+5. Copie o ID (termina em `.apps.googleusercontent.com`) e cole no Honra.
+
+Para abrir para qualquer pessoa (fora da lista de teste), o Google pede a verificação do app, porque o acesso à agenda é um escopo sensível.
