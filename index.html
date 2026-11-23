@@ -461,6 +461,28 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 ul.acessos{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 ul.acessos li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 ul.acessos li span:first-child{text-transform:capitalize;font-weight:600}
+#carregando{position:fixed;inset:0;z-index:350;display:grid;place-items:center;color:#eaf5ee;background:radial-gradient(120% 90% at 50% 0%,#2a8a5a 0%,#14563a 35%,#0b2e20 72%,#06180f 100%);animation:surge .35s ease both}
+#carregando[hidden]{display:none}
+#carregando.sai{animation:cgSai .55s cubic-bezier(.6,0,.3,1) forwards}
+.cg-centro{display:grid;justify-items:center;gap:22px;text-align:center;padding:24px}
+.cg-logo{position:relative;width:112px;height:112px;display:grid;place-items:center;animation:pop .6s cubic-bezier(.2,.8,.2,1) backwards}
+.cg-logo::before{content:"";position:absolute;inset:0;border-radius:32px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(6px);animation:cgRespira 2.4s ease-in-out infinite}
+.cg-logo svg{position:relative;transform-origin:50% 30%;animation:cgBalanca 2.4s ease-in-out infinite}
+.cg-anel{position:absolute;inset:-18px;border-radius:50%;border:2px solid transparent;border-top-color:rgba(255,255,255,.75);border-right-color:rgba(255,255,255,.25);animation:gl-gira 1.1s linear infinite}
+.cg-nome{font-size:26px;font-weight:800;letter-spacing:-.02em;animation:sobe .6s .1s cubic-bezier(.2,.8,.2,1) backwards}
+.cg-txt{font-size:14px;opacity:.82;min-height:20px;animation:surge .5s .25s both}
+.cg-txt span{display:inline-block;animation:sobe .45s cubic-bezier(.2,.8,.2,1) backwards}
+.cg-barra{width:220px;height:4px;border-radius:9px;background:rgba(255,255,255,.16);overflow:hidden;animation:surge .5s .3s both}
+.cg-barra i{display:block;height:100%;width:40%;border-radius:9px;background:linear-gradient(90deg,transparent,#fff,transparent);animation:cgCorre 1.3s ease-in-out infinite}
+@keyframes cgBalanca{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@keyframes cgRespira{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes cgCorre{from{transform:translateX(-110%)}to{transform:translateX(260%)}}
+@keyframes cgSai{to{opacity:0;transform:scale(1.04);visibility:hidden}}
+body.entrando .side{animation:daEsquerda .55s cubic-bezier(.2,.8,.2,1) backwards}
+body.entrando .main>*{animation:sobe .6s cubic-bezier(.2,.8,.2,1) backwards}
+body.entrando .main>*:nth-child(2){animation-delay:.08s}
+body.entrando .main>*:nth-child(3){animation-delay:.16s}
+body.entrando .main>*:nth-child(n+4){animation-delay:.24s}
 #gate{position:fixed;inset:0;z-index:300;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);background:var(--bg);overflow:auto}
 #gate[hidden]{display:none}
 .gl-arte{position:relative;overflow:hidden;color:#eaf5ee;padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(120% 80% at 0% 0%,#2a8a5a 0%,#14563a 38%,#0b2e20 75%,#06180f 100%)}
@@ -569,6 +591,7 @@ ul.acessos li span:first-child{text-transform:capitalize;font-weight:600}
 <button class="fab" id="fab" type="button" aria-label="Ações rápidas"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <div id="gate" hidden></div>
 <div id="legal" hidden></div>
+<div id="carregando" hidden role="status" aria-live="polite"></div>
 <div id="modalRoot"></div>
 
 <script>
@@ -1604,11 +1627,11 @@ function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promi
 async function nuvemIniciar(){if(!nuvemDisponivel())return;
   try{await nuvemLib();
     sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{flowType:'pkce',persistSession:true,detectSessionInUrl:true}});
-    sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=ses?ses.user:nuvemUser;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes){nuvemLog('entrada');nuvemPosLogin()}if(ev==='SIGNED_OUT')nuvemAtualiza()});
+    sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=ses?ses.user:nuvemUser;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes){nuvemLog('entrada');carregaMostra();nuvemPosLogin()}if(ev==='SIGNED_OUT')nuvemAtualiza()});
     const {data}=await sb.auth.getSession();nuvemUser=data.session?data.session.user:null;
-    if(nuvemUser)await nuvemPosLogin();
+    if(nuvemUser)await nuvemPosLogin();else carregaEsconde(true);
     nuvemAtualiza();
-  }catch(e){nuvemMsg='Não foi possível conectar ao serviço de acesso. Tente de novo mais tarde.';nuvemAtualiza()}
+  }catch(e){carregaEsconde(true);nuvemMsg='Não foi possível conectar ao serviço de acesso. Tente de novo mais tarde.';nuvemAtualiza()}
 }
 /* ---------- Termos de Uso e Política de Privacidade ---------- */
 const LEGAL_CONTATO='[e-mail do encarregado: a definir]';
@@ -1663,6 +1686,18 @@ function abrirLegal(tipo){const d=LEGAL[tipo];const el=$('#legal');if(!d||!el)re
   el.innerHTML=`<div class="legal-caixa" role="dialog" aria-modal="true" aria-label="${d.t}"><div class="legal-topo"><h2>${d.t}</h2><button class="btn sm" data-act="legal-fechar" type="button">Fechar</button></div><div class="legal-corpo">${d.h}</div></div>`;
   el.hidden=false;el.querySelector('.legal-corpo').scrollTop=0}
 function fecharLegal(){const el=$('#legal');if(el){el.hidden=true;el.innerHTML=''}}
+/* ---------- Carregamento depois do login ---------- */
+let cgT0=0,cgFrase=null;
+const CG_FRASES=['Abrindo seu escritório…','Buscando clientes e parcelas…','Montando a pauta do dia…','Quase pronto…'];
+function carregaMostra(){const el=$('#carregando');if(!el||!el.hidden&&!el.classList.contains('sai'))return;
+  cgT0=Date.now();el.classList.remove('sai');let i=0;
+  el.innerHTML=`<div class="cg-centro"><div class="cg-logo"><span class="cg-anel"></span>${HONRA_SVG(76)}</div><div class="cg-nome">${esc(marca().nome||'Honra')}</div><div class="cg-txt" id="cgTxt"><span>${CG_FRASES[0]}</span></div><div class="cg-barra"><i></i></div></div>`;
+  el.hidden=false;clearInterval(cgFrase);cgFrase=setInterval(()=>{i=Math.min(i+1,CG_FRASES.length-1);const t=$('#cgTxt');if(t)t.innerHTML=`<span>${CG_FRASES[i]}</span>`},1100)}
+function carregaEsconde(rapido){const el=$('#carregando');if(!el||el.hidden)return;
+  const falta=rapido?0:Math.max(0,1200-(Date.now()-cgT0));
+  setTimeout(()=>{clearInterval(cgFrase);el.classList.add('sai');
+    if(!rapido){document.body.classList.remove('entrando');void document.body.offsetWidth;document.body.classList.add('entrando');setTimeout(()=>document.body.classList.remove('entrando'),1200)}
+    setTimeout(()=>{el.hidden=true;el.classList.remove('sai');el.innerHTML=''},560)},falta)}
 /* ---------- Nuvem: uma linha por registro ---------- */
 const TERMOS_V='2026-11-23';
 const NV_TAB={clientes:'clientes',parcelas:'parcelas',agenda:'compromissos',acoes:'acoes',avulsos:'avulsos',empresas:'empresas',devedores:'devedores'};
@@ -1741,14 +1776,14 @@ async function nuvemEnviar(){if(!sb||!nuvemUser||!nuvemEsc||!nuvemSnap)return;
 /* Depois de entrar: duas etapas, aceite dos termos e só então os dados */
 function nuvemPosLogin(){if(nuvemPos)return nuvemPos;nuvemPos=(async()=>{try{
     const {data:al}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-    if(al&&al.nextLevel==='aal2'&&al.currentLevel!=='aal2'){gateMfa=true;nuvemMsg='';nuvemAtualiza();return}
+    if(al&&al.nextLevel==='aal2'&&al.currentLevel!=='aal2'){gateMfa=true;nuvemMsg='';nuvemAtualiza();carregaEsconde(true);return}
     gateMfa=false;
     const {data:ac,error}=await sb.from('aceites').select('id').eq('versao',TERMOS_V).limit(1);
     if(!error&&!(ac&&ac.length)){const md=nuvemUser.user_metadata||{};
       if(md.aceite_versao===TERMOS_V)await sb.from('aceites').insert({versao:TERMOS_V,agente:nvAgente()});
-      else{gateAceite=true;nuvemMsg='';nuvemAtualiza();return}}
-    gateAceite=false;nuvemAtualiza();await nuvemSincronizar(false);
-  }finally{nuvemPos=null}})();return nuvemPos}
+      else{gateAceite=true;nuvemMsg='';nuvemAtualiza();carregaEsconde(true);return}}
+    carregaMostra();gateAceite=false;nuvemAtualiza();await nuvemSincronizar(false);carregaEsconde();
+  }catch(e){carregaEsconde(true)}finally{nuvemPos=null}})();return nuvemPos}
 const nvAgente=()=>String(navigator.userAgent||'').slice(0,250);
 function nuvemLog(ev){if(sb&&nuvemUser)sb.from('acessos').insert({evento:ev,agente:nvAgente()}).then(()=>{},()=>{})}
 function nvAparelho(ua){ua=ua||'';const so=/iPhone|iPad/.test(ua)?'iPhone/iPad':/Android/.test(ua)?'Android':/Windows/.test(ua)?'Windows':/Mac OS/.test(ua)?'Mac':/Linux/.test(ua)?'Linux':'aparelho';
@@ -1923,7 +1958,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fechar()});
 
-carregar();aplicaMarca();go();if(nuvemDisponivel()){document.body.classList.add('trancado');renderGate()}
+carregar();aplicaMarca();go();if(nuvemDisponivel()){document.body.classList.add('trancado');renderGate();try{if(Object.keys(localStorage).some(k=>/^sb-.*-auth-token$/.test(k)))carregaMostra()}catch(e){}}
 nuvemIniciar();
 // app instalável: só registra quando servido por https (GitHub Pages), não dentro do visualizador
 try{if('serviceWorker' in navigator&&location.protocol==='https:'&&standalone&&!/claude\.ai|claudeusercontent/.test(location.host))navigator.serviceWorker.register('sw.js')}catch(e){}
