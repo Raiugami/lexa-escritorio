@@ -203,6 +203,8 @@ td.n,th.n{text-align:right;white-space:nowrap}
 .p-info{background:var(--info-soft);color:var(--info)} .p-acc{background:var(--accent-soft);color:var(--accent-ink)} .p-due{background:var(--due-soft);color:var(--due)}
 .empty{color:var(--muted);padding:18px 4px;text-align:center}
 form .fs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px}
+
+.aviso-parada{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border-radius:12px;background:rgba(255,120,100,.18);color:#ffd9d2;font-size:.85rem;font-weight:600}
 form.fs{display:grid;grid-template-columns:minmax(0,1fr);gap:14px 14px;align-items:start}
 form.fs>.row:last-child{grid-column:1/-1;margin-top:8px;gap:10px;flex-wrap:wrap}
 .modal>.note{margin:-4px 0 2px}
@@ -728,11 +730,11 @@ function exemplo(){
   const b=mk({nome:'Exemplo · João Pereira',area:'trabalhista',tel:'43977776666',tipoHon:'exito',exitoPct:30,prof:'Motorista'});
   const c=mk({nome:'Exemplo · Construtora Alfa Ltda.',area:'civel',tel:'4333334444',total:1200000,entrada:0,nParcelas:4,primeiroVenc:addMeses(h,-3),criado:addMeses(h,-3)});
   parcelasDe(c.id).forEach((p,i)=>{if(i===0)p.pagamentos.push({valor:p.valor,data:p.venc});if(i===1)p.pagamentos.push({valor:150000,data:p.venc})});
-  mk({nome:'Exemplo · Ana Ribeiro',area:'previdenciario',tel:'43966665555',total:300000,entrada:300000,forma:'vista',primeiroVenc:h});
+  const an=mk({nome:'Exemplo · Ana Ribeiro',area:'previdenciario',tel:'43966665555',total:300000,entrada:300000,forma:'vista',primeiroVenc:h});
   S.agenda.push({id:nid(),titulo:'Audiência de conciliação · Mariana Costa',desc:'Vara de Família, sala 2',data:addMeses(h,0).slice(0,8)+pad(Math.min(28,+h.slice(8)+2)),hora:'14:00'});
   S.agenda.push({id:nid(),titulo:'Reunião com João Pereira',desc:'Levar cálculo de verbas rescisórias',data:h,hora:'17:30'});
-  S.acoes.push({id:nid(),cliente:'João Pereira',tipo:'Reclamação trabalhista',desc:'Horas extras e FGTS',data:h,prioridade:'alta',status:'pendente'});
-  S.acoes.push({id:nid(),cliente:'Ana Ribeiro',tipo:'Aposentadoria por idade',desc:'Aguardando CNIS',data:h,prioridade:'normal',status:'pendente'});
+  S.acoes.push({id:nid(),cliente:b.nome,clienteId:b.id,tipo:'Reclamação trabalhista',desc:'Horas extras e FGTS',data:h,prioridade:'alta',status:'pendente'});
+  S.acoes.push({id:nid(),cliente:an.nome,clienteId:an.id,tipo:'Aposentadoria por idade',desc:'Aguardando CNIS',data:h,prioridade:'normal',status:'pendente'});
   const e=S.empresas[S.empresas.push({id:nid(),nome:'Exemplo · Loja Beta Comércio',cnpj:'',contato:'Carlos',tel:'',email:'',end:'',comissao:20,obs:''})-1];
   const d=S.devedores[S.devedores.push({id:nid(),empresaId:e.id,nome:'Exemplo · Pedro Lima',doc:'',tel:'43955554444',email:'',end:'',obs:''})-1];
   novoAcordo({empresaId:e.id,devedorId:d.id,data:addMeses(h,-1),total:240000,entrada:40000,dataEntrada:addMeses(h,-1),n:4,primeiroVenc:addMeses(h,-1),obs:''});
@@ -953,7 +955,7 @@ ROUTES.painel=()=>{
       <section class="panel"><div class="ph"><h2>${dia===h?'Hoje':'Dia '+br(dia)}</h2><button class="btn sm" data-act="novo-comp" type="button">+ Compromisso</button></div>
         ${itens.length?`<div class="list">${itens.map(x=>`<div class="li" style="justify-content:flex-start"><span class="ico ${TIPO_IC[x.tipo][1]}">${svg(IC[TIPO_IC[x.tipo][0]])}</span><div style="flex:1;min-width:0"><div class="t">${esc(x.tit)}</div><div class="s">${x.hora?esc(x.hora)+' · ':''}${esc(x.sub)}</div></div>${x.tipo==='parc'?`<button class="btn sm pri" data-act="baixa" data-id="${x.id}" type="button">Baixa</button>`:x.tipo==='acordo'?`<button class="btn sm" data-act="baixa-acordo" data-a="${x.a}" data-id="${x.id}" type="button">Baixa</button>`:''}</div>`).join('')}</div>`:'<div class="empty">Nada para este dia.</div>'}</section>
       <section class="dark-card" style="flex:1"><h2>Fila para ajuizar</h2><div style="font-size:2.4rem;font-weight:800;letter-spacing:-.02em">${aj.length} ${aj.length===1?'ação':'ações'}</div>
-        <div class="s">${aj.length?`${aj.filter(a=>a.prioridade==='alta').length} com prioridade alta · próxima: ${esc(aj[0].tipo)} de ${esc(aj[0].cliente)}`:'Nenhuma ação esperando.'}</div><div style="flex:1"></div><a class="btn" href="#ajuizar">Abrir fila</a></section>
+        <div class="s">${aj.length?`${aj.filter(a=>a.prioridade==='alta').length} com prioridade alta · próxima: ${esc(aj[0].tipo)} de ${esc((acaoCli(aj[0])||{}).nome||aj[0].cliente)}`:'Nenhuma ação esperando.'}</div>${aj.filter(parada).length?`<div class="aviso-parada">${GL_IC_ALERTA}${aj.filter(parada).length} ${aj.filter(parada).length===1?'ação parada':'ações paradas'} na fila há mais de ${aj.some(a=>parada(a)&&a.prioridade!=='alta')?DIAS_PARADA:7} dias</div>`:''}<div style="flex:1"></div><a class="btn" href="#ajuizar">Abrir fila</a></section>
     </div>
   </div>`;
 };
@@ -1200,7 +1202,10 @@ ROUTES['cliente-']=id=>{
       <dt>Nascimento</dt><dd>${br(c.nasc)}</dd><dt>Estado civil</dt><dd>${esc(c.civil)||'—'}</dd><dt>Profissão</dt><dd>${esc(c.prof)||'—'}</dd>
       <dt>Endereço</dt><dd>${esc(ender)||'—'}${c.cidade?`<br>${esc(c.cidade)}/${esc(c.uf)} ${esc(c.cep)}`:''}</dd></dl>
       ${c.obs?`<h3 style="margin:14px 0 4px">Observações</h3><p style="margin:0;white-space:pre-wrap">${esc(c.obs)}</p>`:''}</div>
-  </div>`;
+  </div>
+  ${(()=>{const l=acoesDoCliente(c).sort((x,y)=>(x.status===y.status?0:x.status==='pendente'?-1:1)||ordPri(x,y));
+    return `<div class="panel" style="margin-top:14px"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h2>Ações</h2><button class="btn sm" data-act="nova-acao-cli" data-id="${c.id}" type="button">+ Nova ação</button></div>
+    ${l.length?`<div class="tbl"><table><thead><tr><th>Tipo</th><th>Situação</th><th>Processo</th><th>Data</th><th></th></tr></thead><tbody>${l.map(a=>`<tr><td data-label="Tipo"><strong>${esc(a.tipo)}</strong>${a.desc?`<div class="note">${esc(a.desc)}</div>`:''}</td><td data-label="Situação">${a.status==='pendente'?`<span class="pill ${parada(a)?'p-atrasado':'p-pendente'}">Na fila há ${diasFila(a)} d</span>`:'<span class="pill p-pago">Ajuizada</span>'}</td><td data-label="Processo">${esc(a.processo)||'—'}${a.vara?`<div class="note">${esc(a.vara)}</div>`:''}</td><td data-label="Data">${br(a.status==='ajuizada'&&a.dataAjuiz?a.dataAjuiz:a.data)}</td><td class="n"><div class="row" style="justify-content:flex-end;gap:6px">${a.status==='pendente'?`<button class="btn sm pri" data-act="ajuizou" data-id="${a.id}" type="button">Ajuizou</button>`:''}<button class="btn sm" data-act="edit-acao" data-id="${a.id}" type="button">Editar</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nenhuma ação para este cliente.</div>'}</div>`})()}`;
 };
 AFTER['cliente-']=()=>{document.querySelectorAll('.obs-in').forEach(i=>i.onchange=()=>{const p=S.parcelas.find(x=>x.id===+i.dataset.id);p.obs=i.value;salvar();toast('Observação salva')})};
 
@@ -1469,16 +1474,30 @@ function gSair(){const c=gcfg();if(gToken&&window.google&&google.accounts)try{go
 /* ---------- Ações a ajuizar ---------- */
 const PRI={alta:['Alta','p-atrasado',0],media:['Média','p-parcial',1],normal:['Normal','p-pendente',2]};
 const priPill=p=>`<span class="pill ${PRI[p][1]}">${PRI[p][0]}</span>`;
+const DIAS_PARADA=15;
+const GL_IC_ALERTA='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>';
+const normNome=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+const acaoCli=a=>S.clientes.find(c=>c.id===a.clienteId)||(a.clienteId?null:S.clientes.find(c=>normNome(c.nome)===normNome(a.cliente)))||null;
+const acoesDoCliente=c=>S.acoes.filter(a=>acaoCli(a)===c);
+const diasFila=a=>Math.max(0,Math.round((parseISO(hoje())-parseISO(a.data))/864e5));
+const limiteParada=a=>a.prioridade==='alta'?7:DIAS_PARADA;
+const parada=a=>a.status==='pendente'&&diasFila(a)>limiteParada(a);
+const cliAcaoHtml=a=>{const c=acaoCli(a);return c?`<a href="#cliente-${c.id}">${esc(c.nome)}</a>`:`${esc(a.cliente)} <span class="note" title="Cliente não cadastrado">(sem cadastro)</span>`};
 const ordPri=(a,b)=>PRI[a.prioridade][2]-PRI[b.prioridade][2]||a.data.localeCompare(b.data);
 let ajTab='pendente';
 ROUTES.ajuizar=()=>{const l=S.acoes.filter(a=>a.status===ajTab).sort(ordPri);
   return `<div class="phead"><div><h1>Ações a ajuizar</h1><p>Fila de entrada do escritório, por prioridade e data de chegada.</p></div><button class="btn pri" data-act="nova-acao" type="button">Nova ação</button></div>
   <div class="tabs">${[['pendente','Na fila'],['ajuizada','Ajuizadas']].map(([k,t])=>`<button class="tab ${ajTab===k?'on':''}" data-aj="${k}" type="button">${t} (${S.acoes.filter(a=>a.status===k).length})</button>`).join('')}</div>
-  <div class="panel">${l.length?`<div class="tbl"><table><thead><tr><th>Prioridade</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th>Entrada</th><th class="n">Na fila</th><th></th></tr></thead><tbody>${l.map(a=>`<tr><td>${priPill(a.prioridade)}</td><td>${esc(a.cliente)}</td><td><strong>${esc(a.tipo)}</strong></td><td>${esc(a.desc)}</td><td>${br(a.data)}</td><td class="n">${Math.max(0,Math.round((parseISO(hoje())-parseISO(a.data))/864e5))} d</td><td class="n"><div class="row" style="justify-content:flex-end;gap:6px">${a.status==='pendente'?`<button class="btn sm pri" data-act="ajuizou" data-id="${a.id}" type="button">Ajuizada</button>`:`<button class="btn sm" data-act="voltar-fila" data-id="${a.id}" type="button">Voltar à fila</button>`}<button class="btn sm" data-act="edit-acao" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger ico-btn" data-act="del-acao" data-id="${a.id}" type="button" title="Excluir" aria-label="Excluir">✕</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nada aqui. Use "Nova ação" para registrar.</div>'}</div>`;
+  <div class="panel">${l.length?`<div class="tbl"><table><thead><tr><th>Prioridade</th><th>Cliente</th><th>Tipo</th>${ajTab==='pendente'?'<th>Descrição</th><th>Entrada</th><th class="n">Na fila</th>':'<th>Processo</th><th>Vara / comarca</th><th>Ajuizada em</th>'}<th></th></tr></thead><tbody>${l.map(a=>`<tr><td data-label="Prioridade">${priPill(a.prioridade)}</td><td data-label="Cliente">${cliAcaoHtml(a)}</td><td data-label="Tipo"><strong>${esc(a.tipo)}</strong></td>${ajTab==='pendente'?`<td data-label="Descrição">${esc(a.desc)||'—'}</td><td data-label="Entrada">${br(a.data)}</td><td class="n" data-label="Na fila">${parada(a)?`<span class="pill p-atrasado" title="Parada há mais de ${limiteParada(a)} dias">${diasFila(a)} d</span>`:diasFila(a)+' d'}</td>`:`<td data-label="Processo">${esc(a.processo)||'—'}</td><td data-label="Vara">${esc(a.vara)||'—'}</td><td data-label="Ajuizada em">${a.dataAjuiz?br(a.dataAjuiz):'—'}</td>`}<td class="n"><div class="row" style="justify-content:flex-end;gap:6px">${a.status==='pendente'?`<button class="btn sm pri" data-act="ajuizou" data-id="${a.id}" type="button">Ajuizou</button>`:`<button class="btn sm" data-act="voltar-fila" data-id="${a.id}" type="button">Voltar à fila</button>`}<button class="btn sm" data-act="edit-acao" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger ico-btn" data-act="del-acao" data-id="${a.id}" type="button" title="Excluir" aria-label="Excluir">✕</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nada aqui. Use "Nova ação" para registrar.</div>'}</div>`;
 };
-function modalAcao(a){a=a||{data:hoje(),prioridade:'normal'};
-  modal(`<h2>${a.id?'Editar':'Nova'} ação</h2><form id="fA" class="fs" style="grid-template-columns:1fr 1fr"><label>Cliente *<input id="x_c" required list="dlCli" value="${esc(a.cliente||'')}"><datalist id="dlCli">${S.clientes.map(c=>`<option value="${esc(c.nome)}">`).join('')}</datalist></label><label>Tipo de ação *<input id="x_t" required value="${esc(a.tipo||'')}"></label><label>Data de entrada *<input id="x_d" type="date" required value="${a.data}"></label><label>Prioridade<select id="x_p">${Object.entries(PRI).map(([k,v])=>`<option value="${k}" ${a.prioridade===k?'selected':''}>${v[0]}</option>`).join('')}</select></label><label style="grid-column:1/-1">Descrição<textarea id="x_desc">${esc(a.desc||'')}</textarea></label><div class="row" style="grid-column:1/-1;justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
-  $('#fA').onsubmit=e=>{e.preventDefault();const d={cliente:$('#x_c').value.trim(),tipo:$('#x_t').value.trim(),data:$('#x_d').value,prioridade:$('#x_p').value,desc:$('#x_desc').value.trim()};if(a.id)Object.assign(a,d);else S.acoes.push(Object.assign({id:nid(),status:'pendente'},d));salvar();fechar();toast('Ação salva');go()};
+function modalAjuizou(a){if(!a)return;
+  modal(`<h2>Ação ajuizada</h2><p class="note">${esc(a.tipo)} · ${esc((acaoCli(a)||{}).nome||a.cliente)}. Os dados do processo são opcionais e podem ser preenchidos depois em Editar.</p><form id="fJ" class="fs" style="grid-template-columns:1fr 1fr"><label style="grid-column:1/-1">Número do processo<input id="j_p" value="${esc(a.processo||'')}" placeholder="0000000-00.0000.0.00.0000" inputmode="numeric"></label><label>Vara / comarca<input id="j_v" value="${esc(a.vara||'')}" placeholder="2ª Vara Cível de Londrina"></label><label>Data do ajuizamento<input id="j_d" type="date" value="${a.dataAjuiz||hoje()}"></label><div class="row" style="justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Marcar como ajuizada</button></div></form>`);
+  const ip=$('#j_p');ip.oninput=()=>{const d=ip.value.replace(/\D/g,'').slice(0,20);if(d.length<8){ip.value=ip.value.replace(/[^\d.-]/g,'');return}const p=[d.slice(0,7),d.slice(7,9),d.slice(9,13),d.slice(13,14),d.slice(14,16),d.slice(16,20)];ip.value=p[0]+(p[1]?'-'+p[1]:'')+(p[2]?'.'+p[2]:'')+(p[3]?'.'+p[3]:'')+(p[4]?'.'+p[4]:'')+(p[5]?'.'+p[5]:'')};
+  $('#fJ').onsubmit=e=>{e.preventDefault();Object.assign(a,{status:'ajuizada',processo:ip.value.trim(),vara:$('#j_v').value.trim(),dataAjuiz:$('#j_d').value||hoje()});salvar();fechar();toast('Marcada como ajuizada');go()}}
+function modalAcao(a,cli){a=a||{data:hoje(),prioridade:'normal',cliente:cli?cli.nome:''};
+  modal(`<h2>${a.id?'Editar':'Nova'} ação</h2><form id="fA" class="fs" style="grid-template-columns:1fr 1fr"><label>Cliente *<input id="x_c" required list="dlCli" autocomplete="off" value="${esc((acaoCli(a)||{}).nome||a.cliente||'')}" placeholder="Escolha um cliente cadastrado"><datalist id="dlCli">${S.clientes.map(c=>`<option value="${esc(c.nome)}">`).join('')}</datalist><small class="note" id="x_cinfo"></small></label><label>Tipo de ação *<input id="x_t" required value="${esc(a.tipo||'')}"></label><label>Data de entrada *<input id="x_d" type="date" required value="${a.data}"></label><label>Prioridade<select id="x_p">${Object.entries(PRI).map(([k,v])=>`<option value="${k}" ${a.prioridade===k?'selected':''}>${v[0]}</option>`).join('')}</select></label><label style="grid-column:1/-1">Descrição<textarea id="x_desc">${esc(a.desc||'')}</textarea></label>${a.status==='ajuizada'?`<label>Número do processo<input id="x_proc" value="${esc(a.processo||'')}" placeholder="0000000-00.0000.0.00.0000"></label><label>Vara / comarca<input id="x_vara" value="${esc(a.vara||'')}"></label>`:''}<div class="row" style="grid-column:1/-1;justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
+  const info=()=>{const c=S.clientes.find(x=>normNome(x.nome)===normNome($('#x_c').value));$('#x_cinfo').textContent=$('#x_c').value.trim()?(c?'Vinculada à ficha do cliente':'Cliente não cadastrado: a ação fica só com o nome'):''};$('#x_c').oninput=info;info();
+  $('#fA').onsubmit=e=>{e.preventDefault();const nm=$('#x_c').value.trim(),cc=S.clientes.find(x=>normNome(x.nome)===normNome(nm));const d={cliente:cc?cc.nome:nm,clienteId:cc?cc.id:null,tipo:$('#x_t').value.trim(),data:$('#x_d').value,prioridade:$('#x_p').value,desc:$('#x_desc').value.trim()};if($('#x_proc')){d.processo=$('#x_proc').value.trim();d.vara=$('#x_vara').value.trim()}if(a.id)Object.assign(a,d);else S.acoes.push(Object.assign({id:nid(),status:'pendente'},d));salvar();fechar();toast('Ação salva');go()};
 }
 
 /* ---------- Financeiro ---------- */
@@ -1988,7 +2007,8 @@ document.addEventListener('click',e=>{
     case 'nova-acao':modalAcao();break;
     case 'edit-acao':modalAcao(S.acoes.find(x=>x.id===id));break;
     case 'del-acao':confirmar('Excluir esta ação da fila?','Excluir',()=>{S.acoes=S.acoes.filter(x=>x.id!==id);salvar();go()});break;
-    case 'ajuizou':S.acoes.find(x=>x.id===id).status='ajuizada';salvar();toast('Marcada como ajuizada');go();break;
+    case 'ajuizou':modalAjuizou(S.acoes.find(x=>x.id===id));break;
+    case 'nova-acao-cli':modalAcao(null,S.clientes.find(x=>x.id===id));break;
     case 'voltar-fila':S.acoes.find(x=>x.id===id).status='pendente';salvar();go();break;
     case 'mes':finMes=ym(addMeses(finMes+'-01',+ds.d));go();break;
     case 'del-avulso':S.avulsos=S.avulsos.filter(x=>x.id!==id);salvar();go();break;
