@@ -416,6 +416,18 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 }
 @media (max-width:360px){ .kpis{grid-template-columns:1fr} }
 .g-panel{margin-bottom:14px}.g-row{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.g-row .note{margin-top:2px}.g-ok{color:var(--accent-ink);font-weight:600}
+@media (min-width:761px){.tbl-parc{overflow:visible}.tbl-parc td{padding:9px 8px}.tbl-parc th{padding:8px}
+.tbl-parc .num{color:var(--muted);font-weight:600;width:1%;white-space:nowrap}.tbl-parc .acoes{width:1%}}
+.tbl-parc .venc{display:flex;flex-direction:column;gap:1px;min-width:0}
+.tbl-parc .obs-in{border:0;background:transparent;padding:0;font-size:.76rem;color:var(--muted);min-width:0;width:100%;max-width:200px;border-radius:6px;box-shadow:none;min-height:0}
+.tbl-parc .obs-in:hover,.tbl-parc .obs-in:focus{background:var(--surface-2);outline:none;padding:2px 6px;margin-left:-6px}
+.tbl-parc .obs-in::placeholder{color:var(--muted);opacity:.6}
+@media (hover:hover){.tbl-parc tr:not(:hover) .obs-in:placeholder-shown:not(:focus){opacity:0}}
+.tbl-parc .pago-parc{font-size:.74rem;color:var(--ok);font-weight:600}
+.tbl-parc .acoes .row{justify-content:flex-end;flex-wrap:nowrap;gap:6px}
+.ico-btn{min-width:32px;padding:0 8px!important;font-size:1rem}
+@media (max-width:1280px){.grid3{grid-template-columns:1fr}}
+@media (max-width:760px){.tbl-parc .venc{align-items:flex-end}.tbl-parc .obs-in{text-align:right}.tbl-parc .obs-in:focus{margin-left:0}}
 @media print{ .side,.top,.noprint{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} .doc{padding:0} }
 </style>
 
@@ -982,9 +994,9 @@ ROUTES['cliente-']=id=>{
   </div>
   <div class="grid3">
     <div class="panel"><h2>Parcelas</h2>
-    ${r.ps.length?`<div class="tbl"><table><thead><tr><th>#</th><th>Vencimento</th><th class="n">Valor</th><th class="n">Pago</th><th>Situação</th><th>Obs.</th><th></th></tr></thead><tbody>
-    ${r.ps.map(p=>{const s=situacao(p);return`<tr><td>${p.num===0?'Entrada':pad(p.num)}</td><td>${br(p.venc)}</td><td class="n">${m(p.valor)}</td><td class="n">${pagoDe(p)?m(pagoDe(p)):'—'}</td><td>${pill(s)}</td><td><input class="obs-in" data-id="${p.id}" value="${esc(p.obs)}" placeholder="—" style="min-width:90px;padding:4px 8px" aria-label="Observação"></td>
-      <td class="n"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap">${s!=='pago'?`<button class="btn sm pri" data-act="baixa" data-id="${p.id}" type="button">Dar baixa</button>`:''}${p.pagamentos.length?`<button class="btn sm" data-act="recibo" data-id="${p.id}" type="button">Recibo</button><button class="btn sm ghost" data-act="estornar" data-id="${p.id}" type="button">Estornar</button>`:''}</div></td></tr>`}).join('')}
+    ${r.ps.length?`<div class="tbl tbl-parc"><table><thead><tr><th>#</th><th>Vencimento</th><th class="n">Valor</th><th>Situação</th><th></th></tr></thead><tbody>
+    ${r.ps.map(p=>{const s=situacao(p),pg=pagoDe(p);return`<tr><td class="num">${p.num===0?'Entrada':pad(p.num)}</td><td><div class="venc"><span>${br(p.venc)}</span><input class="obs-in" data-id="${p.id}" value="${esc(p.obs)}" placeholder="+ observação" aria-label="Observação"></div></td><td class="n">${m(p.valor)}${pg&&pg<p.valor?`<div class="pago-parc">pago ${m(pg)}</div>`:''}</td><td>${pill(s)}</td>
+      <td class="n acoes"><div class="row">${s!=='pago'?`<button class="btn sm pri" data-act="baixa" data-id="${p.id}" type="button">Dar baixa</button>`:''}${p.pagamentos.length?`<button class="btn sm" data-act="recibo" data-id="${p.id}" type="button">Recibo</button><button class="btn sm ghost ico-btn" data-act="estornar" data-id="${p.id}" type="button" title="Estornar pagamento" aria-label="Estornar pagamento">↺</button>`:''}</div></td></tr>`}).join('')}
     </tbody></table></div>`:`<div class="empty">${c.tipoHon==='exito'?'Honorários por êxito: lance a parcela quando houver o recebimento da causa (botão "Lançar parcela").':'Sem parcelas.'}</div>`}</div>
     <div class="panel"><h2>Contato e dados</h2><dl class="dl">
       <dt>Telefone</dt><dd>${esc(fmtTel(c.tel))||'—'}</dd><dt>E-mail</dt><dd>${esc(c.email)||'—'}</dd><dt>CPF</dt><dd>${esc(fmtCPF(c.cpf))||'—'}</dd><dt>RG</dt><dd>${esc(c.rg)||'—'}</dd>
@@ -1229,7 +1241,7 @@ let ajTab='pendente';
 ROUTES.ajuizar=()=>{const l=S.acoes.filter(a=>a.status===ajTab).sort(ordPri);
   return `<div class="phead"><div><h1>Ações a ajuizar</h1><p>Fila de entrada do escritório, por prioridade e data de chegada.</p></div><button class="btn pri" data-act="nova-acao" type="button">Nova ação</button></div>
   <div class="tabs">${[['pendente','Na fila'],['ajuizada','Ajuizadas']].map(([k,t])=>`<button class="tab ${ajTab===k?'on':''}" data-aj="${k}" type="button">${t} (${S.acoes.filter(a=>a.status===k).length})</button>`).join('')}</div>
-  <div class="panel">${l.length?`<div class="tbl"><table><thead><tr><th>Prioridade</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th>Entrada</th><th class="n">Na fila</th><th></th></tr></thead><tbody>${l.map(a=>`<tr><td>${priPill(a.prioridade)}</td><td>${esc(a.cliente)}</td><td><strong>${esc(a.tipo)}</strong></td><td>${esc(a.desc)}</td><td>${br(a.data)}</td><td class="n">${Math.max(0,Math.round((parseISO(hoje())-parseISO(a.data))/864e5))} d</td><td class="n"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap">${a.status==='pendente'?`<button class="btn sm pri" data-act="ajuizou" data-id="${a.id}" type="button">Ajuizada</button>`:`<button class="btn sm" data-act="voltar-fila" data-id="${a.id}" type="button">Voltar à fila</button>`}<button class="btn sm" data-act="edit-acao" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger" data-act="del-acao" data-id="${a.id}" type="button">Excluir</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nada aqui. Use "Nova ação" para registrar.</div>'}</div>`;
+  <div class="panel">${l.length?`<div class="tbl"><table><thead><tr><th>Prioridade</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th>Entrada</th><th class="n">Na fila</th><th></th></tr></thead><tbody>${l.map(a=>`<tr><td>${priPill(a.prioridade)}</td><td>${esc(a.cliente)}</td><td><strong>${esc(a.tipo)}</strong></td><td>${esc(a.desc)}</td><td>${br(a.data)}</td><td class="n">${Math.max(0,Math.round((parseISO(hoje())-parseISO(a.data))/864e5))} d</td><td class="n"><div class="row" style="justify-content:flex-end;gap:6px">${a.status==='pendente'?`<button class="btn sm pri" data-act="ajuizou" data-id="${a.id}" type="button">Ajuizada</button>`:`<button class="btn sm" data-act="voltar-fila" data-id="${a.id}" type="button">Voltar à fila</button>`}<button class="btn sm" data-act="edit-acao" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger ico-btn" data-act="del-acao" data-id="${a.id}" type="button" title="Excluir" aria-label="Excluir">✕</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nada aqui. Use "Nova ação" para registrar.</div>'}</div>`;
 };
 function modalAcao(a){a=a||{data:hoje(),prioridade:'normal'};
   modal(`<h2>${a.id?'Editar':'Nova'} ação</h2><form id="fA" class="fs" style="grid-template-columns:1fr 1fr"><label>Cliente *<input id="x_c" required list="dlCli" value="${esc(a.cliente||'')}"><datalist id="dlCli">${S.clientes.map(c=>`<option value="${esc(c.nome)}">`).join('')}</datalist></label><label>Tipo de ação *<input id="x_t" required value="${esc(a.tipo||'')}"></label><label>Data de entrada *<input id="x_d" type="date" required value="${a.data}"></label><label>Prioridade<select id="x_p">${Object.entries(PRI).map(([k,v])=>`<option value="${k}" ${a.prioridade===k?'selected':''}>${v[0]}</option>`).join('')}</select></label><label style="grid-column:1/-1">Descrição<textarea id="x_desc">${esc(a.desc||'')}</textarea></label><div class="row" style="grid-column:1/-1;justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
