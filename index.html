@@ -647,7 +647,10 @@ function cssMarca(cor){
   const b=o=>Object.entries(o).map(([k,v])=>`${k}:${v}`).join(';');
   return `html:root{${b(L)}}@media (prefers-color-scheme: dark){html:root:not([data-theme="light"]){${b(D)}}}html:root[data-theme="dark"]{${b(D)}}`;
 }
-const iniciaisMarca=n=>(n||'L').replace(/advocacia|advogados|associados|sociedade|escrit[óo]rio|&|\be\b|\bde\b|\bdo\b|\bda\b/gi,' ').trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'L';
+// iniciais do nome e do sobrenome (Francisco Bernuzzi -> FB). Sem nome do escritório, usa o nome do advogado em Meus dados.
+const iniciaisMarca=n=>{if(!n||n==='Lexa')n=(S&&S.perfil&&S.perfil.nome)||n||'Lexa';
+  const w=n.replace(/^(dra?|dr)\.?\s+/i,'').replace(/[&,.]/g,' ').split(/\s+/).filter(x=>x&&!/^(advocacia|advogados|associados|sociedade|escrit[óo]rio|e|de|do|da|dos|das)$/i.test(x));
+  if(!w.length)return 'L';if(w.length===1)return w[0].slice(0,2).toUpperCase();return (w[0][0]+w[w.length-1][0]).toUpperCase()};
 function htmlMarca(mk,top){
   const ic=mk.icone?`<img class="logo img" src="${esc(mk.icone)}" alt="" onerror="logoFalhou(this,1)">`:`<span class="logo" aria-hidden="true">${esc(iniciaisMarca(mk.nome))}</span>`;
   const full=mk.logo?`<img class="logo-full f-${esc(mk.fundo)}" src="${esc(mk.logo)}" alt="${esc(mk.nome)}" onerror="logoFalhou(this)">`:'';
@@ -1108,7 +1111,7 @@ ROUTES.perfil=()=>{const p=S.perfil;const f=(id,l,c)=>`<label class="${c||''}">$
   return `<div class="phead"><div><h1>Meus dados</h1><p>Usados no contrato, na procuração e nos recibos.</p></div></div>
   <form class="panel" id="fPf"><div class="fs">${f('nome','Nome completo *','c2')}${f('oab','OAB (ex.: OAB/PR 12.345)')}${f('cpf','CPF')}${f('rg','RG')}${f('nac','Nacionalidade')}${f('civil','Estado civil')}${f('tel','Telefone / WhatsApp')}${f('email','E-mail','c2')}${f('end','Endereço do escritório','c2')}${f('cidade','Cidade/UF (foro padrão)')}${f('pix','Chave Pix para honorários')}</div>
   <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn pri" type="submit">Salvar</button></div></form>`};
-AFTER.perfil=()=>{$('#fPf').onsubmit=e=>{e.preventDefault();Object.keys(S.perfil).forEach(k=>{const i=$('#pf_'+k);if(i)S.perfil[k]=i.value.trim()});salvar();toast('Dados salvos')}};
+AFTER.perfil=()=>{$('#fPf').onsubmit=e=>{e.preventDefault();Object.keys(S.perfil).forEach(k=>{const i=$('#pf_'+k);if(i)S.perfil[k]=i.value.trim()});salvar();aplicaMarca();renderConta('perfil');toast('Dados salvos')}};
 
 /* ---------- Backup ---------- */
 ROUTES.backup=()=>`<div class="phead"><div><h1>Backup</h1><p>Nesta versão os dados ficam guardados só neste navegador. Faça cópias com frequência.</p></div></div>
