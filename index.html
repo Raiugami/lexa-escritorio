@@ -85,6 +85,8 @@ html.tema-neutro[data-theme="dark"]{
   html.tema-neutro .chave{background:rgba(0,0,0,.15)}
   html.tema-neutro .tema[aria-checked="true"] .chave{background:rgba(0,0,0,.45)}
 }
+@media (prefers-color-scheme: dark){html.tema-neutro:not([data-theme="light"]) .btn.pri,html.tema-neutro:not([data-theme="light"]) .fab{background:#ededed;color:#151515;border-color:#ededed}}
+html.tema-neutro[data-theme="dark"] .btn.pri,html.tema-neutro[data-theme="dark"] .fab{background:#ededed;color:#151515;border-color:#ededed}
 html.tema-neutro .side .logo-honra{background:var(--ind)}
 html.tema-neutro .side .logo-honra svg{color:var(--ind-fg)}
 *{box-sizing:border-box}
@@ -201,6 +203,9 @@ td.n,th.n{text-align:right;white-space:nowrap}
 .p-info{background:var(--info-soft);color:var(--info)} .p-acc{background:var(--accent-soft);color:var(--accent-ink)} .p-due{background:var(--due-soft);color:var(--due)}
 .empty{color:var(--muted);padding:18px 4px;text-align:center}
 form .fs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px}
+form.fs{display:grid;grid-template-columns:minmax(0,1fr);gap:14px 14px;align-items:start}
+form.fs>.row:last-child{grid-column:1/-1;margin-top:8px;gap:10px;flex-wrap:wrap}
+.modal>.note{margin:-4px 0 2px}
 .fs .c2{grid-column:span 2} .fs .c4{grid-column:1/-1}
 .sect{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin:18px 0 4px;grid-column:1/-1}
 label{display:flex;flex-direction:column;gap:6px;font-size:.84rem;font-weight:600;color:var(--fg);min-width:0}
