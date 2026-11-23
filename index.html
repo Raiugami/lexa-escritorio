@@ -205,6 +205,17 @@ td.n,th.n{text-align:right;white-space:nowrap}
 form .fs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px}
 
 .aviso-parada{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border-radius:12px;background:rgba(255,120,100,.18);color:#ffd9d2;font-size:.85rem;font-weight:600}
+
+.li.feito .t{text-decoration:line-through;opacity:.6}
+.tag-prazo{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--due-soft);color:var(--due);vertical-align:2px}
+.seg{display:flex;gap:4px;padding:4px;border-radius:99px;background:var(--surface-2);width:max-content;max-width:100%}
+.seg-op{flex-direction:row;cursor:pointer}
+.seg-op input{position:absolute;opacity:0;pointer-events:none}
+.seg-op span{padding:7px 16px;border-radius:99px;font-weight:700;font-size:.85rem;color:var(--muted);transition:background .2s,color .2s}
+.seg-op input:checked+span{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.seg-op input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.cmp{display:inline-flex;align-items:center;gap:4px;font-weight:700}
+.cmp.up{color:#bdf0cf}.cmp.down{color:#ffc9c0}
 form.fs{display:grid;grid-template-columns:minmax(0,1fr);gap:14px 14px;align-items:start}
 form.fs>.row:last-child{grid-column:1/-1;margin-top:8px;gap:10px;flex-wrap:wrap}
 .modal>.note{margin:-4px 0 2px}
@@ -776,7 +787,7 @@ const MOBILE=['painel','clientes','agenda','financeiro','cobrancas'];
 const NAV=[
   ['painel','Pauta'],
   ['g','Clientes'],['novo-cliente','Novo cliente'],['clientes','Clientes','atraso'],['atraso','Em atraso'],['quitados','Quitados'],['aniversariantes','Aniversariantes'],
-  ['g','Rotina'],['agenda','Agenda'],['ajuizar','Ações a ajuizar','ajuizar'],
+  ['g','Rotina'],['agenda','Agenda','agenda'],['ajuizar','Ações a ajuizar','ajuizar'],
   ['g','Dinheiro'],['financeiro','Financeiro'],['cobrancas','Cobrança de empresas'],['relatorios','Relatórios']
 ];
 let navIniciado=false;
@@ -798,7 +809,7 @@ function renderNav(r){
   $('#foldBtn')&&($('#foldBtn').onclick=()=>{const ab=!$('#foldAj').classList.contains('aberto');pref('lexa-ajustes',ab?'1':'0');$('#foldAj').classList.toggle('aberto',ab);$('#foldBtn').setAttribute('aria-expanded',ab)});
   function item(k,t,c){
     const on=r===k||(k==='clientes'&&/^(cliente|editar|documentos)-/.test(r));
-    const n=c==='atraso'?nAtraso:c==='ajuizar'?nAj:0;
+    const n=c==='atraso'?nAtraso:c==='ajuizar'?nAj:c==='agenda'?nAlertaAgenda():0;
     return `<a href="#${k}" class="${on?'on':''} ${MOBILE.includes(k)?'':'mobhide'}" title="${t}" aria-label="${t}${n?`, ${n} pendente(s)`:''}"${on?' aria-current="page"':''}>${svg(IC[k])}<span class="lbl">${t}</span>${n?`<span class="cnt">${n}</span><span class="dot" style="${c==='ajuizar'?'background:#d99a1e':''}"></span>`:''}</a>`;
   }
 }
@@ -891,15 +902,22 @@ const bannerEx=()=>S.exemplo?`<div class="banner noprint"><span>Você está vend
 /* ---------- Pauta (painel) ---------- */
 let pautaDia=null;
 const DSEM=['dom','seg','ter','qua','qui','sex','sáb'];
+const diasAte=d=>Math.round((parseISO(d)-parseISO(hoje()))/864e5);
+const compAtrasado=a=>!a.feito&&a.data<hoje();
+const prazoTxt=a=>{const n=diasAte(a.data);return a.feito?'Cumprido':n<0?`Vencido há ${-n} dia${n===-1?'':'s'}`:n===0?'Vence hoje':n===1?'Vence amanhã':`Faltam ${n} dias`};
+const prazoCls=a=>{const n=diasAte(a.data);return a.feito?'p-pago':n<=2?'p-atrasado':n<=7?'p-parcial':'p-pendente'};
+const nAlertaAgenda=()=>S.agenda.filter(a=>!a.feito&&((a.tipo==='prazo'&&diasAte(a.data)<=3)||(a.data<hoje()&&a.tipo!=='prazo'&&diasAte(a.data)>=-30))).length;
 function itensDoDia(d){
   const it=[];
-  S.agenda.filter(a=>a.data===d).forEach(a=>it.push({hora:a.hora,tit:a.titulo,sub:a.desc||'Compromisso',tipo:'ag'}));
+  S.agenda.filter(a=>a.data===d).forEach(a=>it.push({hora:a.tipo==='prazo'?'':a.hora,tit:(a.tipo==='prazo'?'Prazo · ':'')+a.titulo,sub:a.tipo==='prazo'?prazoTxt(a)+(a.desc?' · '+a.desc:''):(a.desc||'Compromisso'),tipo:a.tipo==='prazo'?'prazo':'ag',id:a.id,feito:a.feito}));
+  if(d===hoje()){S.agenda.filter(a=>a.tipo==='prazo'&&!a.feito&&a.data>d&&diasAte(a.data)<=7).forEach(a=>it.push({hora:'',tit:'Prazo · '+a.titulo,sub:prazoTxt(a)+' ('+br(a.data)+')',tipo:'prazo',id:a.id}));
+    S.agenda.filter(a=>compAtrasado(a)&&diasAte(a.data)>=-30).forEach(a=>it.push({hora:'',tit:(a.tipo==='prazo'?'Prazo · ':'')+a.titulo,sub:`Não concluído · era ${br(a.data)}${a.hora&&a.tipo!=='prazo'?' às '+a.hora:''}`,tipo:'atras',id:a.id}))}
   S.parcelas.filter(p=>p.venc===d&&situacao(p)!=='pago').forEach(p=>{const c=S.clientes.find(x=>x.id===p.clienteId);c&&it.push({hora:'',tit:`Parcela de ${c.nome}`,sub:`${p.num?'Parcela '+p.num:'Entrada'} · ${brl(p.valor-pagoDe(p))}`,tipo:'parc',id:p.id})});
   S.acordos.forEach(a=>a.parcelas.filter(p=>p.venc===d&&pagoDe(p)<p.valor).forEach(p=>{const dv=S.devedores.find(x=>x.id===a.devedorId);it.push({hora:'',tit:`Acordo · ${dv?dv.nome:'devedor'}`,sub:`Parcela ${p.num||'entrada'} · ${brl(p.valor-pagoDe(p))}`,tipo:'acordo',a:a.id,id:p.id})}));
   S.clientes.filter(c=>c.nasc&&c.nasc.slice(5)===d.slice(5)).forEach(c=>it.push({hora:'',tit:`Aniversário de ${c.nome}`,sub:'Mande uma mensagem',tipo:'niver',cid:c.id}));
   return it.sort((a,b)=>(a.hora||'99').localeCompare(b.hora||'99'));
 }
-const TIPO_IC={ag:['agenda','p-info'],parc:['financeiro','p-acc'],acordo:['cobrancas','p-parcial'],niver:['aniversariantes','p-due']};
+const TIPO_IC={ag:['agenda','p-info'],prazo:['agenda','p-due'],atras:['agenda','p-atrasado'],parc:['financeiro','p-acc'],acordo:['cobrancas','p-parcial'],niver:['aniversariantes','p-due']};
 function semiDonut(pct,rotulo){const p=Math.max(0,Math.min(1,pct));const L=282.7;
   return `<svg role="img" aria-label="${Math.round(p*100)}% ${rotulo}" viewBox="0 0 220 130" style="width:100%;max-width:240px;display:block;margin:6px auto 0"><defs><linearGradient id="gd" x1="0" x2="1"><stop offset="0" style="stop-color:var(--accent-ink)"/><stop offset="1" style="stop-color:var(--bar)"/></linearGradient><pattern id="hd" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="8" fill="var(--hatch)"/></pattern></defs>
   <path d="M20 115 A90 90 0 0 1 200 115" fill="none" stroke="var(--surface-2)" stroke-width="26" stroke-linecap="round"/><path d="M20 115 A90 90 0 0 1 200 115" fill="none" stroke="url(#hd)" stroke-width="26" stroke-linecap="round"/>
@@ -921,7 +939,7 @@ ROUTES.painel=()=>{
   const prevMes=S.parcelas.filter(p=>ym(p.venc)===mes).reduce((a,p)=>a+p.valor,0);
   const meta=prevMes?k.recebido/prevMes:0;
   const atrasados=S.clientes.map(c=>({c,r:resumoCliente(c)})).filter(x=>x.r.atras.length).sort((a,b)=>b.r.diasAtraso-a.r.diasAtraso);
-  const aud=S.agenda.filter(a=>(a.data+a.hora)>=(h+String(new Date().getHours()).padStart(2,'0')+':00')).sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora))[0];
+  const aud=S.agenda.filter(a=>a.tipo!=='prazo'&&!a.feito&&(a.data+a.hora)>=(h+String(new Date().getHours()).padStart(2,'0')+':00')).sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora))[0];
   const aj=S.acoes.filter(a=>a.status==='pendente').sort(ordPri);
   const nAtiv=ativos().length;
   return `${bannerEx()}
@@ -929,7 +947,9 @@ ROUTES.painel=()=>{
   <div class="row"><button class="btn" data-act="toggle-money" type="button">${hideMoney?'Mostrar valores':'Ocultar valores'}</button><button class="btn" data-act="avulso" type="button">Recebimento avulso</button><a class="btn pri" href="#novo-cliente">+ Novo cliente</a></div></div>
   <div class="week" role="group" aria-label="Semana">${semana.map((d,i)=>`<button class="day ${d===h?'today':''} ${d===dia&&d!==h?'sel':''}" data-pdia="${d}" type="button" aria-pressed="${d===dia}">${d===h?'hoje':DSEM[i]}<b>${+d.slice(8)}</b><small>${resumoDia(d)||'&nbsp;'}</small></button>`).join('')}</div>
   <div class="kpis">
-    <div class="kpi hero"><span class="lb">Recebido em ${MESES[+mes.slice(5)-1]}</span><span class="v">${m(k.recebido)}</span><span class="s">${prevMes?Math.round(meta*100)+'% do previsto no mês':'inclui avulsos'}</span></div>
+    <div class="kpi hero"><span class="lb">Recebido em ${MESES[+mes.slice(5)-1]}</span><span class="v">${m(k.recebido)}</span><span class="s">${prevMes?Math.round(meta*100)+'% do previsto no mês':'inclui avulsos'}</span>${(()=>{const ant=kpisMes(ym(addMeses(mes+'-01',-1))).recebido;const ms=[1,2,3,4,5,6].map(i=>kpisMes(ym(addMeses(mes+'-01',-i))).recebido);const md=Math.round(ms.reduce((a,b)=>a+b,0)/6);
+  if(!ant&&!md)return'';const dif=ant?Math.round((k.recebido-ant)/ant*100):null;
+  return `<span class="s">${dif==null?'':`<span class="cmp ${dif>=0?'up':'down'}">${dif>=0?'▲':'▼'} ${Math.abs(dif)}%</span> vs. ${MESES[+ym(addMeses(mes+'-01',-1)).slice(5)-1]} · `}média 6 meses ${m(md)}</span>`})()}</div>
     <div class="kpi"><span class="lb">A receber no mês</span><span class="v">${m(k.aReceber)}</span><span class="s">parcelas em aberto</span></div>
     <div class="kpi bad"><span class="lb">Em atraso</span><span class="v">${m(k.atraso)}</span><span class="s">${atrasados.length} cliente(s)${atrasados[0]?' · o mais antigo há '+atrasados[0].r.diasAtraso+' dias':''}</span></div>
     <div class="kpi"><span class="lb">Clientes ativos</span><span class="v">${nAtiv}</span><span class="s">${S.clientes.length} no total</span></div>
@@ -953,7 +973,7 @@ ROUTES.painel=()=>{
     </div>
     <div style="flex:1 1 260px;display:flex;flex-direction:column;gap:14px">
       <section class="panel"><div class="ph"><h2>${dia===h?'Hoje':'Dia '+br(dia)}</h2><button class="btn sm" data-act="novo-comp" type="button">+ Compromisso</button></div>
-        ${itens.length?`<div class="list">${itens.map(x=>`<div class="li" style="justify-content:flex-start"><span class="ico ${TIPO_IC[x.tipo][1]}">${svg(IC[TIPO_IC[x.tipo][0]])}</span><div style="flex:1;min-width:0"><div class="t">${esc(x.tit)}</div><div class="s">${x.hora?esc(x.hora)+' · ':''}${esc(x.sub)}</div></div>${x.tipo==='parc'?`<button class="btn sm pri" data-act="baixa" data-id="${x.id}" type="button">Baixa</button>`:x.tipo==='acordo'?`<button class="btn sm" data-act="baixa-acordo" data-a="${x.a}" data-id="${x.id}" type="button">Baixa</button>`:''}</div>`).join('')}</div>`:'<div class="empty">Nada para este dia.</div>'}</section>
+        ${itens.length?`<div class="list">${itens.map(x=>`<div class="li" style="justify-content:flex-start"><span class="ico ${TIPO_IC[x.tipo][1]}">${svg(IC[TIPO_IC[x.tipo][0]])}</span><div style="flex:1;min-width:0"><div class="t">${esc(x.tit)}</div><div class="s">${x.hora?esc(x.hora)+' · ':''}${esc(x.sub)}</div></div>${(x.tipo==='ag'||x.tipo==='prazo'||x.tipo==='atras')&&!x.feito?`<button class="btn sm" data-act="concluir-comp" data-id="${x.id}" type="button">Concluir</button>`:x.tipo==='parc'?`<button class="btn sm pri" data-act="baixa" data-id="${x.id}" type="button">Baixa</button>`:x.tipo==='acordo'?`<button class="btn sm" data-act="baixa-acordo" data-a="${x.a}" data-id="${x.id}" type="button">Baixa</button>`:''}</div>`).join('')}</div>`:'<div class="empty">Nada para este dia.</div>'}</section>
       <section class="dark-card" style="flex:1"><h2>Fila para ajuizar</h2><div style="font-size:2.4rem;font-weight:800;letter-spacing:-.02em">${aj.length} ${aj.length===1?'ação':'ações'}</div>
         <div class="s">${aj.length?`${aj.filter(a=>a.prioridade==='alta').length} com prioridade alta · próxima: ${esc(aj[0].tipo)} de ${esc((acaoCli(aj[0])||{}).nome||aj[0].cliente)}`:'Nenhuma ação esperando.'}</div>${aj.filter(parada).length?`<div class="aviso-parada">${GL_IC_ALERTA}${aj.filter(parada).length} ${aj.filter(parada).length===1?'ação parada':'ações paradas'} na fila há mais de ${aj.some(a=>parada(a)&&a.prioridade!=='alta')?DIAS_PARADA:7} dias</div>`:''}<div style="flex:1"></div><a class="btn" href="#ajuizar">Abrir fila</a></section>
     </div>
@@ -1356,16 +1376,20 @@ AFTER['documentos-']=id=>{
 let agFiltro='proximos',agDia=null;
 ROUTES.agenda=()=>{
   const h=hoje();let l=[...S.agenda];
-  if(agDia)l=l.filter(a=>a.data===agDia);else if(agFiltro==='proximos')l=l.filter(a=>a.data>=h);else if(agFiltro==='semana')l=l.filter(a=>a.data>=h&&a.data<=addDias(h,7));
+  if(agDia)l=l.filter(a=>a.data===agDia);else if(agFiltro==='proximos')l=l.filter(a=>a.data>=h);else if(agFiltro==='semana')l=l.filter(a=>a.data>=h&&a.data<=addDias(h,7));else if(agFiltro==='prazos')l=l.filter(a=>a.tipo==='prazo'&&(!a.feito||a.data>=h));else if(agFiltro==='pendentes')l=l.filter(compAtrasado);
   l.sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
-  return `<div class="phead"><div><h1>Agenda</h1><p>Audiências, prazos e reuniões.</p></div><div class="row"><button class="btn" data-act="exp-ics" type="button">Exportar agenda</button><button class="btn pri" data-act="novo-comp" type="button">Novo compromisso</button></div></div>
+  return `<div class="phead"><div><h1>Agenda</h1><p>Audiências, prazos e reuniões.</p></div><div class="row"><button class="btn" data-act="exp-ics" type="button">Exportar agenda</button><button class="btn" data-act="novo-prazo" type="button">Novo prazo</button><button class="btn pri" data-act="novo-comp" type="button">Novo compromisso</button></div></div>
   ${painelGoogle()}
-  <div class="panel"><div class="chips" style="margin-bottom:12px">${agDia?`<button class="chip on" data-ag="limpa" type="button">${br(agDia)} ✕</button>`:''}${[['proximos','Próximos'],['semana','Próximos 7 dias'],['todos','Todos']].map(([k,t])=>`<button class="chip ${!agDia&&agFiltro===k?'on':''}" data-ag="${k}" type="button">${t}</button>`).join('')}</div>
-  ${l.length?`<div class="list">${l.map(a=>`<div class="li"><div><div class="t">${esc(a.titulo)}</div><div class="s">${br(a.data)}${a.hora?' às '+esc(a.hora):' · dia inteiro'}${a.desc?' · '+esc(a.desc):''}${a.gid?' · <span class="g-ok">no Google</span>':''}</div></div><div class="row">${a.data<h?'<span class="pill p-pendente">Passado</span>':a.data===h?'<span class="pill p-acc">Hoje</span>':''}<a class="btn sm" href="${gcalLink(a)}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda">+ Google</a><button class="btn sm" data-act="edit-comp" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger" data-act="del-comp" data-id="${a.id}" type="button">Excluir</button></div></div>`).join('')}</div>`:'<div class="empty">Nenhum compromisso aqui. Use "Novo compromisso" para agendar.</div>'}</div>`;
+  <div class="panel"><div class="chips" style="margin-bottom:12px">${agDia?`<button class="chip on" data-ag="limpa" type="button">${br(agDia)} ✕</button>`:''}${[['proximos','Próximos'],['semana','Próximos 7 dias'],['prazos','Prazos'],['pendentes','Não concluídos'],['todos','Todos']].map(([k,t])=>`<button class="chip ${!agDia&&agFiltro===k?'on':''}" data-ag="${k}" type="button">${t}</button>`).join('')}</div>
+  ${l.length?`<div class="list">${l.map(a=>`<div class="li ${a.feito?'feito':''}"><div><div class="t">${a.tipo==='prazo'?'<span class="tag-prazo">Prazo</span> ':''}${esc(a.titulo)}</div><div class="s">${a.tipo==='prazo'?'Vence em '+br(a.data):br(a.data)+(a.hora?' às '+esc(a.hora):' · dia inteiro')}${a.cliNome?' · '+esc(a.cliNome):''}${a.desc?' · '+esc(a.desc):''}${a.gid?' · <span class="g-ok">no Google</span>':''}</div></div><div class="row">${a.tipo==='prazo'?`<span class="pill ${prazoCls(a)}">${prazoTxt(a)}</span>`:a.feito?'<span class="pill p-pago">Concluído</span>':a.data<h?'<span class="pill p-atrasado">Não concluído</span>':a.data===h?'<span class="pill p-acc">Hoje</span>':''}<button class="btn sm ${a.feito?'ghost':''}" data-act="concluir-comp" data-id="${a.id}" type="button">${a.feito?'Reabrir':'Concluir'}</button><a class="btn sm" href="${gcalLink(a)}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda">+ Google</a><button class="btn sm" data-act="edit-comp" data-id="${a.id}" type="button">Editar</button><button class="btn sm ghost danger" data-act="del-comp" data-id="${a.id}" type="button">Excluir</button></div></div>`).join('')}</div>`:'<div class="empty">Nenhum compromisso aqui. Use "Novo compromisso" para agendar.</div>'}</div>`;
 };
-function modalComp(a){a=a||{data:agDia||hoje(),hora:'09:00'};
-  modal(`<h2>${a.id?'Editar':'Novo'} compromisso</h2><form id="fC" class="fs" style="grid-template-columns:1fr 1fr"><label style="grid-column:1/-1">Título *<input id="a_t" required value="${esc(a.titulo||'')}"></label><label>Data *<input id="a_d" type="date" required value="${a.data}"></label><label>Hora *<input id="a_h" type="time" required value="${a.hora}"></label><label style="grid-column:1/-1">Descrição<textarea id="a_desc">${esc(a.desc||'')}</textarea></label><div class="row" style="grid-column:1/-1;justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
-  $('#fC').onsubmit=e=>{e.preventDefault();const d={titulo:$('#a_t').value.trim(),data:$('#a_d').value,hora:$('#a_h').value,desc:$('#a_desc').value.trim()};if(a.id)Object.assign(a,d);else S.agenda.push(Object.assign({id:nid()},d));salvar();fechar();toast('Compromisso salvo');go();gAuto()};
+function modalComp(a,tipo){a=a||{data:agDia||hoje(),hora:'09:00',tipo:tipo||'comp'};
+  modal(`<h2>${a.id?'Editar':'Novo'} compromisso</h2><form id="fC" class="fs" style="grid-template-columns:1fr 1fr"><div class="seg" role="radiogroup" style="grid-column:1/-1"><label class="seg-op"><input type="radio" name="a_tp" value="comp" ${a.tipo!=='prazo'?'checked':''}><span>Compromisso</span></label><label class="seg-op"><input type="radio" name="a_tp" value="prazo" ${a.tipo==='prazo'?'checked':''}><span>Prazo processual</span></label></div><label style="grid-column:1/-1">Título *<input id="a_t" required value="${esc(a.titulo||'')}" placeholder="${a.tipo==='prazo'?'Contestação · Processo 0000000-00…':'Reunião com…'}"></label><label style="grid-column:1/-1">Cliente<input id="a_cli" list="dlCliAg" autocomplete="off" value="${esc(a.cliNome||'')}" placeholder="Opcional"><datalist id="dlCliAg">${S.clientes.map(c=>`<option value="${esc(c.nome)}">`).join('')}</datalist></label><label><span id="a_dl">${a.tipo==='prazo'?'Vencimento do prazo *':'Data *'}</span><input id="a_d" type="date" required value="${a.data}"></label><label id="a_hl">Hora *<input id="a_h" type="time" value="${a.hora||'09:00'}"></label><p class="note" id="a_cont" style="grid-column:1/-1;margin:0"></p><label style="grid-column:1/-1">Descrição<textarea id="a_desc">${esc(a.desc||'')}</textarea></label><div class="row" style="grid-column:1/-1;justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
+  const tp=()=>(document.querySelector('[name=a_tp]:checked')||{}).value||'comp';
+  const upd=()=>{const pz=tp()==='prazo';$('#a_hl').style.display=pz?'none':'';$('#a_dl').textContent=pz?'Vencimento do prazo *':'Data *';const v=$('#a_d').value;$('#a_cont').textContent=pz&&v?prazoTxt({data:v}):''};
+  document.querySelectorAll('[name=a_tp]').forEach(r=>r.onchange=upd);$('#a_d').oninput=upd;upd();
+  $('#fC').onsubmit=e=>{e.preventDefault();const pz=tp()==='prazo';const cn=$('#a_cli').value.trim(),cc=S.clientes.find(x=>normNome(x.nome)===normNome(cn));
+    const d={tipo:pz?'prazo':'comp',titulo:$('#a_t').value.trim(),data:$('#a_d').value,hora:pz?'':($('#a_h').value||'09:00'),desc:$('#a_desc').value.trim(),cliNome:cc?cc.nome:cn,clienteId:cc?cc.id:null};if(a.id)Object.assign(a,d);else S.agenda.push(Object.assign({id:nid()},d));salvar();fechar();toast('Compromisso salvo');go();gAuto()};
 }
 
 
@@ -1510,7 +1534,7 @@ function kpisMes(mes){
   const v30=S.parcelas.filter(p=>p.venc>=h&&p.venc<=addDias(h,30)).reduce((a,p)=>a+Math.max(0,p.valor-pagoDe(p)),0);
   return{recebido,aReceber,atraso,v30};
 }
-let finMes=ym(hoje()),finTab='geral';
+let finMes=ym(hoje()),finTab='geral',finSit='30d',finBusca='';
 const cliNome=id=>{const c=S.clientes.find(x=>x.id===id);return c?`<a href="#cliente-${c.id}">${esc(c.nome)}</a>`:'—'};
 ROUTES.financeiro=()=>{
   const k=kpisMes(finMes);const[y,mo]=finMes.split('-').map(Number);
@@ -1519,12 +1543,21 @@ ROUTES.financeiro=()=>{
   else if(finTab==='receber'){const l=S.parcelas.filter(p=>ym(p.venc)===finMes&&situacao(p)!=='pago').sort((a,b)=>a.venc.localeCompare(b.venc));corpo=tabParc(l,'Nada a receber neste mês.')}
   else if(finTab==='recebidos'){const l=pagamentosNoMes(finMes).sort((a,b)=>a.g.data.localeCompare(b.g.data));const av=S.avulsos.filter(a=>ym(a.data)===finMes);
     corpo=`<div class="panel">${l.length||av.length?`<div class="tbl"><table><thead><tr><th>Data</th><th>Cliente</th><th>Referente</th><th class="n">Valor</th></tr></thead><tbody>${l.map(x=>`<tr><td>${br(x.g.data)}</td><td>${cliNome(x.p.clienteId)}</td><td>${x.p.num===0?'Entrada':'Parcela '+x.p.num}</td><td class="n">${m(x.g.valor)}</td></tr>`).join('')}${av.map(a=>`<tr><td>${br(a.data)}</td><td>${esc(a.desc)}</td><td>Avulso <button class="btn sm ghost danger" data-act="del-avulso" data-id="${a.id}" type="button">Excluir</button></td><td class="n">${m(a.valor)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nenhum recebimento neste mês.</div>'}</div>`}
+  else if(finTab==='parcelas'){const h=hoje(),q=normNome(finBusca);
+    const F={'30d':p=>situacao(p)!=='pago'&&p.venc>=h&&p.venc<=addDias(h,30),pendente:p=>situacao(p)==='pendente',parcial:p=>/parcial/.test(situacao(p)),pago:p=>situacao(p)==='pago',atrasado:p=>['atrasado','parcial-atraso'].includes(situacao(p)),todas:()=>true};
+    const base=S.parcelas.filter(p=>{const c=S.clientes.find(x=>x.id===p.clienteId);return c&&(!q||normNome(c.nome).includes(q)||String(c.cpf||'').includes(finBusca.replace(/\D/g,'')||'§'))});
+    const l=base.filter(F[finSit]).sort((a,b)=>finSit==='pago'?b.venc.localeCompare(a.venc):a.venc.localeCompare(b.venc));
+    const cont=k=>base.filter(F[k]).length;
+    corpo=`<div class="panel" style="margin-bottom:12px"><div class="row" style="justify-content:space-between;gap:10px;flex-wrap:wrap"><div class="chips">${[['30d','Próximos 30 dias'],['pendente','Pendentes'],['parcial','Parciais'],['pago','Pagas'],['atrasado','Atrasadas'],['todas','Todas']].map(([k,t])=>`<button class="chip ${finSit===k?'on':''}" data-act="fin-sit" data-k="${k}" type="button">${t} (${cont(k)})</button>`).join('')}</div><input id="finBusca" placeholder="Buscar cliente ou CPF" value="${esc(finBusca)}" style="max-width:240px"></div></div>${tabParcSit(l,'Nenhuma parcela com esse filtro.')}`}
   else if(finTab==='inad'){const l=S.parcelas.filter(p=>['atrasado','parcial-atraso'].includes(situacao(p))).sort((a,b)=>a.venc.localeCompare(b.venc));corpo=tabParc(l,'Nenhuma parcela em atraso.',true)}
   else if(finTab==='exito'){const l=S.clientes.filter(c=>c.tipoHon==='exito');corpo=`<div class="panel">${l.length?`<div class="tbl"><table><thead><tr><th>Cliente</th><th>Área</th><th class="n">Percentual</th><th class="n">Causa estimada</th><th class="n">Honorário estimado</th></tr></thead><tbody>${l.map(c=>`<tr><td><a href="#cliente-${c.id}">${esc(c.nome)}</a></td><td>${areaTag(c.area)}</td><td class="n">${esc(c.exitoPct)}%</td><td class="n">${c.causa?m(c.causa):'—'}</td><td class="n">${c.causa?m(Math.round(c.causa*c.exitoPct/100)):'—'}</td></tr>`).join('')}</tbody></table></div><p class="note">Potencial total estimado: ${m(l.reduce((a,c)=>a+Math.round((c.causa||0)*c.exitoPct/100),0))}</p>`:'<div class="empty">Nenhum contrato por êxito.</div>'}</div>`}
   return `<div class="phead"><div><h1>Financeiro</h1><p>Recebimentos de honorários do escritório.</p></div><div class="row"><button class="btn" data-act="mes" data-d="-1" type="button" aria-label="Mês anterior">‹</button><strong style="min-width:130px;text-align:center;text-transform:capitalize">${MESES[mo-1]} ${y}</strong><button class="btn" data-act="mes" data-d="1" type="button" aria-label="Próximo mês">›</button><button class="btn" data-act="avulso" type="button">Recebimento avulso</button></div></div>
   <div class="kpis"><div class="kpi ok"><span class="lb">Recebido no mês</span><span class="v">${m(k.recebido)}</span></div><div class="kpi"><span class="lb">A receber no mês</span><span class="v">${m(k.aReceber)}</span><span class="s">em aberto com vencimento no mês</span></div><div class="kpi bad"><span class="lb">Em atraso (hoje)</span><span class="v">${m(k.atraso)}</span><span class="s">vencido e não pago</span></div><div class="kpi"><span class="lb">A vencer em 30 dias</span><span class="v">${m(k.v30)}</span></div></div>
-  <div class="tabs">${[['geral','Visão geral'],['receber','A receber'],['recebidos','Recebidos'],['inad','Inadimplência'],['exito','Contratos por êxito']].map(([a,t])=>`<button class="tab ${finTab===a?'on':''}" data-fin="${a}" type="button">${t}</button>`).join('')}</div>${corpo}`;
+  <div class="tabs">${[['geral','Visão geral'],['parcelas','Parcelas'],['receber','A receber'],['recebidos','Recebidos'],['inad','Inadimplência'],['exito','Contratos por êxito']].map(([a,t])=>`<button class="tab ${finTab===a?'on':''}" data-fin="${a}" type="button">${t}</button>`).join('')}</div>${corpo}`;
 };
+AFTER.financeiro=()=>{const b=$('#finBusca');if(!b)return;let t;b.oninput=()=>{clearTimeout(t);t=setTimeout(()=>{finBusca=b.value;const pos=b.selectionStart;go();const n=$('#finBusca');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}},250)}};
+function tabParcSit(l,vazio){const tot=l.reduce((a,p)=>a+p.valor,0),ab=l.reduce((a,p)=>a+Math.max(0,p.valor-pagoDe(p)),0);
+  return `<div class="panel">${l.length?`<div class="tbl"><table><thead><tr><th>Cliente</th><th>Parcela</th><th>Vencimento</th><th class="n">Valor</th><th class="n">Em aberto</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(p=>{const st=situacao(p),dd=diasAte(p.venc);return`<tr><td data-label="Cliente">${cliNome(p.clienteId)}</td><td data-label="Parcela">${p.num===0?'Entrada':p.num}</td><td data-label="Vencimento">${br(p.venc)}${st!=='pago'&&dd>=0&&dd<=30?`<div class="note">${dd===0?'hoje':dd===1?'amanhã':'em '+dd+' dias'}</div>`:''}</td><td class="n" data-label="Valor">${m(p.valor)}</td><td class="n" data-label="Em aberto">${m(Math.max(0,p.valor-pagoDe(p)))}</td><td data-label="Situação">${pill(st)}</td><td class="n">${st!=='pago'?`<button class="btn sm pri" data-act="baixa" data-id="${p.id}" type="button">Dar baixa</button>`:p.pagamentos.length?`<button class="btn sm" data-act="recibo" data-id="${p.id}" type="button">Recibo</button>`:''}</td></tr>`}).join('')}</tbody></table></div><p class="note">${l.length} parcela(s) · total ${m(tot)} · em aberto ${m(ab)}</p>`:`<div class="empty">${vazio}</div>`}</div>`}
 function tabParc(l,vazio,dias){return `<div class="panel">${l.length?`<div class="tbl"><table><thead><tr><th>Cliente</th><th>Parcela</th><th>Vencimento</th>${dias?'<th class="n">Dias</th>':''}<th class="n">Em aberto</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(p=>`<tr><td>${cliNome(p.clienteId)}</td><td>${p.num===0?'Entrada':p.num}</td><td>${br(p.venc)}</td>${dias?`<td class="n">${Math.round((parseISO(hoje())-parseISO(p.venc))/864e5)}</td>`:''}<td class="n">${m(p.valor-pagoDe(p))}</td><td>${pill(situacao(p))}</td><td class="n"><button class="btn sm pri" data-act="baixa" data-id="${p.id}" type="button">Dar baixa</button></td></tr>`).join('')}</tbody></table></div><p class="note">Total: ${m(l.reduce((a,p)=>a+p.valor-pagoDe(p),0))}</p>`:`<div class="empty">${vazio}</div>`}</div>`}
 function graf6(mes){
   const ms=[];for(let i=5;i>=0;i--)ms.push(ym(addMeses(mes+'-01',-i)));
@@ -1987,7 +2020,10 @@ document.addEventListener('click',e=>{
     case 'parcela-extra':modalParcelaExtra(S.clientes.find(x=>x.id===id));break;
     case 'excluir-cliente':{const c=S.clientes.find(x=>x.id===id);confirmar(`Excluir <strong>${esc(c.nome)}</strong> e todas as parcelas e pagamentos? Não dá para desfazer.`,'Excluir cliente',()=>{S.clientes=S.clientes.filter(x=>x.id!==id);S.parcelas=S.parcelas.filter(p=>p.clienteId!==id);salvar();toast('Cliente excluído');location.hash='#clientes'});break}
     case 'novo-comp':modalComp();break;
+    case 'fin-sit':finSit=ds.k;go();break;
     case 'edit-comp':modalComp(S.agenda.find(x=>x.id===id));break;
+    case 'novo-prazo':modalComp(null,'prazo');break;
+    case 'concluir-comp':{const x=S.agenda.find(y=>y.id===id);if(x){x.feito=!x.feito;salvar();toast(x.feito?(x.tipo==='prazo'?'Prazo cumprido':'Compromisso concluído'):'Reaberto');go()}break}
     case 'del-comp':confirmar('Excluir este compromisso?','Excluir',()=>{const x=S.agenda.find(y=>y.id===id);if(x&&x.gid){gcfg().apagar=(gcfg().apagar||[]).concat(x.gid)}S.agenda=S.agenda.filter(x=>x.id!==id);salvar();go();gAuto()});break;
     case 'nuvem-entrar':nuvemEntrar();break;
     case 'gate-modo':gateModo=ds.modo;nuvemMsg='';renderGate();break;
