@@ -447,6 +447,10 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 .gate-form{display:grid;gap:10px;margin-top:16px}
 .gate-form input{width:100%}
 .gate-msg{margin-top:14px}
+.gate-abas{display:flex;gap:6px;background:var(--surface-2);border-radius:99px;padding:4px;margin-bottom:18px}
+.gate-aba{flex:1;border:0;background:none;border-radius:99px;padding:9px 12px;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
+.gate-aba.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.gate-form label{display:grid;gap:4px;font-size:.84rem;font-weight:600}
 @media print{ .side,.top,.noprint,#fab,.toast{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} }
 @page{size:A4;margin:0}
 #printRoot{display:none}
@@ -1444,19 +1448,27 @@ ROUTES.backup=()=>`<div class="phead"><div><h1>Backup</h1><p>Nesta versão os da
 const SB_URL='https://dwyalxrzljotekooqpto.supabase.co';
 const SB_KEY='sb_publishable_uoCXERCLpJy_jHDjaRlSug_nhvEL6vv';
 const SB_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js';
-let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false;
+let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar';
 const nuvemDisponivel=()=>/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const nuvemHora=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 function nuvemAtualiza(){renderGate();if(location.hash.startsWith('#backup'))go()}
 function renderGate(){const g=$('#gate');if(!g)return;
   if(!nuvemDisponivel()||nuvemUser){g.hidden=true;g.innerHTML='';document.body.classList.remove('trancado');return}
   document.body.classList.add('trancado');g.hidden=false;
+  const criar=gateModo==='criar';
+  const aba=(k,t)=>`<button type="button" class="gate-aba ${gateModo===k?'on':''}" data-act="gate-modo" data-modo="${k}">${t}</button>`;
+  const campos=criar?`<label>Nome completo *<input id="gt_nome" required autocomplete="name" placeholder="Dra. Maria Silva"></label>
+      <label>OAB (opcional)<input id="gt_oab" placeholder="OAB/SP 000.000"></label>
+      <label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>`
+    :`<label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>`;
   const pronto=!!sb;
   g.innerHTML=`<div class="gate-caixa"><div class="gate-marca"><span class="gate-logo">H</span><b>Honra</b></div>
-    <h1>Entre para acessar</h1>
-    <p class="note">Os dados do escritório ficam na nuvem e só aparecem depois do login. Enviamos um link para o seu e-mail, sem senha.</p>
-    ${pronto?`<form class="gate-form" onsubmit="event.preventDefault();document.querySelector('[data-act=nuvem-entrar]').click()"><input id="gt_email" type="email" placeholder="seu@email.com" autocomplete="email" required><button class="btn pri" data-act="nuvem-entrar" type="submit">Enviar link de acesso</button></form>`:`<p class="note">Conectando ao serviço de acesso…</p>`}
+    <div class="gate-abas">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>
+    <h1>${criar?'Crie sua conta':'Bem-vindo de volta'}</h1>
+    <p class="note">${criar?'Use seu e-mail profissional. Enviamos um link para confirmar e entrar, sem senha.':'Digite o e-mail da sua conta. Enviamos um link de acesso, sem senha.'}</p>
+    ${pronto?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()">${campos}<button class="btn pri" type="submit">${criar?'Criar conta e receber link':'Enviar link de acesso'}</button></form>`:`<p class="note">Conectando ao serviço de acesso…</p>`}
     ${nuvemMsg?`<p class="note gate-msg">${esc(nuvemMsg)}</p>`:''}</div>`}
+
 function salvarLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promise((ok,er)=>{const sc=document.createElement('script');sc.src=SB_SRC;sc.onload=ok;sc.onerror=()=>er(new Error('não consegui carregar o serviço de login'));document.head.appendChild(sc)})}
 async function nuvemIniciar(){if(!nuvemDisponivel())return;
@@ -1473,7 +1485,7 @@ async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado)ret
     if(data&&data.dados&&Object.keys(data.dados).length){
       try{localStorage.setItem('lexa-antes-da-nuvem',localStorage.getItem(KEY)||'')}catch(e){}
       S=Object.assign(vazio(),data.dados);salvarLocal();nuvemMsg='Dados carregados da nuvem às '+nuvemHora()+'.';aplicaMarca();
-    }else{const {error:e2}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(e2)throw e2;nuvemMsg='Dados enviados para a nuvem às '+nuvemHora()+'.'}
+    }else{const md=nuvemUser.user_metadata||{};if(!S.perfil.nome&&md.nome){S.perfil.nome=md.nome;if(md.oab&&!S.perfil.oab)S.perfil.oab=md.oab;salvarLocal();aplicaMarca()}if(!S.perfil.email&&nuvemUser.email)S.perfil.email=nuvemUser.email;const {error:e2}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(e2)throw e2;nuvemMsg='Dados enviados para a nuvem às '+nuvemHora()+'.'}
   }catch(e){nuvemMsg='Não consegui sincronizar: '+e.message}
   finally{nuvemOcupado=false;nuvemAtualiza();if(!$('#gate')||$('#gate').hidden)go()}
 }
@@ -1482,12 +1494,17 @@ async function nuvemEnviar(){if(!sb||!nuvemUser)return;
   try{const {error}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(error)throw error;nuvemMsg='Salvo na nuvem às '+nuvemHora()+'.'}
   catch(e){nuvemMsg='Não foi possível salvar na nuvem agora ('+e.message+'). Os dados continuam neste navegador e tentam de novo na próxima alteração.'}
   nuvemAtualiza()}
-async function nuvemEntrar(){const em=((($('#gt_email')||$('#nv_email'))||{}).value||'').trim();if(!/@/.test(em)){toast('Digite um e-mail válido');return}
+async function nuvemEntrar(){const em=((($('#gt_email')||$('#nv_email'))||{}).value||'').trim();const criar=gateModo==='criar';
+  const nome=(($('#gt_nome')||{}).value||'').trim();const oab=(($('#gt_oab')||{}).value||'').trim();
+  if(!/@/.test(em)){toast('Digite um e-mail válido');return}
+  if(criar&&!nome){toast('Digite seu nome completo');return}
   try{if(!sb)await nuvemIniciar();if(!sb)throw new Error('serviço indisponível');
-    const {error}=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;
-    nuvemMsg='Enviei um link de acesso para '+em+'. Abra o e-mail neste mesmo navegador e clique no link.'}
-  catch(e){nuvemMsg='Não consegui enviar o link: '+e.message}
+    const {error}=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:criar,data:criar?{nome,oab}:undefined}});
+    if(error)throw error;
+    nuvemMsg=(criar?'Conta criada. Enviamos um link para ':'Enviamos um link de acesso para ')+em+'. Abra o e-mail neste mesmo navegador e clique no link.'}
+  catch(e){const m=String(e.message||e);nuvemMsg=!criar&&/signups? not allowed|not found|Signups/i.test(m)?'Não encontramos uma conta com esse e-mail. Use "Criar conta" primeiro.':'Não consegui enviar o link: '+m}
   nuvemAtualiza()}
+
 async function nuvemSair(){if(!sb)return;try{await sb.auth.signOut()}catch(e){}nuvemUser=null;
   try{localStorage.removeItem(KEY);localStorage.removeItem('lexa-antes-da-nuvem')}catch(e){}
   S=vazio();nuvemMsg='Você saiu. Entre de novo para acessar os dados.';nuvemAtualiza();go()}
@@ -1537,6 +1554,7 @@ document.addEventListener('click',e=>{
     case 'edit-comp':modalComp(S.agenda.find(x=>x.id===id));break;
     case 'del-comp':confirmar('Excluir este compromisso?','Excluir',()=>{const x=S.agenda.find(y=>y.id===id);if(x&&x.gid){gcfg().apagar=(gcfg().apagar||[]).concat(x.gid)}S.agenda=S.agenda.filter(x=>x.id!==id);salvar();go();gAuto()});break;
     case 'nuvem-entrar':nuvemEntrar();break;
+    case 'gate-modo':gateModo=ds.modo;nuvemMsg='';renderGate();break;
     case 'nuvem-sair':nuvemSair();break;
     case 'nuvem-sincar':nuvemSincronizar(true);break;
     case 'exp-ics':exportaIcs();break;
