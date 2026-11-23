@@ -438,20 +438,63 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 @media screen and (max-width:1280px){.grid3{grid-template-columns:1fr}}
 @media screen and (max-width:760px){.tbl-parc .venc{align-items:flex-end}.tbl-parc .obs-in{text-align:right}.tbl-parc .obs-in:focus{margin-left:0}}
 .trancado .app,.trancado #modalRoot,.trancado .fab{visibility:hidden}
-#gate{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:radial-gradient(120% 90% at 0% 0%,#1f6b45 0%,#0e3a25 55%,#071f15 100%);overflow:auto}
+#gate{position:fixed;inset:0;z-index:300;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);background:var(--bg);overflow:auto}
 #gate[hidden]{display:none}
-.gate-caixa{width:100%;max-width:420px;background:var(--surface);border-radius:24px;padding:32px 28px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
-.gate-marca{display:flex;align-items:center;gap:10px;margin-bottom:22px}
-.gate-logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#0e3a25,#3a9a66)}
-.gate-caixa h1{font-size:1.5rem;margin:0 0 8px}
-.gate-form{display:grid;gap:10px;margin-top:16px}
-.gate-form input{width:100%}
-.gate-msg{margin-top:14px}
-.gate-abas{display:flex;gap:6px;background:var(--surface-2);border-radius:99px;padding:4px;margin-bottom:18px}
-.gate-aba{flex:1;border:0;background:none;border-radius:99px;padding:9px 12px;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}
-.gate-aba.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12)}
-.gate-form label{display:grid;gap:4px;font-size:.84rem;font-weight:600}
-.gate-link{justify-self:end;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:700;cursor:pointer;padding:0}
+.gl-arte{position:relative;overflow:hidden;color:#eaf5ee;padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(120% 80% at 0% 0%,#2a8a5a 0%,#14563a 38%,#0b2e20 75%,#06180f 100%)}
+.gl-arte::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 85% 15%,rgba(255,255,255,.10),transparent 60%),radial-gradient(50% 40% at 10% 95%,rgba(58,154,102,.35),transparent 70%);pointer-events:none}
+.gl-arte::after{content:"";position:absolute;right:-120px;bottom:-120px;width:420px;height:420px;border-radius:50%;border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 60px rgba(255,255,255,.025),0 0 0 120px rgba(255,255,255,.02)}
+.gl-arte>*{position:relative;z-index:1}
+.gl-marca{display:flex;align-items:center;gap:12px;font-size:1.25rem;font-weight:800;letter-spacing:-.01em;color:#fff}
+.gl-logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(6px)}
+.gl-meio h2{font-size:clamp(1.8rem,2.6vw,2.5rem);line-height:1.15;letter-spacing:-.02em;margin:0 0 14px;color:#fff;max-width:15ch}
+.gl-meio p{margin:0 0 28px;color:rgba(234,245,238,.78);max-width:42ch;font-size:1rem}
+.gl-lista{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.gl-lista li{display:flex;gap:12px;align-items:flex-start;font-size:.95rem;color:rgba(234,245,238,.92)}
+.gl-lista .ic{flex:0 0 32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14)}
+.gl-lista b{display:block;color:#fff;font-weight:700}
+.gl-rodape{font-size:.8rem;color:rgba(234,245,238,.55)}
+.gl-lado{display:grid;place-items:center;padding:40px 24px;background:var(--surface)}
+.gl-lado .gl-input input{background:var(--surface);border:1.5px solid var(--line)}
+.gl-form-caixa{width:100%;max-width:400px}
+.gl-topo-mob{display:none}
+.gl-form-caixa h1{font-size:1.75rem;letter-spacing:-.02em;margin:0 0 6px}
+.gl-sub{color:var(--muted);margin:0 0 24px}
+.gate-abas{display:flex;gap:4px;background:var(--surface-2);border-radius:14px;padding:4px;margin-bottom:28px}
+.gate-aba{flex:1;border:0;background:none;border-radius:10px;padding:10px 12px;font:inherit;font-weight:700;font-size:.9rem;color:var(--muted);cursor:pointer;transition:background .2s,color .2s}
+.gate-aba.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.10),0 4px 12px rgba(0,0,0,.05)}
+.gate-form{display:grid;gap:16px}
+.gl-campo{display:grid;gap:6px;font-size:.84rem;font-weight:600;color:var(--fg)}
+.gl-campo .opc{font-weight:500;color:var(--muted)}
+.gl-input{position:relative;display:flex;align-items:center}
+.gl-input>svg{position:absolute;left:14px;color:var(--muted);pointer-events:none}
+.gl-input input{width:100%;height:48px;padding:0 14px 0 44px;border-radius:12px;font-size:.95rem}
+.gl-input input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.gl-olho{position:absolute;right:6px;width:36px;height:36px;border:0;background:none;border-radius:8px;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.gl-olho:hover{background:var(--surface-2);color:var(--fg)}
+.gl-input:has(.gl-olho) input{padding-right:46px}
+.gl-linha{display:flex;justify-content:space-between;align-items:center;margin-top:-4px}
+.gl-lembrar{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:500;color:var(--muted);cursor:pointer}
+.gl-lembrar input{width:16px;height:16px;accent-color:var(--accent)}
+.gate-link{border:0;background:none;color:var(--accent-ink);font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;padding:0}
+.gate-link:hover{text-decoration:underline}
+.gl-btn{height:50px;width:100%;border-radius:12px;font-size:1rem;margin-top:4px}
+.gl-forca{height:4px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:2px}
+.gl-forca i{display:block;height:100%;width:0;border-radius:4px;transition:width .25s,background .25s}
+.gate-msg{margin:18px 0 0;padding:12px 14px;border-radius:12px;font-size:.88rem;background:var(--surface-2);color:var(--fg)}
+.gate-msg.erro{background:var(--bad-soft);color:var(--bad)}
+.gate-msg.ok{background:var(--ok-soft);color:var(--ok)}
+.gl-termos{font-size:.78rem;color:var(--muted);text-align:center;margin:22px 0 0}
+.gl-seg{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.78rem;color:var(--muted);margin-top:28px}
+.gl-carrega{display:flex;align-items:center;gap:10px;color:var(--muted);padding:20px 0}
+.gl-carrega i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:gl-gira .8s linear infinite}
+@keyframes gl-gira{to{transform:rotate(360deg)}}
+@media screen and (max-width:900px){
+  #gate{grid-template-columns:1fr}
+  .gl-arte{display:none}
+  .gl-lado{place-items:start center;padding:32px 20px}
+  .gl-topo-mob{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1rem;margin-bottom:32px}
+  .gl-topo-mob .gl-logo{width:40px;height:40px;background:linear-gradient(135deg,#0e3a25,#3a9a66);color:#fff;border:0}
+}
 @media print{ .side,.top,.noprint,#fab,.toast{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} }
 @page{size:A4;margin:0}
 #printRoot{display:none}
@@ -1453,32 +1496,66 @@ let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateMo
 const nuvemDisponivel=()=>/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const nuvemHora=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 function nuvemAtualiza(){renderGate();if(location.hash.startsWith('#backup'))go()}
+const GL_IC={
+  mail:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+  lock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  user:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  badge:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2.5"/><path d="M14 10h4M14 14h3"/></svg>',
+  olho:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  balanca:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0L5 7zM19 7l-3 7a3 3 0 0 0 6 0l-3-7z"/></svg>',
+  cal:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  din:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  doc:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>',
+  escudo:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'};
+function glCampo(id,rot,ic,tipo,extra){const senha=tipo==='password';
+  return `<label class="gl-campo" for="${id}"><span>${rot}</span><span class="gl-input">${GL_IC[ic]}<input id="${id}" type="${tipo}" ${extra||''}>${senha?`<button type="button" class="gl-olho" data-act="gate-olho" data-alvo="${id}" aria-label="Mostrar senha" title="Mostrar senha">${GL_IC.olho}</button>`:''}</span></label>`}
 function renderGate(){const g=$('#gate');if(!g)return;
   if(!nuvemDisponivel()||(nuvemUser&&!gateRec)){g.hidden=true;g.innerHTML='';document.body.classList.remove('trancado');return}
   document.body.classList.add('trancado');g.hidden=false;
-  const aba=(k,t)=>`<button type="button" class="gate-aba ${gateModo===k?'on':''}" data-act="gate-modo" data-modo="${k}">${t}</button>`;
-  const pronto=!!sb;let corpo,titulo,sub,botao;
-  if(gateRec){titulo='Crie uma nova senha';sub='Escolha uma senha nova para a sua conta.';
-    corpo=`<label>Nova senha *<input id="gt_senha" type="password" required minlength="8" autocomplete="new-password"></label><label>Repita a senha *<input id="gt_senha2" type="password" required minlength="8" autocomplete="new-password"></label>`;
+  const emailAntes=(($('#gt_email')||{}).value)||'';
+  const aba=(k,t)=>`<button type="button" class="gate-aba ${gateModo===k?'on':''}" data-act="gate-modo" data-modo="${k}" role="tab" aria-selected="${gateModo===k}">${t}</button>`;
+  let titulo,sub,corpo,botao;
+  if(gateRec){titulo='Crie uma nova senha';sub='Escolha uma senha forte, com pelo menos 8 caracteres.';
+    corpo=glCampo('gt_senha','Nova senha','lock','password','required minlength="8" autocomplete="new-password" data-forca="1"')+`<div class="gl-forca"><i id="gl_forca"></i></div>`+glCampo('gt_senha2','Repita a nova senha','lock','password','required minlength="8" autocomplete="new-password"');
     botao='Salvar nova senha';
-  }else if(gateModo==='criar'){titulo='Crie sua conta';sub='Use seu e-mail profissional. Você vai confirmar o e-mail antes de entrar.';
-    corpo=`<label>Nome completo *<input id="gt_nome" required autocomplete="name" placeholder="Dra. Maria Silva"></label>
-      <label>OAB (opcional)<input id="gt_oab" placeholder="OAB/SP 000.000"></label>
-      <label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>
-      <label>Senha * <span class="note">(mínimo de 8 caracteres)</span><input id="gt_senha" type="password" required minlength="8" autocomplete="new-password"></label>
-      <label>Repita a senha *<input id="gt_senha2" type="password" required minlength="8" autocomplete="new-password"></label>`;
+  }else if(gateModo==='criar'){titulo='Crie sua conta';sub='Comece a organizar seu escritório em poucos minutos.';
+    corpo=glCampo('gt_nome','Nome completo','user','text','required autocomplete="name" placeholder="Dra. Maria Silva"')
+      +glCampo('gt_oab','OAB <span class="opc">(opcional)</span>','badge','text','placeholder="OAB/SP 000.000"')
+      +glCampo('gt_email','E-mail','mail','email','required autocomplete="email" placeholder="voce@escritorio.com.br"')
+      +glCampo('gt_senha','Senha','lock','password','required minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" data-forca="1"')+`<div class="gl-forca"><i id="gl_forca"></i></div>`
+      +glCampo('gt_senha2','Confirme a senha','lock','password','required minlength="8" autocomplete="new-password"');
     botao='Criar conta';
-  }else{titulo='Bem-vindo de volta';sub='Entre com seu e-mail e sua senha.';
-    corpo=`<label>E-mail *<input id="gt_email" type="email" required autocomplete="email" placeholder="seu@email.com"></label>
-      <label>Senha *<input id="gt_senha" type="password" required autocomplete="current-password"></label>
-      <button type="button" class="gate-link" data-act="gate-esqueci">Esqueci a senha</button>`;
+  }else{titulo='Bem-vindo de volta';sub='Entre para acessar a pauta do seu escritório.';
+    corpo=glCampo('gt_email','E-mail','mail','email','required autocomplete="email" placeholder="voce@escritorio.com.br"')
+      +glCampo('gt_senha','Senha','lock','password','required autocomplete="current-password" placeholder="Sua senha"')
+      +`<div class="gl-linha"><span></span><button type="button" class="gate-link" data-act="gate-esqueci">Esqueci minha senha</button></div>`;
     botao='Entrar';
   }
-  g.innerHTML=`<div class="gate-caixa"><div class="gate-marca"><span class="gate-logo">H</span><b>Honra</b></div>
-    ${gateRec?'':`<div class="gate-abas">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>`}
-    <h1>${titulo}</h1><p class="note">${sub}</p>
-    ${pronto?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()">${corpo}<button class="btn pri" type="submit">${botao}</button></form>`:`<p class="note">Conectando ao serviço de acesso…</p>`}
-    ${nuvemMsg?`<p class="note gate-msg">${esc(nuvemMsg)}</p>`:''}</div>`}
+  const tipoMsg=/incorret|não|nao|erro|conferem|existe|muitas|indispon|confirme/i.test(nuvemMsg)?'erro':nuvemMsg?'ok':'';
+  g.innerHTML=`<aside class="gl-arte" aria-hidden="true">
+      <div class="gl-marca"><span class="gl-logo">${GL_IC.balanca}</span>Honra</div>
+      <div class="gl-meio"><h2>O escritório inteiro num só lugar.</h2><p>Honorários, agenda, documentos e cobranças organizados para você focar no que importa: seus clientes.</p>
+        <ul class="gl-lista">
+          <li><span class="ic">${GL_IC.din}</span><span><b>Honorários sob controle</b>Parcelas, baixas e atrasos em tempo real.</span></li>
+          <li><span class="ic">${GL_IC.cal}</span><span><b>Pauta do dia</b>Audiências e prazos, ligados ao Google Agenda.</span></li>
+          <li><span class="ic">${GL_IC.doc}</span><span><b>Documentos prontos</b>Contrato, procuração e recibo em um clique.</span></li>
+        </ul></div>
+      <div class="gl-rodape">Honorários · Organização · Negócios · Recebimentos · Agenda</div>
+    </aside>
+    <main class="gl-lado"><div class="gl-form-caixa">
+      <div class="gl-topo-mob"><span class="gl-logo">${GL_IC.balanca}</span>Honra</div>
+      ${gateRec?'':`<div class="gate-abas" role="tablist">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>`}
+      <h1>${titulo}</h1><p class="gl-sub">${sub}</p>
+      ${sb?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()" novalidate>${corpo}<button class="btn pri gl-btn" type="submit">${botao}</button></form>`:`<div class="gl-carrega"><i></i>${nuvemMsg?'':'Conectando…'}</div>`}
+      ${nuvemMsg?`<p class="gate-msg ${tipoMsg}" role="status">${esc(nuvemMsg)}</p>`:''}
+      ${gateModo==='criar'&&!gateRec?'<p class="gl-termos">Ao criar a conta, você concorda em manter os dados dos seus clientes em sigilo, conforme o Estatuto da Advocacia e a LGPD.</p>':''}
+      <div class="gl-seg">${GL_IC.escudo}Conexão protegida. Cada escritório só vê os próprios dados.</div>
+    </div></main>`;
+  const em=$('#gt_email');if(em&&emailAntes)em.value=emailAntes;
+  const fo=$('[data-forca]');if(fo)fo.addEventListener('input',()=>{const v=fo.value;let n=0;if(v.length>=8)n++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))n++;if(/\d/.test(v))n++;if(/[^A-Za-z0-9]/.test(v)||v.length>=12)n++;
+    const b=$('#gl_forca');b.style.width=(v?Math.max(n,1)*25:0)+'%';b.style.background=['#c0392b','#c0392b','#d68910','#2e8b57','#1f6b45'][n]});
+  const f=$('#gate input');if(f&&!('ontouchstart' in window))setTimeout(()=>{try{($('#gate input:placeholder-shown')||f).focus({preventScroll:true})}catch(e){}},50);
+}
 
 function salvarLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promise((ok,er)=>{const sc=document.createElement('script');sc.src=SB_SRC;sc.onload=ok;sc.onerror=()=>er(new Error('não consegui carregar o serviço de login'));document.head.appendChild(sc)})}
@@ -1588,6 +1665,7 @@ document.addEventListener('click',e=>{
     case 'nuvem-entrar':nuvemEntrar();break;
     case 'gate-modo':gateModo=ds.modo;nuvemMsg='';renderGate();break;
     case 'gate-esqueci':nuvemEsqueci();break;
+    case 'gate-olho':{const i=$('#'+ds.alvo);if(i){const v=i.type==='password';i.type=v?'text':'password';el.setAttribute('aria-label',v?'Ocultar senha':'Mostrar senha')}break}
     case 'nuvem-sair':nuvemSair();break;
     case 'nuvem-sincar':nuvemSincronizar(true);break;
     case 'exp-ics':exportaIcs();break;
