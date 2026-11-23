@@ -79,6 +79,7 @@ label.chk{flex-direction:row;align-items:center;gap:10px;font-size:.88rem;color:
 .app.mini .rot{transform:scaleX(-1)}
 .main{flex:1;min-width:0;background:var(--panel);border-radius:24px;padding:24px}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.nav-ind{display:none}
 .top{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:-8px 0 6px}
 .top .brand-top,.top .so-mob{display:none}
 .conta{position:relative}
@@ -281,11 +282,17 @@ textarea{min-height:70px;resize:vertical}
   .nav .fold-btn:hover{color:#fff}
   .nav a{color:rgba(255,255,255,.9);margin-right:12px}
   .nav a:hover{background:rgba(255,255,255,.12);color:#fff}
-  .nav a.on{background:var(--panel);color:var(--accent-ink);box-shadow:none;margin-right:0;border-radius:16px 0 0 16px;font-weight:700}
+  /* aba selecionada: uma peça só que desliza até o item clicado */
+  .nav a{z-index:1;transition:color .25s}
+  .nav a.on{transition:color .2s .2s;background:transparent;color:var(--accent-ink);box-shadow:none;margin-right:0;border-radius:16px 0 0 16px;font-weight:700}
+  .nav a.on:hover{background:transparent}
   .nav a.on svg{color:var(--accent-ink)}
-  .nav a.on::before,.nav a.on::after{content:"";position:absolute;right:0;left:auto;width:20px;height:20px;background:transparent;pointer-events:none;border-radius:0}
-  .nav a.on::before{top:-20px;border-bottom-right-radius:20px;box-shadow:6px 6px 0 6px var(--panel)}
-  .nav a.on::after{bottom:-20px;border-top-right-radius:20px;box-shadow:6px -6px 0 6px var(--panel)}
+  .nav a.on::before,.nav a.on::after{display:none}
+  .nav-ind{display:block;position:absolute;right:0;top:0;height:0;background:var(--panel);border-radius:16px 0 0 16px;pointer-events:none;z-index:0;transition:top .32s cubic-bezier(.3,.8,.2,1),height .32s cubic-bezier(.3,.8,.2,1),left .2s}
+  .nav-ind.sem-anim{transition:none}
+  .nav-ind::before,.nav-ind::after{content:"";position:absolute;right:0;width:20px;height:20px;background:transparent}
+  .nav-ind::before{top:-20px;border-bottom-right-radius:20px;box-shadow:6px 6px 0 6px var(--panel)}
+  .nav-ind::after{bottom:-20px;border-top-right-radius:20px;box-shadow:6px -6px 0 6px var(--panel)}
   .nav .cnt{background:rgba(255,255,255,.92);color:var(--accent-ink)}
   .nav a.on .cnt{background:var(--accent-ink);color:var(--panel)}
   .nav .dot{border-color:transparent}
@@ -308,6 +315,7 @@ textarea{min-height:70px;resize:vertical}
   <aside class="side" id="side">
     <div class="side-top"><div class="brand" id="brand"><span class="logo" aria-hidden="true">L</span><b>Lexa</b></div>
       <button class="colap" id="miniBtn" type="button" aria-label="Recolher menu" title="Recolher menu"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
+    <div class="nav-ind sem-anim" id="navInd" aria-hidden="true"></div>
     <nav class="nav" id="nav" aria-label="Menu principal"></nav>
   </aside>
   <main class="main">
@@ -480,8 +488,16 @@ function renderNav(r){
 }
 /* menu recolhido e tema, lembrados neste navegador */
 const pref=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
+function posInd(semAnim){const ind=$('#navInd'),a=$('#nav a.on'),sd=$('#side');if(!ind)return;
+  if(!a){ind.style.opacity=0;return}ind.style.opacity=1;
+  const rs=sd.getBoundingClientRect(),ra=a.getBoundingClientRect();
+  if(semAnim)ind.classList.add('sem-anim');
+  ind.style.top=(ra.top-rs.top+sd.scrollTop)+'px';ind.style.height=ra.height+'px';ind.style.left=(ra.left-rs.left)+'px';
+  if(semAnim||ind.classList.contains('sem-anim'))requestAnimationFrame(()=>requestAnimationFrame(()=>ind.classList.remove('sem-anim')))}
+window.addEventListener('resize',()=>posInd(true));
+$('#side').addEventListener('transitionend',e=>{if(e.target===$('#side'))posInd(true)});
 function aplicaMini(){const mini=pref('lexa-mini')==='1';$('#app').classList.toggle('mini',mini);$('#miniBtn').setAttribute('aria-label',mini?'Expandir menu':'Recolher menu');$('#miniBtn').title=mini?'Expandir menu':'Recolher menu'}
-$('#miniBtn').onclick=()=>{pref('lexa-mini',pref('lexa-mini')==='1'?'0':'1');aplicaMini()};
+$('#miniBtn').onclick=()=>{pref('lexa-mini',pref('lexa-mini')==='1'?'0':'1');aplicaMini();posInd(true);setTimeout(()=>posInd(true),230)};
 const escuroAgora=()=>{const t=pref('lexa-tema');if(t==='dark')return true;if(t==='light')return false;return !!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)};
 function aplicaTema(){const t=pref('lexa-tema');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme');
   const esc=escuroAgora();$('#themeBtn').innerHTML=`${svg(IC.lua)}<span class="lbl">Modo escuro</span><span class="chave" aria-hidden="true"><i></i></span>`;$('#themeBtn').setAttribute('aria-checked',esc);$('#themeBtn').title=esc?'Desligar modo escuro':'Ligar modo escuro';
@@ -513,7 +529,7 @@ aplicaMini();aplicaTema();
 const ROUTES={};
 function go(){
   const r=(location.hash||'#painel').slice(1)||'painel';
-  renderNav(r);renderConta(r);contaAbre(false);$('#side').classList.remove('open');fechar();
+  renderNav(r);posInd();renderConta(r);contaAbre(false);$('#side').classList.remove('open');fechar();
   if(r!=='aparencia'&&rascMarca){rascMarca=null;aplicaMarca()}
   document.body.classList.toggle('hide-money',hideMoney);
   let fn=ROUTES[r];let arg=null;
