@@ -6,7 +6,7 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Lexa Escritório</title>
+<title>Honra · Gestão para advogados</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
@@ -339,13 +339,13 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 
 <div class="app" id="app">
   <aside class="side" id="side">
-    <div class="side-top"><div class="brand" id="brand"><span class="logo" aria-hidden="true">L</span><b>Lexa</b></div>
+    <div class="side-top"><div class="brand" id="brand"><span class="logo" aria-hidden="true">H</span><b>Honra</b></div>
       <button class="colap" id="miniBtn" type="button" aria-label="Recolher menu" title="Recolher menu"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
     <div class="nav-ind sem-anim" id="navInd" aria-hidden="true"></div>
     <nav class="nav" id="nav" aria-label="Menu principal"></nav>
   </aside>
   <main class="main">
-    <div class="top"><div class="row brand-top" id="brandTop" style="gap:10px"><span class="logo" aria-hidden="true">L</span><strong class="mk-nome">Lexa</strong></div>
+    <div class="top"><div class="row brand-top" id="brandTop" style="gap:10px"><span class="logo" aria-hidden="true">H</span><strong class="mk-nome">Honra</strong></div>
       <div class="row top-dir"><button class="btn sm soft so-mob" id="menuBtn" type="button">Mais</button>
         <div class="conta"><button class="conta-btn" id="contaBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="contaMenu"></button>
           <div class="conta-menu" id="contaMenu" role="menu" aria-label="Conta e ajustes">
@@ -659,9 +659,9 @@ const iniciais=n=>n.replace(/^Exemplo · /,'').split(/\s+/).filter(w=>w.length>2
 const addDias=(s,n)=>{const d=parseISO(s);d.setDate(d.getDate()+n);return iso(d)};
 /* ---------- Marca do escritório (cor, logo, nome) ---------- */
 const COR_PADRAO='#1f6b45';
-const MARCA_PADRAO={nome:'Lexa',cor:COR_PADRAO,logo:'',icone:'',fundo:'nenhum',mostraNome:true};
+const MARCA_PADRAO={nome:'Honra',cor:COR_PADRAO,logo:'',icone:'',fundo:'nenhum',mostraNome:true};
 const CORES=[['Verde','#1f6b45'],['Azul','#1f4f8f'],['Marinho','#1c2b4a'],['Vinho','#7a1f33'],['Bordô','#5c1a2b'],['Grafite','#2f3437'],['Petróleo','#14606b'],['Dourado','#9a7420'],['Terracota','#a2482a'],['Roxo','#5a3a8c']];
-const marca=()=>Object.assign({},MARCA_PADRAO,S.marca||{});
+const marca=()=>{const m=Object.assign({},MARCA_PADRAO,S.marca||{});if(m.nome==='Lexa')m.nome='Honra';return m};
 const hx=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return[0,2,4].map(i=>parseInt(h.slice(i,i+2),16))};
 const toHex=a=>'#'+a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
 const mix=(a,b,t)=>{const x=hx(a),y=hx(b);return toHex(x.map((v,i)=>v+(y[i]-v)*t))};
@@ -686,9 +686,9 @@ function cssMarca(cor){
   return `html:root{${b(L)}}@media (prefers-color-scheme: dark){html:root:not([data-theme="light"]){${b(D)}}}html:root[data-theme="dark"]{${b(D)}}`;
 }
 // iniciais do nome e do sobrenome (Francisco Bernuzzi -> FB). Sem nome do escritório, usa o nome do advogado em Meus dados.
-const iniciaisMarca=n=>{if(!n||n==='Lexa')n=(S&&S.perfil&&S.perfil.nome)||n||'Lexa';
+const iniciaisMarca=n=>{if(!n||n==='Honra'||n==='Lexa')n=(S&&S.perfil&&S.perfil.nome)||'Honra';
   const w=n.replace(/^(dra?|dr)\.?\s+/i,'').replace(/[&,.]/g,' ').split(/\s+/).filter(x=>x&&!/^(advocacia|advogados|associados|sociedade|escrit[óo]rio|e|de|do|da|dos|das)$/i.test(x));
-  if(!w.length)return 'L';if(w.length===1)return w[0].slice(0,2).toUpperCase();return (w[0][0]+w[w.length-1][0]).toUpperCase()};
+  if(!w.length)return 'H';if(w.length===1)return w[0].slice(0,2).toUpperCase();return (w[0][0]+w[w.length-1][0]).toUpperCase()};
 function htmlMarca(mk,top){
   const ic=mk.icone?`<img class="logo img" src="${esc(mk.icone)}" alt="" onerror="logoFalhou(this,1)">`:`<span class="logo" aria-hidden="true">${esc(iniciaisMarca(mk.nome))}</span>`;
   const full=mk.logo?`<img class="logo-full f-${esc(mk.fundo)}" src="${esc(mk.logo)}" alt="${esc(mk.nome)}" onerror="logoFalhou(this)">`:'';
@@ -705,7 +705,7 @@ function aplicaMarca(mk){
   st.textContent=cssMarca(mk.cor);
   $('#brand').innerHTML=htmlMarca(mk);$('#brand').classList.toggle('tem-logo',!!mk.logo);
   $('#brandTop').innerHTML=htmlMarca(mk,true);
-  document.title=mk.nome&&mk.nome!=='Lexa'?`${mk.nome} · Gestão`:'Lexa Escritório';
+  document.title=mk.nome&&mk.nome!=='Honra'?`${mk.nome} · Honra`:'Honra · Gestão para advogados';
   let tc=document.querySelector('meta[name="theme-color"]');if(!tc){tc=document.createElement('meta');tc.name='theme-color';document.head.appendChild(tc)}tc.content=mk.cor;
 }
 
@@ -733,7 +733,7 @@ ROUTES.aparencia=()=>{const mk=rascMarca||(rascMarca=marca());
   </section></div>
   <section class="panel" style="margin-top:14px"><h2>Prévia</h2><div class="prev-marca"><div class="brand tem-logo-${mk.logo?1:0}">${htmlMarca(mk)}</div><button class="btn pri" type="button" tabindex="-1">Botão principal</button><button class="btn" type="button" tabindex="-1">Botão</button><span class="pill p-acc">Destaque</span><div class="kpi hero" style="min-width:200px"><span class="lb">Recebido</span><span class="v">R$ 12.480,00</span></div></div></section>`};
 function mkLe(){const v=id=>$('#'+id)?$('#'+id).value.trim():'';const r=rascMarca;
-  r.nome=v('mk_nome')||'Lexa';const hx6=v('mk_hex');if(/^#[0-9a-f]{6}$/i.test(hx6))r.cor=hx6.toLowerCase();
+  r.nome=v('mk_nome')||'Honra';const hx6=v('mk_hex');if(/^#[0-9a-f]{6}$/i.test(hx6))r.cor=hx6.toLowerCase();
   if(!/^data:/.test(r.logo)||v('mk_logo'))r.logo=v('mk_logo');if(!/^data:/.test(r.icone)||v('mk_icone'))r.icone=v('mk_icone');
   r.fundo=$('#mk_fundo').value;r.mostraNome=$('#mk_mostra').checked}
 function mkAtualiza(){aplicaMarca(rascMarca);const y=window.scrollY;$('#view').innerHTML=ROUTES.aparencia();AFTER.aparencia();window.scrollTo(0,y)}
