@@ -446,6 +446,21 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 @media screen and (max-width:1280px){.grid3{grid-template-columns:1fr}}
 @media screen and (max-width:760px){.tbl-parc .venc{align-items:flex-end}.tbl-parc .obs-in{text-align:right}.tbl-parc .obs-in:focus{margin-left:0}}
 .trancado .app,.trancado #modalRoot,.trancado .fab{visibility:hidden}
+#legal{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}
+#legal[hidden]{display:none}
+.legal-caixa{background:var(--surface);color:var(--fg);border-radius:20px;max-width:720px;width:100%;max-height:min(86vh,900px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.legal-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.legal-topo h2{margin:0;font-size:18px}
+.legal-corpo{overflow:auto;padding:6px 22px 22px;font-size:14px;line-height:1.6}
+.legal-corpo h3{font-size:15px;margin:18px 0 4px}
+.legal-corpo ul{padding-left:20px;margin:6px 0}
+.legal-v{color:var(--muted);font-size:12.5px}
+#gate .gl-aceite,.gl-aceite{display:flex;flex-direction:row;gap:10px;align-items:flex-start;font-size:13.5px;font-weight:400;line-height:1.45;margin:0;cursor:pointer;color:var(--muted)}
+.gl-aceite input{width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--accent)}
+.gl-aceite .gate-link{padding:0;font-size:inherit}
+ul.acessos{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+ul.acessos li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+ul.acessos li span:first-child{text-transform:capitalize;font-weight:600}
 #gate{position:fixed;inset:0;z-index:300;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);background:var(--bg);overflow:auto}
 #gate[hidden]{display:none}
 .gl-arte{position:relative;overflow:hidden;color:#eaf5ee;padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(120% 80% at 0% 0%,#2a8a5a 0%,#14563a 38%,#0b2e20 75%,#06180f 100%)}
@@ -553,6 +568,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 </div>
 <button class="fab" id="fab" type="button" aria-label="Ações rápidas"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <div id="gate" hidden></div>
+<div id="legal" hidden></div>
 <div id="modalRoot"></div>
 
 <script>
@@ -599,7 +615,7 @@ let S;
 function vazio(){return{perfil:{nome:'',oab:'',cpf:'',rg:'',nac:'brasileiro(a)',civil:'',tel:'',email:'',end:'',cidade:'',pix:''},clientes:[],parcelas:[],agenda:[],acoes:[],avulsos:[],empresas:[],devedores:[],acordos:[],seq:1,exemplo:false,marca:null}}
 function salvar(){salvarLocal();nuvemAgenda()}
 function carregar(){try{const r=localStorage.getItem(KEY);if(r){S=Object.assign(vazio(),JSON.parse(r));return}}catch(e){}S=exemplo()}
-const nid=()=>S.seq++;
+const nid=()=>{let v=Date.now()*1000+Math.floor(Math.random()*1000);if(v<=(S.seq||0))v=S.seq+1;S.seq=v+1;return v};
 
 function gerarParcelasCliente(c){
   S.parcelas=S.parcelas.filter(p=>p.clienteId!==c.id||(p.pagamentos&&p.pagamentos.length));
@@ -1497,8 +1513,8 @@ ROUTES.perfil=()=>{const p=S.perfil;const f=(id,l,c)=>`<label class="${c||''}">$
   <form class="panel" id="fPf"><div class="fs">${f('nome','Nome completo *','c2')}${f('oab','OAB (ex.: OAB/PR 12.345)')}${f('cpf','CPF')}${f('rg','RG')}${f('nac','Nacionalidade')}<label>Tratamento<select id="pf_sexo"><option value="">Não informar</option><option value="f" ${p.sexo==='f'?'selected':''}>Senhora</option><option value="m" ${p.sexo==='m'?'selected':''}>Senhor</option></select></label>${f('civil','Estado civil')}${f('tel','Telefone / WhatsApp')}${f('email','E-mail','c2')}${f('end','Endereço do escritório','c2')}${f('cidade','Cidade/UF (foro padrão)')}${f('pix','Chave Pix para honorários')}</div>
   <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn pri" type="submit">Salvar</button></div></form>
   <div class="panel" style="margin-top:14px"><h2>Seus dados</h2><p class="note">Tudo fica salvo na nuvem automaticamente. Se quiser uma cópia sua de todos os clientes, parcelas e agenda, baixe aqui.</p>
-  <div class="row" style="margin-top:10px"><button class="btn" data-act="baixar-backup" type="button">Baixar cópia dos dados</button><button class="btn ghost" data-act="copiar-backup" type="button">Copiar como texto</button></div></div>`};
-AFTER.perfil=()=>{$('#fPf').onsubmit=e=>{e.preventDefault();Object.keys(S.perfil).concat('sexo').forEach(k=>{const i=$('#pf_'+k);if(i)S.perfil[k]=i.value.trim()});salvar();aplicaMarca();renderConta('perfil');toast('Dados salvos')}};
+  <div class="row" style="margin-top:10px"><button class="btn" data-act="baixar-backup" type="button">Baixar cópia dos dados</button><button class="btn ghost" data-act="copiar-backup" type="button">Copiar como texto</button></div></div>${painelSeguranca()}`};
+AFTER.perfil=()=>{carregaSeguranca();$('#fPf').onsubmit=e=>{e.preventDefault();Object.keys(S.perfil).concat('sexo').forEach(k=>{const i=$('#pf_'+k);if(i)S.perfil[k]=i.value.trim()});salvar();aplicaMarca();renderConta('perfil');toast('Dados salvos')}};
 
 /* ---------- Backup ---------- */
 ROUTES.backup=()=>`<div class="phead"><div><h1>Backup</h1><p>Nesta versão os dados ficam guardados só neste navegador. Faça cópias com frequência.</p></div></div>
@@ -1529,12 +1545,19 @@ const GL_IC={
 function glCampo(id,rot,ic,tipo,extra){const senha=tipo==='password';
   return `<label class="gl-campo" for="${id}"><span>${rot}</span><span class="gl-input">${GL_IC[ic]}<input id="${id}" type="${tipo}" ${extra||''}>${senha?`<button type="button" class="gl-olho" data-act="gate-olho" data-alvo="${id}" aria-label="Mostrar senha" title="Mostrar senha">${GL_IC.olho}</button>`:''}</span></label>`}
 function renderGate(){const g=$('#gate');if(!g)return;
-  if(!nuvemDisponivel()||(nuvemUser&&!gateRec)){g.hidden=true;g.innerHTML='';document.body.classList.remove('trancado');return}
+  if(!nuvemDisponivel()||(nuvemUser&&!gateRec&&!gateMfa&&!gateAceite)){g.hidden=true;g.innerHTML='';document.body.classList.remove('trancado');return}
   document.body.classList.add('trancado');g.hidden=false;
   const emailAntes=(($('#gt_email')||{}).value)||'';
   const aba=(k,t)=>`<button type="button" class="gate-aba ${gateModo===k?'on':''}" data-act="gate-modo" data-modo="${k}" role="tab" aria-selected="${gateModo===k}">${t}</button>`;
   let titulo,sub,corpo,botao;
-  if(gateRec){titulo='Crie uma nova senha';sub='Escolha uma senha forte, com pelo menos 8 caracteres.';
+  const aceiteCx=`<label class="gl-aceite"><input type="checkbox" id="gt_aceite" required> <span>Li e aceito os <button type="button" class="gate-link" data-act="legal" data-tipo="termos">Termos de Uso</button> e a <button type="button" class="gate-link" data-act="legal" data-tipo="privacidade">Política de Privacidade</button>.</span></label>`;
+  if(gateMfa){titulo='Verificação em duas etapas';sub='Abra o aplicativo autenticador no celular e digite o código de 6 números.';
+    corpo=glCampo('gt_codigo','Código','lock','text','required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"')+`<div class="gl-linha"><span></span><button type="button" class="gate-link" data-act="nuvem-sair">Entrar com outra conta</button></div>`;
+    botao='Confirmar';
+  }else if(gateAceite){titulo='Antes de continuar';sub='Para usar o Honra, leia e aceite os termos. Eles explicam como guardamos e protegemos os seus dados e os dos seus clientes.';
+    corpo=aceiteCx+`<div class="gl-linha"><span></span><button type="button" class="gate-link" data-act="nuvem-sair">Sair</button></div>`;
+    botao='Aceitar e continuar';
+  }else if(gateRec){titulo='Crie uma nova senha';sub='Escolha uma senha forte, com pelo menos 8 caracteres.';
     corpo=glCampo('gt_senha','Nova senha','lock','password','required minlength="8" autocomplete="new-password" data-forca="1"')+`<div class="gl-forca"><i id="gl_forca"></i></div>`+glCampo('gt_senha2','Repita a nova senha','lock','password','required minlength="8" autocomplete="new-password"');
     botao='Salvar nova senha';
   }else if(gateModo==='criar'){titulo='Crie sua conta';sub='Comece a organizar seu escritório em poucos minutos.';
@@ -1542,7 +1565,7 @@ function renderGate(){const g=$('#gate');if(!g)return;
       +glCampo('gt_oab','OAB <span class="opc">(opcional)</span>','badge','text','placeholder="OAB/SP 000.000"')
       +glCampo('gt_email','E-mail','mail','email','required autocomplete="email" placeholder="voce@escritorio.com.br"')
       +glCampo('gt_senha','Senha','lock','password','required minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" data-forca="1"')+`<div class="gl-forca"><i id="gl_forca"></i></div>`
-      +glCampo('gt_senha2','Confirme a senha','lock','password','required minlength="8" autocomplete="new-password"');
+      +glCampo('gt_senha2','Confirme a senha','lock','password','required minlength="8" autocomplete="new-password"')+aceiteCx;
     botao='Criar conta';
   }else{titulo='Bem-vindo de volta';sub='Entre para acessar a pauta do seu escritório.';
     corpo=glCampo('gt_email','E-mail','mail','email','required autocomplete="email" placeholder="voce@escritorio.com.br"')
@@ -1563,11 +1586,11 @@ function renderGate(){const g=$('#gate');if(!g)return;
     </aside>
     <main class="gl-lado"><div class="gl-form-caixa">
       <div class="gl-topo-mob"><span class="gl-logo">${HONRA_SVG(30)}</span>Honra</div>
-      ${gateRec?'':`<div class="gate-abas" role="tablist">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>`}
+      ${gateRec||gateMfa||gateAceite?'':`<div class="gate-abas" role="tablist">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>`}
       <h1>${titulo}</h1><p class="gl-sub">${sub}</p>
       ${sb?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()" novalidate>${corpo}<button class="btn pri gl-btn" type="submit">${botao}</button></form>`:`<div class="gl-carrega"><i></i>${nuvemMsg?'':'Conectando…'}</div>`}
       ${nuvemMsg?`<p class="gate-msg ${tipoMsg}" role="status">${esc(nuvemMsg)}</p>`:''}
-      ${gateModo==='criar'&&!gateRec?'<p class="gl-termos">Ao criar a conta, você concorda em manter os dados dos seus clientes em sigilo, conforme o Estatuto da Advocacia e a LGPD.</p>':''}
+      ${gateModo==='criar'&&!gateRec&&!gateMfa&&!gateAceite?'<p class="gl-termos">Você se compromete a manter os dados dos seus clientes em sigilo, conforme o Estatuto da Advocacia e a LGPD.</p>':''}
       <div class="gl-seg">${GL_IC.escudo}Conexão protegida. Cada escritório só vê os próprios dados.</div>
     </div></main>`;
   const em=$('#gt_email');if(em&&emailAntes)em.value=emailAntes;
@@ -1581,36 +1604,216 @@ function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promi
 async function nuvemIniciar(){if(!nuvemDisponivel())return;
   try{await nuvemLib();
     sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{flowType:'pkce',persistSession:true,detectSessionInUrl:true}});
-    sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=ses?ses.user:nuvemUser;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes)nuvemSincronizar(true);if(ev==='SIGNED_OUT')nuvemAtualiza()});
+    sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=ses?ses.user:nuvemUser;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes){nuvemLog('entrada');nuvemPosLogin()}if(ev==='SIGNED_OUT')nuvemAtualiza()});
     const {data}=await sb.auth.getSession();nuvemUser=data.session?data.session.user:null;
-    if(nuvemUser)await nuvemSincronizar(false);
+    if(nuvemUser)await nuvemPosLogin();
     nuvemAtualiza();
   }catch(e){nuvemMsg='Não foi possível conectar ao serviço de acesso. Tente de novo mais tarde.';nuvemAtualiza()}
 }
-async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado)return;nuvemOcupado=true;nuvemMsg='Sincronizando…';nuvemAtualiza();
-  try{const {data,error}=await sb.from('escritorios').select('dados').eq('dono',nuvemUser.id).maybeSingle();if(error)throw error;
-    if(data&&data.dados&&Object.keys(data.dados).length){
+/* ---------- Termos de Uso e Política de Privacidade ---------- */
+const LEGAL_CONTATO='[e-mail do encarregado: a definir]';
+const LEGAL={
+  privacidade:{t:'Política de Privacidade',h:`
+<p class="legal-v">Versão de 23 de novembro de 2026</p>
+<p>Esta política explica como o Honra trata dados pessoais, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018, LGPD).</p>
+<h3>1. Quem é quem</h3>
+<p><strong>Dados da sua conta</strong> (nome, e-mail, OAB e dados profissionais): o Honra é o <em>controlador</em>.</p>
+<p><strong>Dados dos seus clientes, devedores e processos</strong>: o seu escritório é o <em>controlador</em> e decide para que os dados servem. O Honra atua como <em>operador</em>, guardando e processando esses dados só para que você use o sistema, seguindo as suas instruções.</p>
+<h3>2. Que dados tratamos</h3>
+<ul><li>Conta: nome, e-mail, senha (guardada de forma cifrada, ninguém consegue lê-la), OAB, CPF, RG, endereço, telefone e chave Pix, quando você os informa.</li>
+<li>Cadastros que você faz: clientes, parcelas, pagamentos, agenda, ações, empresas, devedores e acordos.</li>
+<li>Registros de segurança: data e hora de entrada e saída, navegador e sistema do aparelho, aceite destes termos.</li></ul>
+<h3>3. Para que usamos</h3>
+<ul><li>Permitir o acesso à conta e manter os dados disponíveis em qualquer aparelho (execução de contrato, art. 7º, V).</li>
+<li>Proteger a conta e prevenir fraudes (legítimo interesse e segurança, art. 7º, IX).</li>
+<li>Cumprir obrigações legais, como a guarda de registros de acesso exigida pelo Marco Civil da Internet (art. 7º, II).</li></ul>
+<p>Não vendemos dados, não usamos os dados dos seus clientes para publicidade e não os compartilhamos com terceiros, exceto os fornecedores abaixo.</p>
+<h3>4. Onde os dados ficam</h3>
+<p>Os dados ficam no Supabase (banco de dados em servidores em São Paulo, Brasil), com conexão cifrada e regras que impedem um escritório de ver os dados de outro. O site é servido pelo GitHub Pages. Se você ligar a sincronização com o Google Agenda, os compromissos são enviados à sua própria conta Google.</p>
+<h3>5. Por quanto tempo</h3>
+<p>Enquanto sua conta existir. Ao excluir a conta, todos os dados do escritório são apagados na hora. Registros de acesso podem ser mantidos por até 6 meses quando a lei exigir.</p>
+<h3>6. Seus direitos</h3>
+<p>Você pode, a qualquer momento: confirmar e acessar seus dados, corrigi-los (em Meus dados), baixar uma cópia completa (portabilidade, em Meus dados), excluir a conta e todos os dados (em Meus dados) e revogar o consentimento. Pedidos dos seus clientes sobre os dados deles devem ser atendidos pelo seu escritório, e o Honra dá as ferramentas para isso.</p>
+<h3>7. Segurança</h3>
+<p>Senhas cifradas, conexão protegida, isolamento por escritório no banco de dados, verificação em duas etapas opcional e registro dos últimos acessos. Em caso de incidente de segurança que possa trazer risco, avisaremos você e a ANPD.</p>
+<h3>8. Contato do encarregado</h3>
+<p>Dúvidas ou pedidos sobre dados pessoais: <strong>${LEGAL_CONTATO}</strong>.</p>`},
+  termos:{t:'Termos de Uso',h:`
+<p class="legal-v">Versão de 23 de novembro de 2026</p>
+<h3>1. O serviço</h3>
+<p>O Honra é um sistema on-line de gestão para escritórios de advocacia: honorários, parcelas, agenda, documentos e cobranças.</p>
+<h3>2. Sua conta</h3>
+<p>Você é responsável por manter sua senha em sigilo e por tudo que for feito com a sua conta. Recomendamos ativar a verificação em duas etapas. Avise-nos se suspeitar de acesso indevido.</p>
+<h3>3. Os dados que você cadastra</h3>
+<p>Os dados dos seus clientes pertencem ao seu escritório. Ao cadastrá-los, você declara ter base legal para isso (por exemplo, a execução do contrato de honorários) e se compromete a mantê-los em sigilo, conforme o Estatuto da Advocacia (Lei 8.906/1994), o Código de Ética da OAB e a LGPD.</p>
+<h3>4. Documentos gerados</h3>
+<p>Contratos, procurações e recibos são modelos preenchidos com os dados informados. Revise cada documento antes de usar. A responsabilidade técnica pelo conteúdo é do advogado.</p>
+<h3>5. Uso adequado</h3>
+<p>Não use o Honra para atividades ilegais nem tente acessar dados de outros escritórios. Contas usadas de forma abusiva podem ser suspensas.</p>
+<h3>6. Disponibilidade</h3>
+<p>Trabalhamos para manter o sistema sempre no ar, mas podem ocorrer interrupções para manutenção ou por falhas de fornecedores. Baixe cópias dos seus dados periodicamente em Meus dados.</p>
+<h3>7. Encerramento</h3>
+<p>Você pode excluir sua conta a qualquer momento em Meus dados. A exclusão apaga todos os dados do escritório e não pode ser desfeita.</p>
+<h3>8. Mudanças</h3>
+<p>Se estes termos mudarem, pediremos um novo aceite antes de você continuar usando o sistema.</p>
+<h3>9. Foro</h3>
+<p>Aplica-se a lei brasileira. Contato: <strong>${LEGAL_CONTATO}</strong>.</p>`}
+};
+function abrirLegal(tipo){const d=LEGAL[tipo];const el=$('#legal');if(!d||!el)return;
+  el.innerHTML=`<div class="legal-caixa" role="dialog" aria-modal="true" aria-label="${d.t}"><div class="legal-topo"><h2>${d.t}</h2><button class="btn sm" data-act="legal-fechar" type="button">Fechar</button></div><div class="legal-corpo">${d.h}</div></div>`;
+  el.hidden=false;el.querySelector('.legal-corpo').scrollTop=0}
+function fecharLegal(){const el=$('#legal');if(el){el.hidden=true;el.innerHTML=''}}
+/* ---------- Nuvem: uma linha por registro ---------- */
+const TERMOS_V='2026-11-23';
+const NV_TAB={clientes:'clientes',parcelas:'parcelas',agenda:'compromissos',acoes:'acoes',avulsos:'avulsos',empresas:'empresas',devedores:'devedores'};
+const NV_ORD=['clientes','parcelas','compromissos','acoes','avulsos','empresas','devedores','acordos','acordo_parcelas'];
+let nuvemEsc=null,nuvemSnap=null,nuvemEnviando=false,nuvemDeNovo=false,nuvemPos=null,gateMfa=false,gateAceite=false;
+const nvD=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:null;
+const nvN=v=>v===''||v==null||!isFinite(+v)?null:+v;
+const nvI=v=>{const n=nvN(v);return n==null?null:Math.round(n)};
+const nvT=v=>v==null||v===''?null:String(v);
+const NV_COL={
+  clientes:o=>({nome:o.nome||'',cpf:nvT(o.cpf),telefone:nvT(o.tel),email:nvT(o.email),area:nvT(o.area),tipo_hon:nvT(o.tipoHon),total:nvI(o.total),entrada:nvI(o.entrada),forma:nvT(o.forma),n_parcelas:nvI(o.nParcelas),primeiro_venc:nvD(o.primeiroVenc),exito_pct:nvN(o.exitoPct),criado:nvD(o.criado)}),
+  parcelas:o=>({cliente_id:o.clienteId,num:nvI(o.num),venc:nvD(o.venc),valor:nvI(o.valor),obs:nvT(o.obs),pagamentos:o.pagamentos||[]}),
+  compromissos:o=>({titulo:o.titulo||'',data:nvD(o.data),hora:nvT(o.hora),descricao:nvT(o.desc)}),
+  acoes:o=>({cliente:nvT(o.cliente),tipo:nvT(o.tipo),descricao:nvT(o.desc),data:nvD(o.data),prioridade:nvT(o.prioridade),status:nvT(o.status)}),
+  avulsos:o=>({descricao:nvT(o.desc),valor:nvI(o.valor),data:nvD(o.data)}),
+  empresas:o=>({nome:o.nome||'',cnpj:nvT(o.cnpj)}),
+  devedores:o=>({empresa_id:nvI(o.empresaId),nome:o.nome||'',doc:nvT(o.doc)}),
+  acordos:o=>({empresa_id:nvI(o.empresaId),devedor_id:nvI(o.devedorId),data:nvD(o.data),total:nvI(o.total),entrada:nvI(o.entrada)}),
+  acordo_parcelas:(o,a)=>({acordo_id:a.id,num:nvI(o.num),venc:nvD(o.venc),valor:nvI(o.valor),pagamentos:o.pagamentos||[]})
+};
+function nuvemLinhas(){const r={};NV_ORD.forEach(t=>r[t]=new Map());
+  const put=(t,o,extra,pai)=>{if(o==null||!Number.isSafeInteger(+o.id))return;r[t].set(+o.id,JSON.stringify(Object.assign({escritorio_id:nuvemEsc,id:+o.id},NV_COL[t](o,pai),{extra})))};
+  const cli=new Set(S.clientes.map(c=>+c.id));
+  Object.entries(NV_TAB).forEach(([k,t])=>(S[k]||[]).forEach(o=>{if(t==='parcelas'&&!cli.has(+o.clienteId))return;put(t,o,o)}));
+  (S.acordos||[]).forEach(a=>{const {parcelas,...resto}=a;put('acordos',a,resto);(parcelas||[]).forEach(p=>put('acordo_parcelas',p,p,a))});
+  return r}
+const nuvemEscDados=()=>({nome:(S.marca&&S.marca.nome)||null,marca:S.marca||null,config:{google:S.google||null,exemplo:!!S.exemplo,seq:S.seq||1}});
+function nuvemFoto(){const s=nuvemLinhas();s._esc=JSON.stringify(nuvemEscDados());s._perfil=JSON.stringify(S.perfil||{});return s}
+async function nuvemEmpurra(){
+  const novo=nuvemLinhas();
+  for(const t of NV_ORD){const ant=nuvemSnap[t],cur=novo[t],up=[];cur.forEach((j,id)=>{if(ant.get(id)!==j)up.push(id)});
+    for(let i=0;i<up.length;i+=400){const lote=up.slice(i,i+400);const {error}=await sb.from(t).upsert(lote.map(id=>JSON.parse(cur.get(id))),{onConflict:'escritorio_id,id'});if(error)throw error;lote.forEach(id=>ant.set(id,cur.get(id)))}}
+  for(const t of [...NV_ORD].reverse()){const ant=nuvemSnap[t],cur=novo[t],del=[...ant.keys()].filter(id=>!cur.has(id));
+    for(let i=0;i<del.length;i+=200){const lote=del.slice(i,i+200);const {error}=await sb.from(t).delete().eq('escritorio_id',nuvemEsc).in('id',lote);if(error)throw error;lote.forEach(id=>ant.delete(id))}}
+  const ej=JSON.stringify(nuvemEscDados());if(ej!==nuvemSnap._esc){const {error}=await sb.from('escritorios').update(JSON.parse(ej)).eq('id',nuvemEsc);if(error)throw error;nuvemSnap._esc=ej}
+  const pj=JSON.stringify(S.perfil||{});if(pj!==nuvemSnap._perfil){const {error}=await sb.from('perfis').upsert({usuario:nuvemUser.id,dados:S.perfil||{}},{onConflict:'usuario'});if(error)throw error;nuvemSnap._perfil=pj}
+}
+async function nuvemTudo(t,cols){let out=[],i=0;for(;;){const {data,error}=await sb.from(t).select(cols).eq('escritorio_id',nuvemEsc).order('id').range(i,i+999);if(error)throw error;out=out.concat(data);if(data.length<1000)return out;i+=1000}}
+async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado||gateMfa||gateAceite)return;nuvemOcupado=true;nuvemMsg='Sincronizando…';nuvemAtualiza();
+  try{
+    if(nuvemSnap&&nuvemEsc){clearTimeout(nuvemTimer);await nuvemEmpurra()}
+    const {data:esc,error:e0}=await sb.rpc('meu_escritorio');if(e0)throw e0;nuvemEsc=esc;
+    const {data:row,error:e1}=await sb.from('escritorios').select('dados,marca,config,migrado_em').eq('id',esc).maybeSingle();if(e1)throw e1;
+    if(!row)throw new Error('não encontrei o escritório');
+    if(!row.migrado_em){
       try{localStorage.setItem('lexa-antes-da-nuvem',localStorage.getItem(KEY)||'')}catch(e){}
-      S=Object.assign(vazio(),data.dados);salvarLocal();nuvemMsg='Dados carregados da nuvem às '+nuvemHora()+'.';aplicaMarca();
-    }else{const md=nuvemUser.user_metadata||{};if(!S.perfil.nome&&md.nome){S.perfil.nome=md.nome;if(md.oab&&!S.perfil.oab)S.perfil.oab=md.oab;salvarLocal();aplicaMarca()}if(!S.perfil.email&&nuvemUser.email)S.perfil.email=nuvemUser.email;const {error:e2}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(e2)throw e2;nuvemMsg='Dados enviados para a nuvem às '+nuvemHora()+'.'}
-  }catch(e){nuvemMsg='Não consegui sincronizar: '+e.message}
+      if(row.dados&&Object.keys(row.dados).length)S=Object.assign(vazio(),row.dados);
+      const md=nuvemUser.user_metadata||{};if(!S.perfil.nome&&md.nome){S.perfil.nome=md.nome;if(md.oab&&!S.perfil.oab)S.perfil.oab=md.oab}if(!S.perfil.email&&nuvemUser.email)S.perfil.email=nuvemUser.email;
+      const ids=[];['clientes','parcelas','agenda','acoes','avulsos','empresas','devedores','acordos'].forEach(k=>(S[k]||[]).forEach(o=>{ids.push(+o.id||0);(o.parcelas||[]).forEach(p=>ids.push(+p.id||0))}));S.seq=Math.max(S.seq||1,...ids,0)+1;
+      const vaz={};NV_ORD.forEach(t=>vaz[t]=new Map());vaz._esc='';vaz._perfil='';nuvemSnap=vaz;
+      await nuvemEmpurra();
+      const {error:e2}=await sb.from('escritorios').update({migrado_em:new Date().toISOString()}).eq('id',esc);if(e2)throw e2;
+      salvarLocal();aplicaMarca();nuvemMsg='Dados organizados na nuvem às '+nuvemHora()+'.';
+    }else{
+      const tabs=await Promise.all(NV_ORD.map(t=>nuvemTudo(t,t==='acordo_parcelas'?'id,acordo_id,extra':'id,extra')));
+      const {data:pf,error:e3}=await sb.from('perfis').select('dados').eq('usuario',nuvemUser.id).maybeSingle();if(e3)throw e3;
+      const T=t=>tabs[NV_ORD.indexOf(t)],rec=r=>Object.assign({},r.extra,{id:+r.id});
+      const n=vazio();Object.entries(NV_TAB).forEach(([k,t])=>n[k]=T(t).map(rec));
+      const ac=new Map();n.acordos=T('acordos').map(r=>{const a=Object.assign(rec(r),{parcelas:[]});ac.set(a.id,a);return a});
+      T('acordo_parcelas').forEach(r=>{const a=ac.get(+r.acordo_id);a&&a.parcelas.push(rec(r))});n.acordos.forEach(a=>a.parcelas.sort((x,y)=>(x.num||0)-(y.num||0)));
+      n.perfil=Object.assign(vazio().perfil,(pf&&pf.dados)||{});
+      const cf=row.config||{};n.marca=row.marca||null;if(cf.google)n.google=cf.google;n.exemplo=!!cf.exemplo;
+      const ids=[];NV_ORD.forEach(t=>T(t).forEach(r=>ids.push(+r.id)));n.seq=Math.max(cf.seq||1,...ids,0)+1;
+      try{if(!localStorage.getItem('lexa-antes-da-nuvem'))localStorage.setItem('lexa-antes-da-nuvem',localStorage.getItem(KEY)||'')}catch(e){}
+      S=n;nuvemSnap=nuvemFoto();salvarLocal();aplicaMarca();nuvemMsg='Dados carregados da nuvem às '+nuvemHora()+'.';
+    }
+  }catch(e){nuvemMsg='Não consegui sincronizar: '+(e.message||e)}
   finally{nuvemOcupado=false;nuvemAtualiza();if(!$('#gate')||$('#gate').hidden)go()}
 }
 function nuvemAgenda(){if(!sb||!nuvemUser)return;clearTimeout(nuvemTimer);nuvemTimer=setTimeout(nuvemEnviar,1200)}
-async function nuvemEnviar(){if(!sb||!nuvemUser)return;
-  try{const {error}=await sb.from('escritorios').upsert({dono:nuvemUser.id,dados:S},{onConflict:'dono'});if(error)throw error;nuvemMsg='Salvo na nuvem às '+nuvemHora()+'.'}
-  catch(e){nuvemMsg='Não foi possível salvar na nuvem agora ('+e.message+'). Os dados continuam neste navegador e tentam de novo na próxima alteração.'}
-  nuvemAtualiza()}
+async function nuvemEnviar(){if(!sb||!nuvemUser||!nuvemEsc||!nuvemSnap)return;
+  if(nuvemEnviando||nuvemOcupado){nuvemDeNovo=true;return}nuvemEnviando=true;
+  try{await nuvemEmpurra();nuvemMsg='Salvo na nuvem às '+nuvemHora()+'.'}
+  catch(e){nuvemMsg='Não foi possível salvar na nuvem agora ('+(e.message||e)+'). Os dados continuam neste navegador e tentam de novo na próxima alteração.'}
+  finally{nuvemEnviando=false;nuvemAtualiza();if(nuvemDeNovo){nuvemDeNovo=false;nuvemAgenda()}}}
+/* Depois de entrar: duas etapas, aceite dos termos e só então os dados */
+function nuvemPosLogin(){if(nuvemPos)return nuvemPos;nuvemPos=(async()=>{try{
+    const {data:al}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if(al&&al.nextLevel==='aal2'&&al.currentLevel!=='aal2'){gateMfa=true;nuvemMsg='';nuvemAtualiza();return}
+    gateMfa=false;
+    const {data:ac,error}=await sb.from('aceites').select('id').eq('versao',TERMOS_V).limit(1);
+    if(!error&&!(ac&&ac.length)){const md=nuvemUser.user_metadata||{};
+      if(md.aceite_versao===TERMOS_V)await sb.from('aceites').insert({versao:TERMOS_V,agente:nvAgente()});
+      else{gateAceite=true;nuvemMsg='';nuvemAtualiza();return}}
+    gateAceite=false;nuvemAtualiza();await nuvemSincronizar(false);
+  }finally{nuvemPos=null}})();return nuvemPos}
+const nvAgente=()=>String(navigator.userAgent||'').slice(0,250);
+function nuvemLog(ev){if(sb&&nuvemUser)sb.from('acessos').insert({evento:ev,agente:nvAgente()}).then(()=>{},()=>{})}
+function nvAparelho(ua){ua=ua||'';const so=/iPhone|iPad/.test(ua)?'iPhone/iPad':/Android/.test(ua)?'Android':/Windows/.test(ua)?'Windows':/Mac OS/.test(ua)?'Mac':/Linux/.test(ua)?'Linux':'aparelho';
+  const nav=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'navegador';return nav+' no '+so}
+async function nuvemMfaConfirmar(){const code=(($('#gt_codigo')||{}).value||'').replace(/\D/g,'');
+  if(code.length!==6){toast('Digite os 6 números do aplicativo');return}
+  try{const {data:fs,error:e0}=await sb.auth.mfa.listFactors();if(e0)throw e0;const f=(fs.totp||[]).find(x=>x.status==='verified');if(!f)throw new Error('nenhum autenticador ativo');
+    const {error}=await sb.auth.mfa.challengeAndVerify({factorId:f.id,code});if(error)throw error;
+    gateMfa=false;nuvemMsg='';nuvemLog('duas etapas confirmadas');await nuvemPosLogin();
+  }catch(e){nuvemMsg=/invalid|expired/i.test(String(e.message))?'Código incorreto ou expirado. Confira o aplicativo e tente de novo.':'Não consegui confirmar: '+e.message;nuvemAtualiza()}}
+async function nuvemAceitar(){if(!($('#gt_aceite')||{}).checked){toast('Marque que leu e aceita os termos');return}
+  try{const {error}=await sb.from('aceites').insert({versao:TERMOS_V,agente:nvAgente()});if(error)throw error;gateAceite=false;nuvemMsg='';await nuvemPosLogin()}
+  catch(e){nuvemMsg='Não consegui registrar o aceite: '+e.message;nuvemAtualiza()}}
+/* ---------- Segurança e privacidade (Meus dados) ---------- */
+function painelSeguranca(){if(!nuvemUser||!sb)return'';
+  return `<div class="grid2" style="margin-top:14px"><div class="panel"><h2>Segurança</h2>
+    <div id="mfaBox"><p class="note">Verificando a verificação em duas etapas…</p></div>
+    <h3 style="margin:16px 0 6px;font-size:14px">Últimos acessos</h3><div id="acessosBox"><p class="note">Carregando…</p></div></div>
+  <div class="panel"><h2>Privacidade</h2><p class="note">Os dados dos seus clientes pertencem ao seu escritório. O Honra só os guarda para você usar o sistema, nunca vende nem compartilha.</p>
+    <div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="btn ghost" data-act="legal" data-tipo="privacidade" type="button">Política de Privacidade</button><button class="btn ghost" data-act="legal" data-tipo="termos" type="button">Termos de Uso</button></div>
+    <h3 style="margin:16px 0 6px;font-size:14px">Excluir conta</h3><p class="note">Apaga sua conta, o escritório e todos os clientes, parcelas, agenda e documentos ligados a ela. Baixe uma cópia antes, se quiser guardar.</p>
+    <div class="row" style="margin-top:10px"><button class="btn ghost danger" data-act="excluir-conta" type="button">Excluir minha conta</button></div></div></div>`}
+async function carregaSeguranca(){if(!sb||!nuvemUser)return;
+  try{const {data:fs}=await sb.auth.mfa.listFactors();const ativo=((fs&&fs.totp)||[]).find(x=>x.status==='verified');const b=$('#mfaBox');
+    if(b)b.innerHTML=ativo?`<p class="note"><strong>Verificação em duas etapas ativada.</strong> Ao entrar, além da senha, pedimos o código do aplicativo autenticador.</p><div class="row" style="margin-top:8px"><button class="btn ghost danger" data-act="mfa-desativar" data-fator="${esc(ativo.id)}" type="button">Desativar</button></div>`
+      :`<p class="note">Opcional. Além da senha, pede um código do aplicativo autenticador do celular (Google Authenticator, Microsoft Authenticator ou Authy) ao entrar.</p><div class="row" style="margin-top:8px"><button class="btn" data-act="mfa-ativar" type="button">Ativar duas etapas</button></div>`}catch(e){}
+  try{const {data,error}=await sb.from('acessos').select('quando,evento,agente').order('quando',{ascending:false}).limit(8);const b=$('#acessosBox');if(!b)return;
+    if(error)throw error;b.innerHTML=data.length?`<ul class="acessos">${data.map(a=>{const d=new Date(a.quando);return`<li><span>${esc(a.evento)}</span><span class="note">${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${esc(nvAparelho(a.agente))}</span></li>`}).join('')}</ul>`:'<p class="note">Os próximos acessos aparecem aqui.</p>'}catch(e){const b=$('#acessosBox');if(b)b.innerHTML='<p class="note">Não consegui carregar os acessos agora.</p>'}}
+async function mfaAtivar(){
+  try{const {data:fs}=await sb.auth.mfa.listFactors();for(const f of ((fs&&fs.all)||[]).filter(x=>x.status!=='verified'))await sb.auth.mfa.unenroll({factorId:f.id});
+    const {data,error}=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'Honra '+new Date().toISOString().slice(0,16)});if(error)throw error;
+    modal(`<h2>Ativar duas etapas</h2><p class="note">1. No celular, abra o aplicativo autenticador e leia o código abaixo.</p>
+      <div style="display:grid;place-items:center;margin:10px 0"><img src="${esc(data.totp.qr_code)}" alt="Código QR para o autenticador" width="180" height="180" style="background:#fff;border-radius:12px;padding:8px"></div>
+      <p class="note">Sem câmera? Digite esta chave no aplicativo: <code style="word-break:break-all">${esc(data.totp.secret)}</code></p>
+      <form id="fMf" class="fs"><label>2. Digite o código de 6 números que aparece no aplicativo<input id="mf_c" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label>
+      <div class="row" style="justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Ativar</button></div></form>`);
+    $('#fMf').onsubmit=async ev=>{ev.preventDefault();const code=$('#mf_c').value.replace(/\D/g,'');
+      const {error:e2}=await sb.auth.mfa.challengeAndVerify({factorId:data.id,code});
+      if(e2){toast('Código incorreto. Tente de novo.');return}
+      fechar();nuvemLog('duas etapas ativadas');toast('Verificação em duas etapas ativada');carregaSeguranca()};
+  }catch(e){toast('Não consegui ativar: '+e.message)}}
+function mfaDesativar(fid){confirmar('Desativar a verificação em duas etapas? Depois disso, só a senha será pedida ao entrar.','Desativar',async()=>{
+  const {error}=await sb.auth.mfa.unenroll({factorId:fid});if(error){toast('Não consegui desativar: '+error.message);return}
+  try{await sb.auth.refreshSession()}catch(e){}nuvemLog('duas etapas desativadas');toast('Verificação em duas etapas desativada');carregaSeguranca()})}
+function excluirConta(){modal(`<h2>Excluir minha conta</h2><p>Isto apaga <strong>definitivamente</strong> sua conta, o escritório e todos os clientes, parcelas, agenda, cobranças e o histórico. Não dá para desfazer.</p>
+  <p class="note">Se quiser guardar os dados, use antes "Baixar cópia dos dados".</p>
+  <form id="fEx" class="fs"><label>Para confirmar, digite EXCLUIR<input id="ex_c" autocomplete="off" required></label>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri danger" type="submit">Excluir tudo</button></div></form>`);
+  $('#fEx').onsubmit=async ev=>{ev.preventDefault();if($('#ex_c').value.trim().toUpperCase()!=='EXCLUIR'){toast('Digite EXCLUIR para confirmar');return}
+    const {error}=await sb.rpc('excluir_minha_conta');if(error){toast('Não consegui excluir: '+error.message);return}
+    fechar();clearTimeout(nuvemTimer);nuvemSnap=null;nuvemEsc=null;try{await sb.auth.signOut({scope:'local'})}catch(e){}
+    nuvemUser=null;try{localStorage.removeItem(KEY);localStorage.removeItem('lexa-antes-da-nuvem')}catch(e){}
+    S=vazio();nuvemMsg='Sua conta e todos os dados foram excluídos.';nuvemAtualiza();go()}}
 async function nuvemEntrar(){
   const val=id=>((($('#'+id))||{}).value||'').trim();
   const em=val('gt_email'),senha=(($('#gt_senha')||{}).value||''),senha2=(($('#gt_senha2')||{}).value||'');
   try{if(!sb)await nuvemIniciar();if(!sb)throw new Error('serviço indisponível');
+    if(gateMfa){await nuvemMfaConfirmar();return}
+    if(gateAceite){await nuvemAceitar();return}
     if(gateRec){
       if(!nuvemUser){nuvemMsg='Esse link de redefinição expirou ou já foi usado. Peça um novo em "Esqueci minha senha".';gateRec=false;try{history.replaceState(null,'',location.pathname)}catch(e){}nuvemAtualiza();return}
       if(senha.length<8){toast('A senha precisa de pelo menos 8 caracteres');return}
       if(senha!==senha2){toast('As senhas não conferem');return}
       const {error}=await sb.auth.updateUser({password:senha});if(error)throw error;
-      gateRec=false;try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}nuvemMsg='Senha alterada.';toast('Senha alterada');nuvemAtualiza();go();return}
+      gateRec=false;nuvemLog('senha alterada');try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}nuvemMsg='Senha alterada.';toast('Senha alterada');nuvemAtualiza();go();return}
     if(!/@/.test(em)){toast('Digite um e-mail válido');return}
     if(!senha){toast('Digite a senha');return}
     if(gateModo==='criar'){
@@ -1618,7 +1821,8 @@ async function nuvemEntrar(){
       if(!nome){toast('Digite seu nome completo');return}
       if(senha.length<8){toast('A senha precisa de pelo menos 8 caracteres');return}
       if(senha!==senha2){toast('As senhas não conferem');return}
-      const {data,error}=await sb.auth.signUp({email:em,password:senha,options:{emailRedirectTo:location.origin+location.pathname,data:{nome,oab}}});
+      if(!($('#gt_aceite')||{}).checked){toast('Para criar a conta, aceite os Termos de Uso e a Política de Privacidade');return}
+      const {data,error}=await sb.auth.signUp({email:em,password:senha,options:{emailRedirectTo:location.origin+location.pathname,data:{nome,oab,aceite_versao:TERMOS_V,aceite_em:new Date().toISOString()}}});
       if(error)throw error;
       nuvemMsg=data.session?'Conta criada. Entrando…':'Conta criada. Enviamos um e-mail para '+em+'. Clique no link para confirmar e depois entre com sua senha.';
       if(!data.session){gateModo='entrar'}
@@ -1634,7 +1838,7 @@ async function nuvemEsqueci(){const em=((($('#gt_email'))||{}).value||'').trim()
     nuvemMsg='Enviamos um link para redefinir a senha para '+em+'.'}catch(e){nuvemMsg='Não consegui enviar: '+e.message}
   nuvemAtualiza()}
 
-async function nuvemSair(){if(!sb)return;try{await sb.auth.signOut()}catch(e){}nuvemUser=null;
+async function nuvemSair(){if(!sb)return;clearTimeout(nuvemTimer);if(nuvemSnap&&!gateMfa&&!gateAceite){try{await nuvemEmpurra()}catch(e){}}if(nuvemUser){try{await sb.from('acessos').insert({evento:'saída',agente:nvAgente()})}catch(e){}}try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemSnap=null;nuvemEsc=null;gateMfa=false;gateAceite=false;
   try{localStorage.removeItem(KEY);localStorage.removeItem('lexa-antes-da-nuvem')}catch(e){}
   S=vazio();nuvemMsg='Você saiu. Entre de novo para acessar os dados.';nuvemAtualiza();go()}
 function nuvemPainel(){
@@ -1687,6 +1891,11 @@ document.addEventListener('click',e=>{
     case 'gate-esqueci':nuvemEsqueci();break;
     case 'gate-olho':{const i=$('#'+ds.alvo);if(i){const v=i.type==='password';i.type=v?'text':'password';el.setAttribute('aria-label',v?'Ocultar senha':'Mostrar senha')}break}
     case 'nuvem-sair':nuvemSair();break;
+    case 'legal':abrirLegal(ds.tipo);break;
+    case 'legal-fechar':fecharLegal();break;
+    case 'mfa-ativar':mfaAtivar();break;
+    case 'mfa-desativar':mfaDesativar(ds.fator);break;
+    case 'excluir-conta':excluirConta();break;
     case 'nuvem-sincar':nuvemSincronizar(true);break;
     case 'exp-ics':exportaIcs();break;
     case 'g-config':modalGoogle();break;
