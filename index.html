@@ -198,8 +198,17 @@ textarea{min-height:70px;resize:vertical}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .prog{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden}
 .prog>div{height:100%;background:var(--grad);border-radius:99px}
-.doc{background:#fff;color:#111;font-family:Georgia,"Times New Roman",serif;font-size:15px;line-height:1.65;padding:40px 48px;border-radius:16px;max-width:780px;margin:0 auto;white-space:pre-wrap;width:100%}
-.doc h4{text-align:center;font-size:1.05rem;margin:0 0 18px;letter-spacing:.04em}
+.doc{background:#fff;color:#111;font-family:"Times New Roman",Tinos,Georgia,serif;font-size:16px;line-height:1.5;padding:64px 64px 56px 80px;border-radius:6px;max-width:794px;margin:0 auto;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 32px rgba(0,0,0,.07)}
+.doc h4{text-align:center;font-size:16px;font-weight:700;margin:0 0 28px;letter-spacing:.02em;text-transform:uppercase}
+.doc p{margin:0 0 14px;text-align:justify;text-indent:0;hyphens:auto;-webkit-hyphens:auto}
+.doc p.doc-data{text-align:right;margin-top:28px}
+.doc-ass{display:flex;flex-wrap:wrap;justify-content:center;gap:48px 56px;margin-top:64px;break-inside:avoid}
+.doc-ass .ass{width:300px;max-width:100%;text-align:center;break-inside:avoid}
+.doc-ass .linha{border-top:1px solid #111;margin-bottom:6px}
+.doc-ass .nome{font-weight:700}.doc-ass .papel{font-size:14px}
+.doc-folha{background:var(--surface-2);border-radius:16px;padding:28px 16px}
+.doc-falta{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:.86rem;margin:0}
+.modal .doc{padding:36px 40px;box-shadow:none;border:1px solid var(--line)}
 .chart svg{width:100%;height:auto;display:block}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:.8rem;font-variant-numeric:tabular-nums}
 .hide-money .money{filter:blur(7px)}
@@ -218,7 +227,7 @@ textarea{min-height:70px;resize:vertical}
   .conta-txt,.conta-seta{display:none}
   .conta-btn{padding:3px;min-height:44px}
   .conta-menu{width:min(270px,calc(100vw - 32px))}
-  .doc{padding:24px 18px}
+  .doc{padding:28px 20px;font-size:14px}.doc-folha{padding:0;background:none}.doc-ass{gap:36px}
   .week{grid-template-columns:repeat(7,minmax(40px,1fr));overflow-x:auto}
 }
 @media (max-width:460px){ .kpis{grid-template-columns:1fr} form .fs{grid-template-columns:1fr} .fs .c2{grid-column:auto} .day small{display:none} }
@@ -428,7 +437,19 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 .ico-btn{min-width:32px;padding:0 8px!important;font-size:1rem}
 @media (max-width:1280px){.grid3{grid-template-columns:1fr}}
 @media (max-width:760px){.tbl-parc .venc{align-items:flex-end}.tbl-parc .obs-in{text-align:right}.tbl-parc .obs-in:focus{margin-left:0}}
-@media print{ .side,.top,.noprint{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} .doc{padding:0} }
+@media print{ .side,.top,.noprint,#fab,.toast{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} }
+@page{size:A4;margin:0}
+#printRoot{display:none}
+@media print{
+  body.imprimindo{background:#fff!important;margin:0}
+  body.imprimindo>*:not(#printRoot){display:none!important}
+  body.imprimindo #printRoot{display:block}
+  #printRoot .doc{width:auto;max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;padding:0;font-size:12pt;line-height:1.5}
+  #printRoot .doc h4{font-size:12pt}#printRoot .doc-ass .papel{font-size:11pt}
+  #printRoot table{width:100%;border-collapse:collapse}#printRoot td{padding:0;border:0}
+  #printRoot .pg-top{height:30mm}#printRoot .pg-bot{height:20mm}
+  #printRoot .pg-corpo{padding:0 20mm 0 30mm}
+}
 </style>
 
 <div class="app" id="app">
@@ -906,6 +927,7 @@ function formCliente(c){
     <label>Telefone / WhatsApp<input id="c_tel" inputmode="tel" value="${esc(fmtTel(c.tel))}"></label>
     <label>CPF<input id="c_cpf" inputmode="numeric" value="${esc(fmtCPF(c.cpf))}"><span class="note" id="cpfMsg"></span></label>
     <label>RG<input id="c_rg" value="${v('rg')}"></label>
+    <label>Tratamento<select id="c_sexo"><option value="">Não informar</option><option value="f" ${c.sexo==='f'?'selected':''}>Senhora</option><option value="m" ${c.sexo==='m'?'selected':''}>Senhor</option></select></label>
     <label>Nacionalidade<input id="c_nac" value="${v('nac')}"></label>
     <label>Estado civil<select id="c_civil"><option value="">Selecione</option>${CIVIL.map(x=>`<option ${c.civil===x?'selected':''}>${x}</option>`).join('')}</select></label>
     <label>Profissão<input id="c_prof" value="${v('prof')}"></label>
@@ -959,7 +981,7 @@ function wireCliente(c){
   $('#c_tel').addEventListener('blur',e=>e.target.value=fmtTel(e.target.value));
   $('#fCli').onsubmit=ev=>{ev.preventDefault();
     const g=id=>$('#'+id).value.trim();
-    const d={nome:g('c_nome'),nasc:g('c_nasc'),tel:onlyDigits(g('c_tel')),cpf:onlyDigits(g('c_cpf')),rg:g('c_rg'),nac:g('c_nac'),civil:g('c_civil'),prof:g('c_prof'),email:g('c_email'),renda:centsFrom(g('c_renda')),area:g('c_area'),end:g('c_end'),num:g('c_num'),cep:g('c_cep'),bairro:g('c_bairro'),cidade:g('c_cidade'),uf:g('c_uf'),obs:g('c_obs'),causa:centsFrom(g('c_causa'))};
+    const d={nome:g('c_nome'),nasc:g('c_nasc'),tel:onlyDigits(g('c_tel')),cpf:onlyDigits(g('c_cpf')),rg:g('c_rg'),nac:g('c_nac'),sexo:g('c_sexo'),civil:g('c_civil'),prof:g('c_prof'),email:g('c_email'),renda:centsFrom(g('c_renda')),area:g('c_area'),end:g('c_end'),num:g('c_num'),cep:g('c_cep'),bairro:g('c_bairro'),cidade:g('c_cidade'),uf:g('c_uf'),obs:g('c_obs'),causa:centsFrom(g('c_causa'))};
     const tipo=g('c_tipo');
     const plano={tipoHon:tipo,total:centsFrom(g('c_total')),entrada:centsFrom(g('c_entrada')),forma:g('c_forma'),nParcelas:Math.max(1,+g('c_n')||1),primeiroVenc:g('c_venc'),exitoPct:pctFrom(g('c_pct'))};
     if(tipo==='fixo'&&(!plano.total||plano.entrada>plano.total||!plano.primeiroVenc)){toast('Confira valor total, entrada e 1º vencimento');return}
@@ -1018,11 +1040,33 @@ function modalBaixa(p,onDone){
 }
 
 /* ---------- Documentos ---------- */
-function qualCliente(c){const end=[c.end,c.num,c.bairro].filter(Boolean).join(', ');return `${c.nome.toUpperCase()}, ${c.nac||'brasileiro(a)'}, ${c.civil?c.civil.toLowerCase()+', ':''}${c.prof?c.prof.toLowerCase()+', ':''}${c.rg?'RG nº '+c.rg+', ':''}${c.cpf?'CPF nº '+fmtCPF(c.cpf)+', ':''}residente e domiciliado(a) em ${end||'[endereço]'}${c.cidade?', '+c.cidade+'/'+c.uf:''}${c.cep?', CEP '+c.cep:''}`}
-function qualAdv(){const p=S.perfil;return `${(p.nome||'[nome do(a) advogado(a)]').toUpperCase()}, ${p.nac||'brasileiro(a)'}, ${p.civil?p.civil+', ':''}advogado(a) inscrito(a) na ${p.oab||'OAB/[UF] nº [número]'}${p.cpf?', CPF nº '+fmtCPF(p.cpf):''}, com escritório em ${p.end||'[endereço do escritório]'}${p.email?', e-mail '+p.email:''}${p.tel?', telefone '+p.tel:''}`}
+const LACUNA='______________________';
+const gen=(x,m,f,n)=>x&&x.sexo==='f'?f:x&&x.sexo==='m'?m:n;
+const civilG=(x,cv)=>{if(!cv)return'';cv=cv.toLowerCase();if(cv.includes('(a)'))cv=cv.replace(/o\(a\)/,gen(x,'o','a','o(a)'));return cv};
+const cidUF=(cid,uf)=>cid?(uf&&!/\/\s*\w{2}\s*$/.test(cid)?cid.trim()+'/'+uf.trim().toUpperCase():cid.trim()):'';
+function qualCliente(c){const end=[c.end,c.num,c.bairro].filter(x=>x&&String(x).trim()).join(', ');const cid=cidUF(c.cidade,c.uf);
+  const nac=(c.nac||gen(c,'brasileiro','brasileira','brasileiro(a)')).toLowerCase();
+  const partes=[c.nome.toUpperCase(),nac,civilG(c,c.civil),c.prof?c.prof.toLowerCase():'',c.rg?'portador'+gen(c,'','a','(a)')+' do RG nº '+c.rg:'',c.cpf?'inscrit'+gen(c,'o','a','o(a)')+' no CPF sob o nº '+fmtCPF(c.cpf):''].filter(Boolean);
+  return partes.join(', ')+', residente e domiciliad'+gen(c,'o','a','o(a)')+' '+(end?(/^(rua|avenida|av\.|travessa|alameda|praça|estrada|rodovia)\b/i.test(end)?'na ':'em ')+end:'em '+LACUNA)+(cid?', '+cid:'')+(c.cep?', CEP '+c.cep:'')}
+function qualAdv(){const p=S.perfil;return `${(p.nome||LACUNA).toUpperCase()}, ${(p.nac||gen(p,'brasileiro','brasileira','brasileiro(a)')).toLowerCase()}, ${p.civil?civilG(p,p.civil)+', ':''}advogad${gen(p,'o','a','o(a)')} inscrit${gen(p,'o','a','o(a)')} na ${p.oab||'OAB/'+LACUNA}${p.cpf?', CPF nº '+fmtCPF(p.cpf):''}, com escritório ${p.end?(/^(rua|avenida|av\.|travessa|alameda|praça|estrada|rodovia)\b/i.test(p.end)?'na ':'em ')+p.end:'em '+LACUNA}${p.email?', e-mail '+p.email:''}${p.tel?', telefone '+fmtTel(p.tel):''}`}
+const cidadeDoc=(o,c)=>o.foro||S.perfil.cidade||cidUF(c&&c.cidade,c&&c.uf)||LACUNA;
+function docFaltas(c,o,tipo){const f=[],p=S.perfil;
+  if(tipo!=='hipo'){if(!p.nome)f.push('seu nome (Meus dados)');if(!p.oab)f.push('sua OAB (Meus dados)');if(!p.end)f.push('endereço do escritório (Meus dados)')}
+  if(!c.end)f.push('endereço do cliente');if(!c.cpf)f.push('CPF do cliente');
+  if(tipo!=='hipo'&&!o.acao)f.push('objeto da ação');if(!o.foro&&!p.cidade&&!c.cidade)f.push('cidade do foro');return f}
+/* Monta o texto em parágrafos formatados (título, corpo justificado, data e assinaturas) */
+function docHtml(txt){const m=txt.match(/^<h4>([\s\S]*?)<\/h4>([\s\S]*)$/);const tit=m?m[1]:'';const corpo=(m?m[2]:txt).trim();
+  const blocos=corpo.split(/\n{2,}/).map(b=>b.trim()).filter(Boolean);
+  const assin=[],outros=[];
+  blocos.forEach(b=>{if(/^_{5,}/.test(b))assin.push(b);else outros.push(b)});
+  const ph=b=>{if(/^[^\n]{0,80}, \d{1,2} de [a-zç]+ de \d{4}\.$/.test(b))return`<p class="doc-data">${esc(b)}</p>`;
+    const r=b.match(/^([A-ZÁÉÍÓÚÂÊÔÃÕÇ ]{4,}(?: [–-] [^.]*)?(?:\s\d+ª)?(?: – [A-ZÁÉÍÓÚÂÊÔÃÕÇ ]+)?[.:])\s([\s\S]*)$/);
+    return r?`<p><strong>${esc(r[1])}</strong> ${esc(r[2])}</p>`:`<p>${esc(b)}</p>`};
+  const assHtml=assin.length?`<div class="doc-ass">${assin.map(a=>{const l=a.split('\n').slice(1);return`<div class="ass"><div class="linha"></div>${l.map((x,i)=>`<div class="${i?'papel':'nome'}">${esc(x)}</div>`).join('')}</div>`}).join('')}</div>`:'';
+  return `${tit?`<h4>${esc(tit)}</h4>`:''}${outros.map(ph).join('')}${assHtml}`}
 const dataExt=s=>{const d=parseISO(s);return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`};
 function docContrato(c,o){
-  const p=S.perfil;const cid=o.foro||p.cidade||'[cidade/UF]';
+  const p=S.perfil;const cid=cidadeDoc(o,c);
   let cl2;
   if(c.tipoHon==='exito'){cl2=`Pelos serviços, o CONTRATANTE pagará ao CONTRATADO honorários de ${c.exitoPct}% (${c.exitoPct} por cento) sobre o proveito econômico obtido, seja por sentença, acordo ou qualquer outra forma de solução, devidos no momento em que o CONTRATANTE receber os valores. Não havendo êxito, nada será devido a este título.`}
   else{const resto=c.total-c.entrada;const n=c.forma==='vista'?1:c.nParcelas;const base=Math.floor(resto/n);
@@ -1033,7 +1077,7 @@ CONTRATADO: ${qualAdv()}.
 
 As partes acima ajustam o presente contrato, que se regerá pelas cláusulas a seguir e pela Lei nº 8.906/1994 (Estatuto da Advocacia).
 
-CLÁUSULA 1ª – DO OBJETO. O CONTRATADO prestará ao CONTRATANTE serviços jurídicos referentes a ${o.acao||'[descrever a ação ou o serviço]'}, atuando em todas as fases e instâncias necessárias até decisão final, salvo ajuste diverso por escrito.
+CLÁUSULA 1ª – DO OBJETO. O CONTRATADO prestará ao CONTRATANTE serviços jurídicos referentes a ${o.acao||LACUNA}, atuando em todas as fases e instâncias necessárias até decisão final, salvo ajuste diverso por escrito.
 
 CLÁUSULA 2ª – DOS HONORÁRIOS. ${cl2}
 
@@ -1061,16 +1105,16 @@ CONTRATANTE
 
 
 _______________________________________
-${(p.nome||'[ADVOGADO(A)]').toUpperCase()} – ${p.oab||'OAB'}
+${(p.nome||'').toUpperCase()}${p.oab?'\n'+p.oab:''}
 CONTRATADO`}
-function docProcuracao(c,o){const p=S.perfil;const cid=o.foro||p.cidade||'[cidade/UF]';
+function docProcuracao(c,o){const p=S.perfil;const cid=cidadeDoc(o,c);
   return `<h4>PROCURAÇÃO AD JUDICIA ET EXTRA</h4>OUTORGANTE: ${qualCliente(c)}.
 
 OUTORGADO: ${qualAdv()}.
 
 PODERES: pelo presente instrumento, o OUTORGANTE nomeia e constitui o OUTORGADO seu procurador, conferindo-lhe os poderes da cláusula ad judicia et extra para o foro em geral, em qualquer juízo, instância ou tribunal, podendo propor as ações competentes e defendê-lo nas contrárias, seguindo umas e outras até decisão final, usando os recursos legais. Confere ainda poderes especiais para confessar, reconhecer a procedência do pedido, transigir, desistir, renunciar ao direito sobre o qual se funda a ação, receber, dar quitação, firmar compromisso, levantar alvarás, assinar declaração de hipossuficiência econômica e substabelecer, com ou sem reserva de poderes, conforme o art. 105 do Código de Processo Civil.
 
-FINALIDADE: ${o.acao||'[finalidade]'}.
+FINALIDADE: ${o.acao||LACUNA}.
 
 ${cid}, ${dataExt(hoje())}.
 
@@ -1079,7 +1123,7 @@ ${cid}, ${dataExt(hoje())}.
 _______________________________________
 ${c.nome.toUpperCase()}
 OUTORGANTE`}
-function docHipo(c,o){const p=S.perfil;const cid=o.foro||p.cidade||'[cidade/UF]';
+function docHipo(c,o){const p=S.perfil;const cid=cidadeDoc(o,c);
   return `<h4>DECLARAÇÃO DE HIPOSSUFICIÊNCIA ECONÔMICA</h4>Eu, ${qualCliente(c)}, declaro, para os fins do art. 98 e seguintes do Código de Processo Civil e do art. 5º, LXXIV, da Constituição Federal, que não tenho condições de arcar com as custas processuais e os honorários advocatícios de sucumbência sem prejuízo do meu sustento e do de minha família${c.renda?`, tendo renda mensal aproximada de ${brl(c.renda)}`:''}.
 
 Declaro estar ciente de que a falsidade desta declaração pode acarretar sanções civis e criminais.
@@ -1091,7 +1135,7 @@ ${cid}, ${dataExt(hoje())}.
 _______________________________________
 ${c.nome.toUpperCase()}
 DECLARANTE`}
-function docRecibo(p,c,pg){const pf=S.perfil;const cid=pf.cidade||'[cidade/UF]';
+function docRecibo(p,c,pg){const pf=S.perfil;const cid=cidadeDoc({},c);
   return `<h4>RECIBO DE HONORÁRIOS ADVOCATÍCIOS</h4>Recebi de ${c.nome.toUpperCase()}${c.cpf?', CPF nº '+fmtCPF(c.cpf):''}, a importância de ${brl(pg.valor)} (${extenso(pg.valor)}), referente ${p.num===0?'à entrada':'à parcela nº '+p.num}${c.tipoHon==='fixo'?` dos honorários advocatícios contratados (${brl(c.total)})`:' de honorários advocatícios'}, com vencimento em ${br(p.venc)}, paga em ${br(pg.data)}.
 
 Pelo que dou plena quitação do valor recebido.
@@ -1101,8 +1145,8 @@ ${cid}, ${dataExt(pg.data)}.
 
 
 _______________________________________
-${(pf.nome||'[ADVOGADO(A)]').toUpperCase()}
-${pf.oab||'OAB'}${pf.cpf?' · CPF '+fmtCPF(pf.cpf):''}`}
+${(pf.nome||'').toUpperCase()}
+${pf.oab||''}${pf.cpf?' · CPF '+fmtCPF(pf.cpf):''}`}
 let docAtual='contrato';
 ROUTES['documentos-']=id=>{
   const c=S.clientes.find(x=>x.id===id);if(!c)return'<div class="empty">Cliente não encontrado.</div>';
@@ -1114,13 +1158,15 @@ ROUTES['documentos-']=id=>{
     <label>Multa por atraso (%)<input id="d_multa" inputmode="decimal" value="${esc(o.multa||'2')}"></label></div>
     ${!S.perfil.nome?'<p class="note" style="margin-top:10px">Preencha <a href="#perfil">Meus dados</a> para que nome, OAB e endereço do escritório entrem nos documentos.</p>':''}</div>
   <div class="tabs noprint">${[['contrato','Contrato de honorários'],['procuracao','Procuração'],['hipo','Declaração de hipossuficiência']].map(([k,t])=>`<button class="tab ${docAtual===k?'on':''}" data-doc="${k}" type="button">${t}</button>`).join('')}</div>
-  <div class="row noprint"><button class="btn pri" data-act="copiar-doc" type="button">Copiar texto</button>${standalone?'<button class="btn" data-act="imprimir" type="button">Imprimir / salvar PDF</button>':''}<span class="note">Cole no Word ou no Google Docs para ajustar e assinar.</span></div>
-  <div class="doc" id="docBox"></div>`;
+  <div class="row noprint"><button class="btn pri" data-act="imprimir" type="button">Imprimir / salvar PDF</button><button class="btn" data-act="copiar-doc" type="button">Copiar texto</button><span class="note">Ou cole no Word ou no Google Docs para ajustar.</span></div>
+  <p class="doc-falta noprint" id="docFalta" hidden></p>
+  <div class="doc-folha"><div class="doc" id="docBox"></div></div>`;
 };
 AFTER['documentos-']=id=>{
   const c=S.clientes.find(x=>x.id===id);if(!c)return;
   const draw=()=>{const o={acao:$('#d_acao').value.trim(),foro:$('#d_foro').value.trim(),multa:$('#d_multa').value.trim()};c.docOpts=o;salvar();
-    $('#docBox').innerHTML=(docAtual==='contrato'?docContrato:docAtual==='procuracao'?docProcuracao:docHipo)(c,o).replace(/\n/g,'\n')};
+    $('#docBox').innerHTML=docHtml((docAtual==='contrato'?docContrato:docAtual==='procuracao'?docProcuracao:docHipo)(c,o));
+    const f=docFaltas(c,o,docAtual);$('#docFalta').innerHTML=f.length?`Faltando para o documento ficar completo: ${f.map(esc).join(', ')}. Esses pontos saem como linha em branco.`:'';$('#docFalta').hidden=!f.length};
   ['d_acao','d_foro','d_multa'].forEach(i=>$('#'+i).oninput=draw);draw();
 };
 
@@ -1141,6 +1187,14 @@ function modalComp(a){a=a||{data:agDia||hoje(),hora:'09:00'};
 }
 
 
+
+/* Impressão limpa de documentos: só a folha, com margens de documento (3 cm em cima e à esquerda, 2 cm embaixo e à direita) */
+function montaImpressao(){const alvo=$('#modalRoot .doc')||$('#view .doc');if(!alvo)return;
+  let r=$('#printRoot');if(!r){r=document.createElement('div');r.id='printRoot';document.body.appendChild(r)}
+  r.innerHTML=`<table><thead><tr><td><div class="pg-top"></div></td></tr></thead><tfoot><tr><td><div class="pg-bot"></div></td></tr></tfoot><tbody><tr><td><div class="pg-corpo"><div class="doc">${alvo.innerHTML}</div></div></td></tr></tbody></table>`;
+  document.body.classList.add('imprimindo');const t=document.title;document.title=' ';r.dataset.titulo=t}
+function desmontaImpressao(){document.body.classList.remove('imprimindo');const r=$('#printRoot');if(r){if(r.dataset.titulo)document.title=r.dataset.titulo;r.innerHTML=''}}
+window.addEventListener('beforeprint',montaImpressao);window.addEventListener('afterprint',desmontaImpressao);
 /* ---------- Google Agenda ---------- */
 const TZ=(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Sao_Paulo'}catch(e){return'America/Sao_Paulo'}})();
 const gcfg=()=>S.google||(S.google={});
@@ -1349,9 +1403,9 @@ AFTER.relatorios=()=>{const u=()=>{relTipo=$('#r_t').value;if($('#r_de')){relDe=
 /* ---------- Meus dados ---------- */
 ROUTES.perfil=()=>{const p=S.perfil;const f=(id,l,c)=>`<label class="${c||''}">${l}<input id="pf_${id}" value="${esc(p[id]||'')}"></label>`;
   return `<div class="phead"><div><h1>Meus dados</h1><p>Usados no contrato, na procuração e nos recibos.</p></div></div>
-  <form class="panel" id="fPf"><div class="fs">${f('nome','Nome completo *','c2')}${f('oab','OAB (ex.: OAB/PR 12.345)')}${f('cpf','CPF')}${f('rg','RG')}${f('nac','Nacionalidade')}${f('civil','Estado civil')}${f('tel','Telefone / WhatsApp')}${f('email','E-mail','c2')}${f('end','Endereço do escritório','c2')}${f('cidade','Cidade/UF (foro padrão)')}${f('pix','Chave Pix para honorários')}</div>
+  <form class="panel" id="fPf"><div class="fs">${f('nome','Nome completo *','c2')}${f('oab','OAB (ex.: OAB/PR 12.345)')}${f('cpf','CPF')}${f('rg','RG')}${f('nac','Nacionalidade')}<label>Tratamento<select id="pf_sexo"><option value="">Não informar</option><option value="f" ${p.sexo==='f'?'selected':''}>Senhora</option><option value="m" ${p.sexo==='m'?'selected':''}>Senhor</option></select></label>${f('civil','Estado civil')}${f('tel','Telefone / WhatsApp')}${f('email','E-mail','c2')}${f('end','Endereço do escritório','c2')}${f('cidade','Cidade/UF (foro padrão)')}${f('pix','Chave Pix para honorários')}</div>
   <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn pri" type="submit">Salvar</button></div></form>`};
-AFTER.perfil=()=>{$('#fPf').onsubmit=e=>{e.preventDefault();Object.keys(S.perfil).forEach(k=>{const i=$('#pf_'+k);if(i)S.perfil[k]=i.value.trim()});salvar();aplicaMarca();renderConta('perfil');toast('Dados salvos')}};
+AFTER.perfil=()=>{$('#fPf').onsubmit=e=>{e.preventDefault();Object.keys(S.perfil).concat('sexo').forEach(k=>{const i=$('#pf_'+k);if(i)S.perfil[k]=i.value.trim()});salvar();aplicaMarca();renderConta('perfil');toast('Dados salvos')}};
 
 /* ---------- Backup ---------- */
 ROUTES.backup=()=>`<div class="phead"><div><h1>Backup</h1><p>Nesta versão os dados ficam guardados só neste navegador. Faça cópias com frequência.</p></div></div>
@@ -1386,8 +1440,8 @@ document.addEventListener('click',e=>{
     case 'baixa':modalBaixa(P(),go);break;
     case 'estornar':{const p=P();confirmar(`Desfazer o último pagamento desta parcela (${brl(p.pagamentos.at(-1).valor)} em ${br(p.pagamentos.at(-1).data)})?`,'Estornar',()=>{p.pagamentos.pop();salvar();toast('Pagamento estornado');go()});break}
     case 'recibo':{const p=P(),c=S.clientes.find(x=>x.id===p.clienteId);const opts=p.pagamentos.map((g,i)=>`<option value="${i}">${brl(g.valor)} em ${br(g.data)}</option>`).join('');
-      modal(`<div class="row noprint" style="justify-content:space-between"><h2>Recibo</h2>${p.pagamentos.length>1?`<select id="rc_s" style="width:auto">${opts}</select>`:''}</div><div class="doc" id="rcBox" style="padding:28px"></div><div class="row noprint" style="justify-content:flex-end"><button class="btn" data-close="1" type="button">Fechar</button><button class="btn pri" data-act="copiar-recibo" type="button">Copiar texto</button></div>`,true);
-      const dr=()=>{const i=$('#rc_s')?+$('#rc_s').value:0;$('#rcBox').innerHTML=docRecibo(p,c,p.pagamentos[i])};const s=$('#rc_s');if(s)s.onchange=dr;dr();break}
+      modal(`<div class="row noprint" style="justify-content:space-between"><h2>Recibo</h2>${p.pagamentos.length>1?`<select id="rc_s" style="width:auto">${opts}</select>`:''}</div><div class="doc" id="rcBox"></div><div class="row noprint" style="justify-content:flex-end"><button class="btn" data-close="1" type="button">Fechar</button><button class="btn" data-act="imprimir" type="button">Imprimir / PDF</button><button class="btn pri" data-act="copiar-recibo" type="button">Copiar texto</button></div>`,true);
+      const dr=()=>{const i=$('#rc_s')?+$('#rc_s').value:0;$('#rcBox').innerHTML=docHtml(docRecibo(p,c,p.pagamentos[i]))};const s=$('#rc_s');if(s)s.onchange=dr;dr();break}
     case 'copiar-recibo':copiar($('#rcBox').innerText);break;
     case 'copiar-doc':copiar($('#docBox').innerText);break;
     case 'imprimir':window.print();break;
