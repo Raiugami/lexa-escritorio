@@ -3,7 +3,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/logo.svg" type="image/svg+xml">
+<link rel="alternate icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Honra · Gestão para advogados</title>
@@ -51,6 +52,8 @@ a{color:var(--accent-ink)}
 .app{display:flex;gap:16px;min-height:100vh;padding-block:16px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 .side{flex:0 0 232px;background:var(--panel);border-radius:24px;padding:20px 12px;position:sticky;top:16px;height:calc(100vh - 32px);overflow-y:auto;display:flex;flex-direction:column;gap:4px;transition:flex-basis .32s cubic-bezier(.3,.8,.2,1)}
 .brand{display:flex;align-items:center;gap:10px;height:44px;padding:0 6px;margin-bottom:8px}
+.logo-honra svg{width:88%;height:88%;color:#fff}
+.side .logo-honra{background:var(--grad);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 .logo{flex:0 0 36px;height:36px;border-radius:12px;background:var(--grad);color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center}
 .brand b{font-size:1.3rem;font-weight:800;letter-spacing:-.02em}
 .nav{display:flex;flex-direction:column;gap:2px;flex:1}
@@ -102,6 +105,11 @@ label.chk{flex-direction:row;align-items:center;gap:10px;font-size:.88rem;color:
 .conta-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);width:270px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:8px;z-index:60}
 .conta-menu.aberto{display:block}
 .conta-cab{display:flex;gap:10px;align-items:center;padding:8px 8px 10px}
+.conta-nuvem{border-top:1px solid var(--line);margin-top:6px;padding-top:6px}
+.cn-status{display:flex;gap:10px;align-items:flex-start;padding:8px 10px}
+.cn-status b{display:block;font-size:.82rem}.cn-status small{display:block;font-size:.74rem;color:var(--muted)}
+.cn-ponto{flex:0 0 8px;height:8px;border-radius:50%;background:var(--ok);margin-top:6px;box-shadow:0 0 0 3px var(--ok-soft)}
+.conta-item.sair{color:var(--bad)}
 .conta-menu a,.conta-item{font:inherit;width:100%;display:flex;align-items:center;gap:12px;min-height:44px;padding:0 10px;border-radius:12px;color:var(--fg);text-decoration:none;background:transparent;border:0;cursor:pointer;font-weight:600;text-align:left}
 .conta-menu a:hover,.conta-item:hover,.conta-menu a.on{background:var(--accent-soft);color:var(--accent-ink)}
 .conta-menu hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
@@ -535,7 +543,8 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
         <div class="conta"><button class="conta-btn" id="contaBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="contaMenu"></button>
           <div class="conta-menu" id="contaMenu" role="menu" aria-label="Conta e ajustes">
             <div class="conta-cab" id="contaCab"></div>
-            <a href="#perfil" role="menuitem" data-conta="perfil"></a><a href="#aparencia" role="menuitem" data-conta="aparencia"></a><a href="#backup" role="menuitem" data-conta="backup"></a>
+            <a href="#perfil" role="menuitem" data-conta="perfil"></a><a href="#aparencia" role="menuitem" data-conta="aparencia"></a>
+            <div class="conta-nuvem" id="contaNuvem" hidden></div>
             <hr>
             <button class="conta-item tema" id="themeBtn" type="button" role="switch" aria-checked="false"></button>
           </div></div></div></div>
@@ -730,7 +739,12 @@ function renderConta(r){const p=S.perfil,mk=marca();const nome=(p.nome||'Minha c
   $('#contaBtn').innerHTML=`<span class="av conta-av">${esc(ini)}</span><span class="conta-txt"><b>${esc(nome)}</b><small>${esc(p.oab||mk.nome)}</small></span><svg class="conta-seta" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>`;
   $('#contaBtn').setAttribute('aria-label',`Conta de ${nome}`);
   $('#contaCab').innerHTML=`<span class="av conta-av">${esc(ini)}</span><div style="min-width:0"><b>${esc(nome)}</b><small>${esc(p.email||p.oab||'Preencha seus dados')}</small></div>`;
-  [['perfil','Meus dados'],['aparencia','Aparência'],['backup','Backup']].forEach(([k,t])=>{const a=document.querySelector(`[data-conta="${k}"]`);a.innerHTML=`${svg(IC[k])}<span>${t}</span>`;a.classList.toggle('on',r===k);a.toggleAttribute('aria-current',r===k)})}
+  [['perfil','Meus dados'],['aparencia','Aparência']].forEach(([k,t])=>{const a=document.querySelector(`[data-conta="${k}"]`);a.innerHTML=`${svg(IC[k])}<span>${t}</span>`;a.classList.toggle('on',r===k);a.toggleAttribute('aria-current',r===k)});renderContaNuvem()}
+function renderContaNuvem(){const el=$('#contaNuvem');if(!el)return;
+  if(!nuvemUser){el.hidden=true;el.innerHTML='';return}
+  el.hidden=false;
+  el.innerHTML=`<div class="cn-status"><span class="cn-ponto"></span><span><b>Salvo na nuvem</b><small>${esc(nuvemMsg&&/às/.test(nuvemMsg)?nuvemMsg.replace(/\.$/,''):'Sincronização automática ativa')}</small></span></div>
+    <button class="conta-item sair" data-act="nuvem-sair" type="button">${svg('<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>')}<span>Sair</span></button>`}
 function contaAbre(ab){$('#contaMenu').classList.toggle('aberto',ab);$('#contaBtn').setAttribute('aria-expanded',ab)}
 $('#contaBtn').onclick=e=>{e.stopPropagation();contaAbre(!$('#contaMenu').classList.contains('aberto'))};
 document.addEventListener('click',e=>{if(!e.target.closest('.conta'))contaAbre(false)});
@@ -889,8 +903,10 @@ function cssMarca(cor){
 const iniciaisMarca=n=>{if(!n||n==='Honra'||n==='Lexa')n=(S&&S.perfil&&S.perfil.nome)||'Honra';
   const w=n.replace(/^(dra?|dr)\.?\s+/i,'').replace(/[&,.]/g,' ').split(/\s+/).filter(x=>x&&!/^(advocacia|advogados|associados|sociedade|escrit[óo]rio|e|de|do|da|dos|das)$/i.test(x));
   if(!w.length)return 'H';if(w.length===1)return w[0].slice(0,2).toUpperCase();return (w[0][0]+w[w.length-1][0]).toUpperCase()};
+const HONRA_SVG=(t)=>`<svg viewBox="0 0 64 64" width="${t||22}" height="${t||22}" aria-hidden="true"><g transform="translate(32 33) scale(.92) translate(-32 -32)"><g fill="currentColor"><rect x="21" y="15" width="7" height="34" rx="1.5"/><rect x="36" y="15" width="7" height="34" rx="1.5"/></g><path d="M12 31.5C20 27.5 44 27.5 52 31.5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 31.5 6.5 43.5M12 31.5 17.5 43.5M52 31.5 46.5 43.5M52 31.5 57.5 43.5"/></g><g fill="currentColor"><path d="M5 43.5h14a7 5 0 0 1-14 0z"/><path d="M45 43.5h14a7 5 0 0 1-14 0z"/></g></g></svg>`;
+const ehHonra=mk=>!mk.icone&&/^honra$/i.test((mk.nome||'').trim());
 function htmlMarca(mk,top){
-  const ic=mk.icone?`<img class="logo img" src="${esc(mk.icone)}" alt="" onerror="logoFalhou(this,1)">`:`<span class="logo" aria-hidden="true">${esc(iniciaisMarca(mk.nome))}</span>`;
+  const ic=mk.icone?`<img class="logo img" src="${esc(mk.icone)}" alt="" onerror="logoFalhou(this,1)">`:ehHonra(mk)?`<span class="logo logo-honra" aria-hidden="true">${HONRA_SVG(26)}</span>`:`<span class="logo" aria-hidden="true">${esc(iniciaisMarca(mk.nome))}</span>`;
   const full=mk.logo?`<img class="logo-full f-${esc(mk.fundo)}" src="${esc(mk.logo)}" alt="${esc(mk.nome)}" onerror="logoFalhou(this)">`:'';
   const nm=(!mk.logo||mk.mostraNome)?`<b class="mk-nome">${esc(mk.nome)}</b>`:'';
   // menu aberto: logo completo (ou ícone + nome); menu recolhido: só o ícone
@@ -1479,7 +1495,9 @@ AFTER.relatorios=()=>{const u=()=>{relTipo=$('#r_t').value;if($('#r_de')){relDe=
 ROUTES.perfil=()=>{const p=S.perfil;const f=(id,l,c)=>`<label class="${c||''}">${l}<input id="pf_${id}" value="${esc(p[id]||'')}"></label>`;
   return `<div class="phead"><div><h1>Meus dados</h1><p>Usados no contrato, na procuração e nos recibos.</p></div></div>
   <form class="panel" id="fPf"><div class="fs">${f('nome','Nome completo *','c2')}${f('oab','OAB (ex.: OAB/PR 12.345)')}${f('cpf','CPF')}${f('rg','RG')}${f('nac','Nacionalidade')}<label>Tratamento<select id="pf_sexo"><option value="">Não informar</option><option value="f" ${p.sexo==='f'?'selected':''}>Senhora</option><option value="m" ${p.sexo==='m'?'selected':''}>Senhor</option></select></label>${f('civil','Estado civil')}${f('tel','Telefone / WhatsApp')}${f('email','E-mail','c2')}${f('end','Endereço do escritório','c2')}${f('cidade','Cidade/UF (foro padrão)')}${f('pix','Chave Pix para honorários')}</div>
-  <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn pri" type="submit">Salvar</button></div></form>`};
+  <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn pri" type="submit">Salvar</button></div></form>
+  <div class="panel" style="margin-top:14px"><h2>Seus dados</h2><p class="note">Tudo fica salvo na nuvem automaticamente. Se quiser uma cópia sua de todos os clientes, parcelas e agenda, baixe aqui.</p>
+  <div class="row" style="margin-top:10px"><button class="btn" data-act="baixar-backup" type="button">Baixar cópia dos dados</button><button class="btn ghost" data-act="copiar-backup" type="button">Copiar como texto</button></div></div>`};
 AFTER.perfil=()=>{$('#fPf').onsubmit=e=>{e.preventDefault();Object.keys(S.perfil).concat('sexo').forEach(k=>{const i=$('#pf_'+k);if(i)S.perfil[k]=i.value.trim()});salvar();aplicaMarca();renderConta('perfil');toast('Dados salvos')}};
 
 /* ---------- Backup ---------- */
@@ -1495,7 +1513,7 @@ const SB_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd
 let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar',gateRec=false;
 const nuvemDisponivel=()=>/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const nuvemHora=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-function nuvemAtualiza(){renderGate();if(location.hash.startsWith('#backup'))go()}
+function nuvemAtualiza(){renderGate();try{renderContaNuvem()}catch(e){}if(location.hash.startsWith('#backup'))go()}
 const GL_IC={
   mail:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
   lock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
@@ -1533,7 +1551,7 @@ function renderGate(){const g=$('#gate');if(!g)return;
   }
   const tipoMsg=/incorret|não|nao|erro|conferem|existe|muitas|indispon|confirme/i.test(nuvemMsg)?'erro':nuvemMsg?'ok':'';
   g.innerHTML=`<aside class="gl-arte" aria-hidden="true">
-      <div class="gl-marca"><span class="gl-logo">${GL_IC.balanca}</span>Honra</div>
+      <div class="gl-marca"><span class="gl-logo">${HONRA_SVG(30)}</span>Honra</div>
       <div class="gl-meio"><h2>O escritório inteiro num só lugar.</h2><p>Honorários, agenda, documentos e cobranças organizados para você focar no que importa: seus clientes.</p>
         <ul class="gl-lista">
           <li><span class="ic">${GL_IC.din}</span><span><b>Honorários sob controle</b>Parcelas, baixas e atrasos em tempo real.</span></li>
@@ -1543,7 +1561,7 @@ function renderGate(){const g=$('#gate');if(!g)return;
       <div class="gl-rodape">Honorários · Organização · Negócios · Recebimentos · Agenda</div>
     </aside>
     <main class="gl-lado"><div class="gl-form-caixa">
-      <div class="gl-topo-mob"><span class="gl-logo">${GL_IC.balanca}</span>Honra</div>
+      <div class="gl-topo-mob"><span class="gl-logo">${HONRA_SVG(30)}</span>Honra</div>
       ${gateRec?'':`<div class="gate-abas" role="tablist">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>`}
       <h1>${titulo}</h1><p class="gl-sub">${sub}</p>
       ${sb?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()" novalidate>${corpo}<button class="btn pri gl-btn" type="submit">${botao}</button></form>`:`<div class="gl-carrega"><i></i>${nuvemMsg?'':'Conectando…'}</div>`}
@@ -1687,7 +1705,7 @@ document.addEventListener('click',e=>{
     case 'baixa-acordo':{const ac=S.acordos.find(x=>x.id===+ds.a);modalBaixa(ac.parcelas.find(p=>p.id===id),go);break}
     case 'copiar-rel':{const d=relDados();copiar([d.cols,...d.rows].map(r=>r.join('\t')).join('\n'));break}
     case 'copiar-backup':copiar(JSON.stringify(S));break;
-    case 'baixar-backup':{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download=`lexa-backup-${hoje()}.json`;l.click();break}
+    case 'baixar-backup':{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download=`honra-dados-${hoje()}.json`;l.click();break}
     case 'restaurar':try{const d=JSON.parse($('#bk_in').value);if(!d.clientes)throw 0;confirmar('Substituir todos os dados atuais por este backup?','Restaurar',()=>{S=Object.assign(vazio(),d);salvar();toast('Backup restaurado');location.hash='#painel'})}catch(_){toast('Backup inválido: cole o texto completo exportado')}break;
     case 'zerar':confirmar('Apagar todos os dados deste navegador? Faça um backup antes.','Apagar tudo',()=>{S=vazio();salvar();toast('Dados apagados');location.hash='#painel'});break;
   }
