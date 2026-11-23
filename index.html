@@ -212,8 +212,8 @@ textarea{min-height:70px;resize:vertical}
 .chart svg{width:100%;height:auto;display:block}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:.8rem;font-variant-numeric:tabular-nums}
 .hide-money .money{filter:blur(7px)}
-@media (max-width:1000px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .grid2,.grid3{grid-template-columns:1fr} form .fs{grid-template-columns:repeat(2,minmax(0,1fr))} }
-@media (max-width:760px){
+@media screen and (max-width:1000px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .grid2,.grid3{grid-template-columns:1fr} form .fs{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media screen and (max-width:760px){
   .app{padding:0;gap:0;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   .side{position:fixed;inset:auto 0 0 0;top:auto;height:auto;flex-direction:row;border-radius:20px 20px 0 0;z-index:40;padding:6px max(8px, env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px, env(safe-area-inset-right,0px));box-shadow:0 -2px 12px rgba(0,0,0,.12);overflow:visible}
   .brand,.side-top,.nav .grp,.side-foot,.nav .lbl,.nav .cnt,.nav a.mobhide,.fold{display:none!important}
@@ -230,7 +230,7 @@ textarea{min-height:70px;resize:vertical}
   .doc{padding:28px 20px;font-size:14px}.doc-folha{padding:0;background:none}.doc-ass{gap:36px}
   .week{grid-template-columns:repeat(7,minmax(40px,1fr));overflow-x:auto}
 }
-@media (max-width:460px){ .kpis{grid-template-columns:1fr} form .fs{grid-template-columns:1fr} .fs .c2{grid-column:auto} .day small{display:none} }
+@media screen and (max-width:460px){ .kpis{grid-template-columns:1fr} form .fs{grid-template-columns:1fr} .fs .c2{grid-column:auto} .day small{display:none} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .logo.img{background:transparent;object-fit:contain;padding:0}
 .logo-full{display:block;max-height:44px;max-width:180px;width:auto;object-fit:contain;border-radius:10px}
@@ -328,7 +328,7 @@ textarea{min-height:70px;resize:vertical}
 }
 .fab{display:none}
 body:has(#modalRoot .modal-bg) .fab{display:none!important}
-@media (max-width:760px){
+@media screen and (max-width:760px){
   .fab{display:flex;position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(88px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--grad);color:#fff;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:45;cursor:pointer}
   .app{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
   .tbl{overflow:visible}
@@ -375,7 +375,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 .app.mostra-txt .nav .lbl,.app.mostra-txt .nav .grp,.app.mostra-txt .nav .cnt,.app.mostra-txt .brand b,.app.mostra-txt .brand .logo-full,.app.mostra-txt .mk-nome{animation:surge .3s .2s backwards}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 /* ===== Celular compacto: aproveita melhor a tela ===== */
-@media (max-width:760px){
+@media screen and (max-width:760px){
   body{font-size:14px}
   h1{font-size:1.55rem}
   .wrap{gap:12px}
@@ -423,7 +423,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
   .nav a{min-height:48px}
   .app{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 }
-@media (max-width:360px){ .kpis{grid-template-columns:1fr} }
+@media screen and (max-width:360px){ .kpis{grid-template-columns:1fr} }
 .g-panel{margin-bottom:14px}.g-row{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.g-row .note{margin-top:2px}.g-ok{color:var(--accent-ink);font-weight:600}
 @media (min-width:761px){.tbl-parc{overflow:visible}.tbl-parc td{padding:9px 8px}.tbl-parc th{padding:8px}
 .tbl-parc .num{color:var(--muted);font-weight:600;width:1%;white-space:nowrap}.tbl-parc .acoes{width:1%}}
@@ -435,8 +435,8 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
 .tbl-parc .pago-parc{font-size:.74rem;color:var(--ok);font-weight:600}
 .tbl-parc .acoes .row{justify-content:flex-end;flex-wrap:nowrap;gap:6px}
 .ico-btn{min-width:32px;padding:0 8px!important;font-size:1rem}
-@media (max-width:1280px){.grid3{grid-template-columns:1fr}}
-@media (max-width:760px){.tbl-parc .venc{align-items:flex-end}.tbl-parc .obs-in{text-align:right}.tbl-parc .obs-in:focus{margin-left:0}}
+@media screen and (max-width:1280px){.grid3{grid-template-columns:1fr}}
+@media screen and (max-width:760px){.tbl-parc .venc{align-items:flex-end}.tbl-parc .obs-in{text-align:right}.tbl-parc .obs-in:focus{margin-left:0}}
 @media print{ .side,.top,.noprint,#fab,.toast{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} }
 @page{size:A4;margin:0}
 #printRoot{display:none}
@@ -446,9 +446,21 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
   body.imprimindo #printRoot{display:block}
   #printRoot .doc{width:auto;max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;padding:0;font-size:12pt;line-height:1.5}
   #printRoot .doc h4{font-size:12pt}#printRoot .doc-ass .papel{font-size:11pt}
-  #printRoot table{width:100%;border-collapse:collapse}#printRoot td{padding:0;border:0}
-  #printRoot .pg-top{height:30mm}#printRoot .pg-bot{height:20mm}
-  #printRoot .pg-corpo{padding:0 20mm 0 30mm}
+  #printRoot table.pg{width:100%;border-collapse:collapse}#printRoot table.pg>*>tr>td{padding:0;border:0}
+  #printRoot .pg-top{height:25mm}#printRoot .pg-bot{height:20mm}
+  #printRoot .pg-corpo{padding:0 20mm 0 25mm}
+  #printRoot .doc{} #printRoot:has(.doc) .pg-top{height:30mm} #printRoot:has(.doc) .pg-corpo{padding-left:30mm}
+  .rel-print{color:#111;font-size:10.5pt}
+  .rel-print *{animation:none!important;box-shadow:none!important}
+  .rel-print .panel{background:none!important;border:0!important;padding:0!important;margin:0 0 14px}
+  .rel-print h2{font-size:15pt;margin:0 0 2px}.rel-print .note{color:#555}
+  .rel-print .tbl{overflow:visible}
+  .rel-print table{width:100%;border-collapse:collapse;margin-top:10px}
+  .rel-print th{color:#555;border-bottom:1.5px solid #111;padding:6px 8px;font-size:9pt}
+  .rel-print td{border-top:1px solid #ddd!important;padding:6px 8px;color:#111}
+  .rel-print tr{break-inside:avoid}.rel-print td:not(:first-child),.rel-print th{white-space:nowrap}
+  .rel-print .pill{background:none!important;padding:0;color:#111!important;font-weight:600}
+  .rel-print .btn{display:none!important}
 }
 </style>
 
@@ -1189,9 +1201,11 @@ function modalComp(a){a=a||{data:agDia||hoje(),hora:'09:00'};
 
 
 /* Impressão limpa de documentos: só a folha, com margens de documento (3 cm em cima e à esquerda, 2 cm embaixo e à direita) */
-function montaImpressao(){const alvo=$('#modalRoot .doc')||$('#view .doc');if(!alvo)return;
+function montaImpressao(){const alvo=$('#modalRoot .doc')||$('#view .doc');let miolo;
+  if(alvo)miolo=`<div class="doc">${alvo.innerHTML}</div>`;
+  else{const v=$('#view').cloneNode(true);v.querySelectorAll('.noprint,.banner,script,.tabs,.chips').forEach(e=>e.remove());v.querySelectorAll('[style*="animation"],.anim').forEach(e=>{e.classList.remove('anim');e.style.animation='none'});v.removeAttribute('id');miolo=`<div class="rel-print">${v.innerHTML}</div>`}
   let r=$('#printRoot');if(!r){r=document.createElement('div');r.id='printRoot';document.body.appendChild(r)}
-  r.innerHTML=`<table><thead><tr><td><div class="pg-top"></div></td></tr></thead><tfoot><tr><td><div class="pg-bot"></div></td></tr></tfoot><tbody><tr><td><div class="pg-corpo"><div class="doc">${alvo.innerHTML}</div></div></td></tr></tbody></table>`;
+  r.innerHTML=`<table class="pg"><thead><tr><td><div class="pg-top"></div></td></tr></thead><tfoot><tr><td><div class="pg-bot"></div></td></tr></tfoot><tbody><tr><td><div class="pg-corpo">${miolo}</div></td></tr></tbody></table>`;
   document.body.classList.add('imprimindo');const t=document.title;document.title=' ';r.dataset.titulo=t}
 function desmontaImpressao(){document.body.classList.remove('imprimindo');const r=$('#printRoot');if(r){if(r.dataset.titulo)document.title=r.dataset.titulo;r.innerHTML=''}}
 window.addEventListener('beforeprint',montaImpressao);window.addEventListener('afterprint',desmontaImpressao);
