@@ -26,3 +26,9 @@ Os dados ficam no `localStorage` do navegador; use a tela **Backup** para export
 - Backend com login e banco de dados para uso real e multiusuário.
 - Anexos de documentos por cliente.
 - Exportação de contratos em .docx.
+
+## Aparência personalizável
+
+Em **Ajustes › Aparência** cada escritório escolhe a cor principal (com cores prontas ou qualquer cor), envia o logo completo e um ícone para o menu recolhido, e define o nome que aparece no topo. O sistema ajusta o tom da cor para manter o texto legível no tema claro e no escuro. A aparência fica salva junto com os dados e entra no backup.
+
+O sistema também tem tema claro, escuro ou automático (segue o aparelho), no botão do rodapé do menu.
