@@ -58,6 +58,14 @@ a{color:var(--accent-ink)}
 .nav .dot{display:none;position:absolute;top:9px;left:30px;width:9px;height:9px;border-radius:50%;background:var(--bad);border:2px solid var(--panel)}
 .side-foot{display:flex;flex-direction:column;gap:2px;margin-top:4px}
 .side-foot .side-btn{min-height:40px}
+/* barras de rolagem discretas; no menu só aparecem ao passar o mouse */
+html{scrollbar-width:thin;scrollbar-color:var(--field) transparent}
+.side,.mais{scrollbar-width:thin;scrollbar-color:transparent transparent;scrollbar-gutter:stable}
+.side:hover,.side:focus-within,.mais:hover{scrollbar-color:var(--field) transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--field);border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-button{display:none}
 input[type=checkbox]{accent-color:var(--accent)}
 ::placeholder{color:var(--muted);opacity:.8}
 label.chk{flex-direction:row;align-items:center;gap:10px;font-size:.88rem;color:var(--fg)}
