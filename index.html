@@ -198,9 +198,9 @@ textarea{min-height:70px;resize:vertical}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .prog{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden}
 .prog>div{height:100%;background:var(--grad);border-radius:99px}
-.doc{background:#fff;color:#111;font-family:"Times New Roman",Tinos,Georgia,serif;font-size:16px;line-height:1.5;padding:64px 64px 56px 80px;border-radius:6px;max-width:794px;margin:0 auto;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 32px rgba(0,0,0,.07)}
+.doc{background:#fff;color:#111;font-family:"Times New Roman",Tinos,Georgia,serif;font-size:16px;line-height:1.5;padding:72px 72px 64px;border-radius:6px;max-width:794px;margin:0 auto;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 32px rgba(0,0,0,.07)}
 .doc h4{text-align:center;font-size:16px;font-weight:700;margin:0 0 28px;letter-spacing:.02em;text-transform:uppercase}
-.doc p{margin:0 0 14px;text-align:justify;text-indent:0;hyphens:auto;-webkit-hyphens:auto}
+.doc p{margin:0 0 14px;text-align:justify;text-indent:0;hyphens:manual;-webkit-hyphens:manual;word-spacing:normal}
 .doc p.doc-data{text-align:right;margin-top:28px}
 .doc-ass{display:flex;flex-wrap:wrap;justify-content:center;gap:48px 56px;margin-top:64px;break-inside:avoid}
 .doc-ass .ass{width:300px;max-width:100%;text-align:center;break-inside:avoid}
@@ -449,7 +449,7 @@ body:has(#modalRoot .modal-bg) .fab{display:none!important}
   #printRoot table.pg{width:100%;border-collapse:collapse}#printRoot table.pg>*>tr>td{padding:0;border:0}
   #printRoot .pg-top{height:25mm}#printRoot .pg-bot{height:20mm}
   #printRoot .pg-corpo{padding:0 20mm 0 25mm}
-  #printRoot .doc{} #printRoot:has(.doc) .pg-top{height:30mm} #printRoot:has(.doc) .pg-corpo{padding-left:30mm}
+  #printRoot .doc{} #printRoot:has(.doc) .pg-corpo{padding:0 25mm}
   .rel-print{color:#111;font-size:10.5pt}
   .rel-print *{animation:none!important;box-shadow:none!important}
   .rel-print .panel{background:none!important;border:0!important;padding:0!important;margin:0 0 14px}
@@ -518,7 +518,7 @@ function extenso(c){ // valor por extenso (reais e centavos)
   const tri=n=>{if(n===0)return'';if(n===100)return'cem';const c=Math.floor(n/100),r=n%100,p=[];if(c)p.push(cn[c]);if(r<20){if(r)p.push(u[r])}else{p.push(dz[Math.floor(r/10)]+(r%10?' e '+u[r%10]:''))}return p.join(' e ')};
   const num=n=>{if(n===0)return'zero';const parts=[];const mi=Math.floor(n/1e6),mil=Math.floor((n%1e6)/1000),r=n%1000;
     if(mi)parts.push(mi===1?'um milhão':tri(mi)+' milhões');if(mil)parts.push(mil===1?'mil':tri(mil)+' mil');if(r)parts.push(tri(r));
-    return parts.join(r&&(r<100||r%100===0)&&parts.length>1?' e ':parts.length>1?', ':'')};
+    if(parts.length<2)return parts.join('');const ult=parts.pop();return parts.join(' ')+((r&&(r<100||r%100===0))||(!r&&mil&&(mil<100||mil%100===0))?' e ':' ')+ult};
   const re=Math.floor(c/100),ce=c%100;let s='';
   if(re)s=num(re)+(re===1?' real':(re%1e6===0?' de reais':' reais'));
   if(ce)s+=(s?' e ':'')+num(ce)+(ce===1?' centavo':' centavos');
@@ -1061,7 +1061,9 @@ function qualCliente(c){const end=[c.end,c.num,c.bairro].filter(x=>x&&String(x).
   const partes=[c.nome.toUpperCase(),nac,civilG(c,c.civil),c.prof?c.prof.toLowerCase():'',c.rg?'portador'+gen(c,'','a','(a)')+' do RG nº '+c.rg:'',c.cpf?'inscrit'+gen(c,'o','a','o(a)')+' no CPF sob o nº '+fmtCPF(c.cpf):''].filter(Boolean);
   return partes.join(', ')+', residente e domiciliad'+gen(c,'o','a','o(a)')+' '+(end?(/^(rua|avenida|av\.|travessa|alameda|praça|estrada|rodovia)\b/i.test(end)?'na ':'em ')+end:'em '+LACUNA)+(cid?', '+cid:'')+(c.cep?', CEP '+c.cep:'')}
 function qualAdv(){const p=S.perfil;return `${(p.nome||LACUNA).toUpperCase()}, ${(p.nac||gen(p,'brasileiro','brasileira','brasileiro(a)')).toLowerCase()}, ${p.civil?civilG(p,p.civil)+', ':''}advogad${gen(p,'o','a','o(a)')} inscrit${gen(p,'o','a','o(a)')} na ${p.oab||'OAB/'+LACUNA}${p.cpf?', CPF nº '+fmtCPF(p.cpf):''}, com escritório ${p.end?(/^(rua|avenida|av\.|travessa|alameda|praça|estrada|rodovia)\b/i.test(p.end)?'na ':'em ')+p.end:'em '+LACUNA}${p.email?', e-mail '+p.email:''}${p.tel?', telefone '+fmtTel(p.tel):''}`}
-const cidadeDoc=(o,c)=>o.foro||S.perfil.cidade||cidUF(c&&c.cidade,c&&c.uf)||LACUNA;
+const capCid=t=>{t=String(t||'').trim().replace(/\s+/g,' ');if(!t)return'';if(/^[a-z]{2}$/i.test(t))return t.toUpperCase();
+  const [cid,uf]=t.split(/\s*\/\s*/);const c2=cid.toLowerCase().replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase()).replace(/ (De|Da|Do|Das|Dos|E) /g,m=>m.toLowerCase());return c2+(uf?'/'+uf.toUpperCase():'')};
+const cidadeDoc=(o,c)=>capCid(o.foro)||capCid(S.perfil.cidade)||cidUF(c&&capCid(c.cidade),c&&c.uf)||LACUNA;
 function docFaltas(c,o,tipo){const f=[],p=S.perfil;
   if(tipo!=='hipo'){if(!p.nome)f.push('seu nome (Meus dados)');if(!p.oab)f.push('sua OAB (Meus dados)');if(!p.end)f.push('endereço do escritório (Meus dados)')}
   if(!c.end)f.push('endereço do cliente');if(!c.cpf)f.push('CPF do cliente');
