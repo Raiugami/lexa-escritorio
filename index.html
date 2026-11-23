@@ -238,6 +238,15 @@ textarea{min-height:70px;resize:vertical}
 @media (min-width:761px){
   .app{gap:0}
   .side{background:var(--grad);color:#fff;z-index:2;padding:20px 0 20px 12px;scrollbar-gutter:auto}
+  /* o menu cabe inteiro na altura da tela: os itens encolhem em vez de rolar */
+  .side{overflow:hidden;padding-block:clamp(10px,2.2vh,20px)}
+  .side-top{flex:0 0 auto;margin-bottom:clamp(2px,1vh,8px)}
+  .nav{flex:1 1 auto;min-height:0;gap:clamp(0px,.25vh,2px)}
+  .nav a{flex:0 1 40px;min-height:26px}
+  .nav .grp{flex:0 1 auto;padding-block:clamp(2px,1vh,8px) clamp(0px,.3vh,2px)}
+  .fold{flex:0 1 auto;min-height:0}
+  .side-foot{flex:0 0 auto}
+  .side-foot .side-btn{min-height:clamp(32px,4.6vh,40px)}
   .side .nav{padding-right:0}
   .main{margin-left:-24px;padding-left:48px}
   .side .logo{background:rgba(255,255,255,.18)}
@@ -261,6 +270,11 @@ textarea{min-height:70px;resize:vertical}
   .app.mini .nav a{margin-right:12px}
   .app.mini .nav a.on{margin-right:0;padding-right:12px}
   .app.mini .side-top,.app.mini .side-foot{padding-right:12px}
+}
+@media (min-width:761px) and (max-height:620px){
+  .nav .grp:not(.fold-btn){display:none}
+  .nav a{min-height:24px}
+  .side{overflow-y:auto}
 }
 @media print{ .side,.top,.noprint{display:none!important} .app{display:block;padding:0} .main{padding:0;background:#fff} .doc{padding:0} }
 </style>
