@@ -191,6 +191,25 @@ label.chk{flex-direction:row;align-items:center;gap:10px;font-size:.88rem;color:
 .dark-card .s{color:var(--on-grad-muted);font-size:.85rem}
 .dark-card .btn{background:#fff;color:#0e3a25;border-color:#fff}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.eq-grade{align-items:start}
+.eq-lista{list-style:none;margin:6px 0 0;padding:0}
+.eq-lista li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.eq-lista li:first-child{border-top:0}
+.eq-quem{flex:1 1 auto;min-width:0}
+.eq-quem b,.eq-quem small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eq-quem small{color:var(--muted);font-size:.82rem;margin-top:1px}
+.eq-voce{display:inline-block;font-size:.68rem;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent-ink);margin-left:8px;vertical-align:2px}
+.eq-acoes{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+.eq-acoes select{width:auto;min-height:34px;padding-block:4px}
+.eq-av-conv{background:var(--surface-2);color:var(--muted)}.eq-av-conv svg{width:16px;height:16px}
+.eq-sub{margin:18px 0 4px;font-size:.92rem}
+.eq-rodape{margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+.eq-erro{margin:0 0 10px}
+.eq-exemplo{margin-bottom:14px}
+.eq-link{display:flex;gap:8px;margin:12px 0}.eq-link input{flex:1 1 auto;min-width:0;font-family:ui-monospace,monospace;font-size:.8rem}
+.eq-envio{flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.gl-convite{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 14px;margin:0 0 16px;background:var(--accent-soft);font-size:.9rem;line-height:1.45}
+@media (max-width:640px){.eq-lista li{flex-wrap:wrap}.eq-acoes{width:100%;justify-content:flex-end}}
 .grid3{display:grid;grid-template-columns:2fr 1fr;gap:14px}
 .flexr{display:flex;flex-wrap:wrap;gap:14px}
 .flexr>*{min-width:0}
@@ -775,7 +794,7 @@ body.entrando .main>*:nth-child(n+4){animation-delay:.24s}
         <div class="conta"><button class="conta-btn" id="contaBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="contaMenu"></button>
           <div class="conta-menu" id="contaMenu" role="menu" aria-label="Conta e ajustes">
             <div class="conta-cab" id="contaCab"></div>
-            <a href="/perfil" role="menuitem" data-conta="perfil"></a><a href="/aparencia" role="menuitem" data-conta="aparencia"></a><a href="/assinatura" role="menuitem" data-conta="assinatura"></a>
+            <a href="/perfil" role="menuitem" data-conta="perfil"></a><a href="/equipe" role="menuitem" data-conta="equipe"></a><a href="/aparencia" role="menuitem" data-conta="aparencia"></a><a href="/assinatura" role="menuitem" data-conta="assinatura"></a>
             <div class="conta-nuvem" id="contaNuvem" hidden></div>
             <hr>
             <button class="conta-item tema" id="themeBtn" type="button" role="switch" aria-checked="false"></button>
@@ -917,6 +936,8 @@ const IC={
   aparencia:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.7 0 2-1.3 1.3-2.4-.7-1.1-.2-2.6 1.3-2.6H17a5 5 0 0 0 5-5c0-5.5-4.5-10-10-10z"/>',
   backup:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
   assinatura:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+  equipe:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M17.5 14.2c2.4.4 4 2.3 4 5"/>',
+  convite:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
   sol:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   lua:'<path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/>',
   auto:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'
@@ -993,7 +1014,7 @@ function renderConta(r){const p=S.perfil,mk=marca();const nome=(p.nome||'Minha c
   $('#contaBtn').innerHTML=`<span class="av conta-av">${esc(ini)}</span><span class="conta-txt"><b>${esc(nome)}</b><small>${esc(p.oab||mk.nome)}</small></span><svg class="conta-seta" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>`;
   $('#contaBtn').setAttribute('aria-label',`Conta de ${nome}`);
   $('#contaCab').innerHTML=`<span class="av conta-av">${esc(ini)}</span><div style="min-width:0"><b>${esc(nome)}</b><small>${esc(p.email||p.oab||'Preencha seus dados')}</small></div>`;
-  [['perfil','Meus dados'],['aparencia','Aparência'],['assinatura','Assinatura']].forEach(([k,t])=>{const a=document.querySelector(`[data-conta="${k}"]`);a.innerHTML=`${svg(IC[k])}<span>${t}</span>`;a.classList.toggle('on',r===k);a.toggleAttribute('aria-current',r===k)});renderContaNuvem()}
+  [['perfil','Meus dados'],['equipe','Equipe'],['aparencia','Aparência'],['assinatura','Assinatura']].forEach(([k,t])=>{const a=document.querySelector(`[data-conta="${k}"]`);a.innerHTML=`${svg(IC[k])}<span>${t}</span>`;a.classList.toggle('on',r===k);a.toggleAttribute('aria-current',r===k)});renderContaNuvem()}
 function renderContaNuvem(){const el=$('#contaNuvem');if(!el)return;
   if(!nuvemUser){el.hidden=true;el.innerHTML='';return}
   el.hidden=false;
@@ -1842,7 +1863,7 @@ function renderGate(){const g=$('#gate');if(!g)return;
   }else if(gateRec){titulo='Crie uma nova senha';sub='Escolha uma senha forte, com pelo menos 8 caracteres.';
     corpo=glCampo('gt_senha','Nova senha','lock','password','required minlength="8" autocomplete="new-password" data-forca="1"')+`<div class="gl-forca"><i id="gl_forca"></i></div>`+glCampo('gt_senha2','Repita a nova senha','lock','password','required minlength="8" autocomplete="new-password"');
     botao='Salvar nova senha';
-  }else if(gateModo==='criar'){titulo='Crie sua conta';sub='Comece a organizar seu escritório em poucos minutos.';
+  }else if(gateModo==='criar'){titulo='Crie sua conta';sub=CONVITE_INFO?'Use o e-mail do convite para entrar na equipe.':'Comece a organizar seu escritório em poucos minutos.';
     corpo=glCampo('gt_nome','Nome completo','user','text','required autocomplete="name" placeholder="Dra. Maria Silva"')
       +glCampo('gt_oab','OAB <span class="opc">(opcional)</span>','badge','text','placeholder="OAB/SP 000.000"')
       +glCampo('gt_email','E-mail','mail','email','required autocomplete="email" placeholder="voce@escritorio.com.br"')
@@ -1869,13 +1890,13 @@ function renderGate(){const g=$('#gate');if(!g)return;
     <main class="gl-lado"><div class="gl-form-caixa">
       <div class="gl-topo-mob"><span class="gl-logo">${HONRA_SVG(30)}</span>Honra</div>
       ${gateRec||gateMfa||gateAceite?'':`<div class="gate-abas" role="tablist">${aba('entrar','Entrar')}${aba('criar','Criar conta')}</div>`}
-      <h1>${titulo}</h1><p class="gl-sub">${sub}</p>
+      <h1>${titulo}</h1><p class="gl-sub">${sub}</p>${gateRec||gateMfa||gateAceite?'':conviteFaixa()}
       ${sb?`<form class="gate-form" onsubmit="event.preventDefault();nuvemEntrar()" novalidate>${corpo}<button class="btn pri gl-btn" type="submit">${botao}</button></form>`:`<div class="gl-carrega"><i></i>${nuvemMsg?'':'Conectando…'}</div>`}
       ${nuvemMsg?`<p class="gate-msg ${tipoMsg}" role="status">${esc(nuvemMsg)}</p>`:''}
       ${gateModo==='criar'&&!gateRec&&!gateMfa&&!gateAceite?'<p class="gl-termos">Você se compromete a manter os dados dos seus clientes em sigilo, conforme o Estatuto da Advocacia e a LGPD.</p>':''}
       <div class="gl-seg">${GL_IC.escudo}Conexão protegida. Cada escritório só vê os próprios dados.</div>
     </div></main>`;
-  const em=$('#gt_email');if(em&&emailAntes)em.value=emailAntes;
+  const em=$('#gt_email');if(em&&emailAntes)em.value=emailAntes;else if(em&&CONVITE_INFO)em.value=CONVITE_INFO.email;
   const fo=$('[data-forca]');if(fo)fo.addEventListener('input',()=>{const v=fo.value;let n=0;if(v.length>=8)n++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))n++;if(/\d/.test(v))n++;if(/[^A-Za-z0-9]/.test(v)||v.length>=12)n++;
     const b=$('#gl_forca');b.style.width=(v?Math.max(n,1)*25:0)+'%';b.style.background=['#c0392b','#c0392b','#d68910','#2e8b57','#1f6b45'][n]});
   const f=$('#gate input');if(f&&!('ontouchstart' in window))setTimeout(()=>{try{($('#gate input:placeholder-shown')||f).focus({preventScroll:true})}catch(e){}},50);
@@ -1942,13 +1963,118 @@ ROUTES.assinatura=()=>{const lib=assLiberado(),teste=assEmTeste(),d=assDias(),pa
     <div class="dark-card"><small style="opacity:.75;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Honra completo</small>
       <div class="ass-preco">R$ ${PLANO.preco} <small>/ ${PLANO.periodo}</small></div>
       <ul class="ass-lista"><li>Clientes, honorários e parcelas sem limite</li><li>Pauta, prazos e Google Agenda</li><li>Contrato, procuração, recibo e extrato prontos</li><li>Cobranças, acordos e relatórios</li><li>Dados na nuvem, com verificação em duas etapas</li></ul>
-      ${ASS&&ASS.status==='cortesia'?'':ativa?'<button class="btn ass-btn" data-act="ass-cancelar" type="button">Cancelar assinatura</button>':`<button class="btn ass-btn" data-act="assinar" type="button">Assinar com Mercado Pago</button>`}
+      ${ASS&&ASS.status==='cortesia'?'':MEU_PAPEL&&MEU_PAPEL!=='dono'?'<p style="margin:6px 0 0;opacity:.85">Só o dono do escritório assina ou cancela. A equipe usa a mesma assinatura, sem custo a mais.</p>':ativa?'<button class="btn ass-btn" data-act="ass-cancelar" type="button">Cancelar assinatura</button>':`<button class="btn ass-btn" data-act="assinar" type="button">Assinar com Mercado Pago</button>`}
       <small style="opacity:.75">Cobrança mensal no cartão de crédito, pelo Mercado Pago. Cancele quando quiser.</small></div>
     <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Sua situação</h2>${sit}</div>${barra}<div style="margin-top:10px">${det}</div>
       <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
       <h2 style="font-size:1rem;margin:0 0 6px">Como funciona</h2>
       <p class="note" style="margin:0">Todo escritório começa com 7 dias grátis, com tudo liberado. Se o teste acabar sem assinatura, nada é apagado: os dados ficam para consulta e exportação, e voltam a ser editáveis assim que o pagamento é confirmado.</p></div>
   </div>`};
+
+/* ===================== Equipe: várias contas no mesmo escritório ===================== */
+/* O dono convida por link (uso único, vale 7 dias, só para o e-mail convidado). A assinatura é uma só por escritório. */
+const PAPEIS={dono:'Dono do escritório',advogado:'Advogado(a)',estagiario:'Estagiário(a)',secretaria:'Secretaria'};
+const PAPEIS_CONVITE=['advogado','estagiario','secretaria'];
+const CONV_KEY='honra-convite';
+let EQ={membros:null,convites:[],lido:0,erro:''},MEU_PAPEL=null,CONVITE_INFO=null,conviteGateFeito=false;
+const convitePendente=()=>{try{return localStorage.getItem(CONV_KEY)||''}catch(e){return''}};
+const conviteLimpa=()=>{CONVITE_INFO=null;try{localStorage.removeItem(CONV_KEY)}catch(e){}};
+/* link de convite: guarda o token (sobrevive à confirmação do e-mail) e tira do endereço */
+(function(){try{const q=new URLSearchParams(location.search),tk=q.get('convite');if(!tk)return;
+  if(/^[0-9a-f]{64}$/.test(tk))localStorage.setItem(CONV_KEY,tk);q.delete('convite');const r=q.toString();
+  history.replaceState(null,'',location.pathname+(r?'?'+r:'')+location.hash)}catch(e){}})();
+const eqMsg=e=>{const m=String((e&&e.message)||e||'').replace(/^.*?:\s*(?=[a-zà-ú])/i,'');return m?m.charAt(0).toUpperCase()+m.slice(1).replace(/\.?$/,'.'):'Tente de novo em instantes.'};
+const eqIni=n=>String(n||'?').replace(/^(dra?\.?|dr\.?)\s+/i,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+const eqLink=tk=>location.origin+'/?convite='+tk;
+const eqExemplo=()=>!nuvemUser;
+async function conviteInfo(){const tk=convitePendente();if(!tk||!sb||nuvemUser)return;
+  try{const {data,error}=await sb.rpc('ver_convite',{token:tk});if(error)throw error;
+    if(!data){conviteLimpa();nuvemMsg='Este convite expirou, foi cancelado ou já foi usado. Peça um novo link a quem convidou você.'}
+    else{CONVITE_INFO=data;if(!conviteGateFeito){conviteGateFeito=true;gateModo='criar'}}}
+  catch(e){}
+  nuvemAtualiza()}
+function conviteFaixa(){const c=CONVITE_INFO;if(!c)return'';
+  return `<div class="gl-convite" role="note"><b>Convite para ${esc(c.escritorio)}</b><span>Você vai entrar como <strong>${esc(PAPEIS[c.papel]||c.papel)}</strong>. ${gateModo==='criar'?'Crie sua conta':'Entre'} com o e-mail <strong>${esc(c.email)}</strong>.</span></div>`}
+/* depois de entrar: aceita o convite guardado antes de abrir o escritório */
+async function conviteAceita(){const tk=convitePendente();if(!tk||!sb||!nuvemUser)return;
+  try{if(nuvemSnap&&nuvemEsc&&assLiberado()){try{await nuvemEmpurra()}catch(e){}}
+    const nomeEsc=CONVITE_INFO&&CONVITE_INFO.escritorio;
+    const {data:esc,error}=await sb.rpc('aceitar_convite',{token:tk});if(error)throw error;
+    conviteLimpa();
+    if(esc!==nuvemEsc){nuvemSnap=null;nuvemEsc=null;S=Object.assign(vazio(),{perfil:S.perfil});EQ.membros=null}
+    nuvemLog('entrou na equipe');setTimeout(()=>toast(nomeEsc?'Bem-vindo à equipe de '+nomeEsc:'Você entrou na equipe do escritório'),900)}
+  catch(e){conviteLimpa();const m=eqMsg(e);
+    setTimeout(()=>modal(`<h2>Não foi possível entrar na equipe</h2><p>${esc(m)}</p><p class="note">Se precisar, peça um novo link a quem convidou você.</p><div class="row" style="justify-content:flex-end"><button class="btn pri" data-close="1" type="button">Entendi</button></div>`),900)}}
+async function eqCarrega(forca){
+  if(eqExemplo()){if(EQ.membros&&EQ.lido&&!forca)return;const p=S.perfil||{};const d=new Date(Date.now()+5*864e5).toISOString();
+    EQ={membros:[{usuario:'eu',papel:'dono',nome:p.nome||'Você',email:p.email||'voce@escritorio.com.br',eu:true},
+      {usuario:'ex1',papel:'advogado',nome:'Marina Costa',email:'marina@escritorio.com.br'},
+      {usuario:'ex2',papel:'estagiario',nome:'Lucas Pereira',email:'lucas@escritorio.com.br'}],
+      convites:[{id:'ex3',email:'recepcao@escritorio.com.br',papel:'secretaria',expira_em:d}],lido:Date.now(),erro:''};MEU_PAPEL='dono';if(rota()==='equipe')go();return}
+  if(!sb||!nuvemEsc)return;if(!forca&&EQ.membros&&Date.now()-EQ.lido<30e3)return;
+  try{const {data,error}=await sb.rpc('equipe',{esc:nuvemEsc});if(error)throw error;
+    const eu=(data||[]).find(m=>m.eu);MEU_PAPEL=eu?eu.papel:MEU_PAPEL;let cv=[];
+    if(MEU_PAPEL==='dono'){const r=await sb.rpc('convites_pendentes',{esc:nuvemEsc});if(r.error)throw r.error;cv=r.data||[]}
+    EQ={membros:data||[],convites:cv,lido:Date.now(),erro:''}}
+  catch(e){EQ.erro=eqMsg(e);EQ.lido=Date.now();if(!EQ.membros)EQ.membros=[]}
+  if(rota()==='equipe')go()}
+ROUTES.equipe=()=>{const ex=eqExemplo(),M=EQ.membros,dono=MEU_PAPEL==='dono';
+  const head=`<div class="phead"><div><h1>Equipe</h1><p>Cada pessoa entra com o próprio e-mail e senha e trabalha no mesmo escritório. A assinatura é uma só: quem você convida não paga nada a mais.</p></div></div>
+    ${ex?'<div class="banner eq-exemplo"><span>Exemplo para visualização. Entre na sua conta para convidar pessoas de verdade.</span></div>':''}`;
+  if(!M)return head+'<div class="panel"><p class="note">Carregando a equipe…</p></div>';
+  const dn=M.find(m=>m.papel==='dono');
+  const pessoa=m=>{const pode=dono&&!m.eu&&m.papel!=='dono';
+    return `<li><span class="av">${esc(eqIni(m.nome))}</span><span class="eq-quem"><b>${esc(m.nome||m.email)}${m.eu?'<span class="eq-voce">Você</span>':''}</b><small>${esc(m.email||'')}</small></span>
+      <span class="eq-acoes">${pode?`<select data-eq-papel="${esc(m.usuario)}" aria-label="Papel de ${esc(m.nome||m.email)}">${PAPEIS_CONVITE.map(k=>`<option value="${k}" ${m.papel===k?'selected':''}>${PAPEIS[k]}</option>`).join('')}</select>
+        <button class="btn sm ghost danger ico-btn" data-act="eq-remover" data-u="${esc(m.usuario)}" type="button" title="Remover da equipe" aria-label="Remover ${esc(m.nome||m.email)} da equipe">✕</button>`
+        :`<span class="pill ${m.papel==='dono'?'p-pago':'p-pendente'}">${PAPEIS[m.papel]||esc(m.papel)}</span>`}</span></li>`};
+  const pend=EQ.convites||[];
+  const lado=dono?`<form class="panel" id="fEq"><h2>Convidar pessoa</h2><p class="note">Geramos um link para você mandar por WhatsApp ou e-mail. Ele vale 7 dias, funciona uma vez só e apenas para o e-mail informado.</p>
+      <div class="fs" style="margin-top:10px"><label class="c2">E-mail da pessoa<input id="eq_email" type="email" required autocomplete="off" placeholder="nome@escritorio.com.br"></label>
+      <label class="c2">Papel<select id="eq_papel">${PAPEIS_CONVITE.map(k=>`<option value="${k}">${PAPEIS[k]}</option>`).join('')}</select></label></div>
+      <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn pri" type="submit">Gerar convite</button></div>
+      ${pend.length?`<h3 class="eq-sub">Aguardando resposta</h3><ul class="eq-lista">${pend.map(c=>`<li><span class="av eq-av-conv">${svg(IC.convite)}</span><span class="eq-quem"><b>${esc(c.email)}</b><small>${PAPEIS[c.papel]||esc(c.papel)} · vale até ${new Date(c.expira_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</small></span>
+        <span class="eq-acoes"><button class="btn sm" data-act="eq-reenviar" data-email="${esc(c.email)}" data-papel="${esc(c.papel)}" type="button">Novo link</button><button class="btn sm ghost danger ico-btn" data-act="eq-cancelar" data-u="${esc(c.id)}" type="button" title="Cancelar convite" aria-label="Cancelar convite de ${esc(c.email)}">✕</button></span></li>`).join('')}</ul>`:''}</form>`
+    :`<div class="panel"><h2>Sobre a equipe</h2><p class="note">Quem convida, muda papéis e cuida da assinatura é ${dn?'<strong>'+esc(dn.nome)+'</strong>, ':''}o dono do escritório.</p>
+      <h3 class="eq-sub">Sair do escritório</h3><p class="note">Você deixa de ver os clientes e a agenda deste escritório. Os dados continuam com o escritório.</p>
+      <div class="row" style="margin-top:10px"><button class="btn ghost danger" data-act="eq-sair" type="button">Sair do escritório</button></div></div>`;
+  return head+`${EQ.erro?`<p class="note eq-erro">Não consegui atualizar a equipe: ${esc(EQ.erro)}</p>`:''}<div class="grid2 eq-grade">
+    <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Pessoas</h2><span class="note">${M.length} ${M.length===1?'pessoa':'pessoas'}</span></div>
+      <ul class="eq-lista">${M.map(pessoa).join('')}</ul>
+      <p class="note eq-rodape">Por enquanto todos os papéis veem e editam os dados do escritório. O papel aparece para a equipe e só o dono convida, remove e assina.</p></div>
+    ${lado}</div>`};
+AFTER.equipe=()=>{eqCarrega(false);
+  const f=$('#fEq');if(f)f.onsubmit=e=>{e.preventDefault();eqConvidar($('#eq_email').value,$('#eq_papel').value,f.querySelector('button[type=submit]'))};
+  document.querySelectorAll('[data-eq-papel]').forEach(s=>s.onchange=()=>eqPapel(s.dataset.eqPapel,s.value,s))};
+async function eqConvidar(email,papel,btn){email=String(email||'').trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){toast('Digite um e-mail válido');return}
+  if(eqExemplo()){eqMostraLink(email,papel,'0'.repeat(64),true);return}
+  if(btn)btn.disabled=true;
+  try{const {data:tk,error}=await sb.rpc('convidar',{esc:nuvemEsc,email,papel});if(error)throw error;
+    nuvemLog('convite enviado');eqMostraLink(email,papel,tk);eqCarrega(true)}
+  catch(e){toast(eqMsg(e))}finally{if(btn)btn.disabled=false}}
+function eqMostraLink(email,papel,tk,ex){const link=eqLink(tk),nomeEsc=(marca().nome||'nosso escritório');
+  const txt=`Olá! Você foi convidado(a) para a equipe de ${nomeEsc} no Honra, como ${PAPEIS[papel]}. Crie sua conta com o e-mail ${email} por este link (vale 7 dias): ${link}`;
+  modal(`<h2>Convite pronto</h2><p>Envie o link abaixo para <strong>${esc(email)}</strong>. Ele não aparece de novo depois que você fechar esta janela${ex?' (exemplo: este link não funciona)':''}.</p>
+    <div class="eq-link"><input id="eq_link" readonly value="${esc(link)}" aria-label="Link do convite"><button class="btn pri" data-act="eq-copiar" type="button">Copiar</button></div>
+    <div class="row eq-envio"><a class="btn" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a><a class="btn" href="mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Convite para o Honra')}&body=${encodeURIComponent(txt)}">Enviar por e-mail</a></div>
+    <p class="note">Por segurança, só a conta com esse e-mail consegue usar o convite.</p>
+    <div class="row" style="justify-content:flex-end"><button class="btn" data-close="1" type="button">Fechar</button></div>`)}
+async function eqPapel(u,papel,sel){if(eqExemplo()){const m=EQ.membros.find(x=>x.usuario===u);if(m)m.papel=papel;toast('Papel alterado');return}
+  sel.disabled=true;try{const {error}=await sb.rpc('mudar_papel',{esc:nuvemEsc,membro:u,papel});if(error)throw error;toast('Papel alterado');nuvemLog('papel alterado')}
+  catch(e){toast(eqMsg(e))}finally{eqCarrega(true)}}
+function eqRemover(u){const m=(EQ.membros||[]).find(x=>x.usuario===u);if(!m)return;
+  confirmar(`Remover <strong>${esc(m.nome||m.email)}</strong> da equipe? A pessoa deixa de ver os dados do escritório na hora. Os clientes e lançamentos que ela fez continuam aqui.`,'Remover',async()=>{
+    if(eqExemplo()){EQ.membros=EQ.membros.filter(x=>x.usuario!==u);go();toast('Pessoa removida');return}
+    try{const {error}=await sb.rpc('remover_membro',{esc:nuvemEsc,membro:u});if(error)throw error;toast('Pessoa removida da equipe');nuvemLog('membro removido')}catch(e){toast(eqMsg(e))}eqCarrega(true)})}
+function eqCancelar(id){confirmar('Cancelar este convite? O link deixa de funcionar.','Cancelar convite',async()=>{
+  if(eqExemplo()){EQ.convites=EQ.convites.filter(c=>c.id!==id);go();return}
+  try{const {error}=await sb.rpc('cancelar_convite',{convite:id});if(error)throw error;toast('Convite cancelado')}catch(e){toast(eqMsg(e))}eqCarrega(true)})}
+function eqSair(){confirmar('Sair da equipe deste escritório? Você deixa de ver os dados dele. Para voltar, o dono precisa convidar você de novo.','Sair do escritório',async()=>{
+  try{const {error}=await sb.rpc('sair_do_escritorio',{esc:nuvemEsc});if(error)throw error;
+    nuvemLog('saiu da equipe');clearTimeout(nuvemTimer);nuvemSnap=null;nuvemEsc=null;MEU_PAPEL=null;EQ={membros:null,convites:[],lido:0,erro:''};
+    S=Object.assign(vazio(),{perfil:S.perfil});salvarLocal();toast('Você saiu do escritório');ir('painel');await nuvemSincronizar(false)}
+  catch(e){toast(eqMsg(e))}})}
 
 function salvarLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promise((ok,er)=>{const sc=document.createElement('script');sc.src=SB_SRC;sc.onload=ok;sc.onerror=()=>er(new Error('não consegui carregar o serviço de login'));document.head.appendChild(sc)})}
@@ -1957,7 +2083,7 @@ async function nuvemIniciar(){if(!nuvemDisponivel())return;
     sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{flowType:'pkce',persistSession:true,detectSessionInUrl:true}});
     sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){gateRec=true;nuvemUser=ses?ses.user:nuvemUser;nuvemAtualiza();return}const antes=nuvemUser;nuvemUser=ses?ses.user:null;if(ev==='SIGNED_IN'&&!antes){nuvemLog('entrada');carregaMostra();nuvemPosLogin()}if(ev==='SIGNED_OUT')nuvemAtualiza()});
     const {data}=await sb.auth.getSession();nuvemUser=data.session?data.session.user:null;
-    if(nuvemUser)await nuvemPosLogin();else carregaEsconde(true);
+    if(nuvemUser)await nuvemPosLogin();else{carregaEsconde(true);conviteInfo()}
     nuvemAtualiza();
   }catch(e){carregaEsconde(true);nuvemMsg='Não foi possível conectar ao serviço de acesso. Tente de novo mais tarde.';nuvemAtualiza()}
 }
@@ -2068,10 +2194,14 @@ async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado||ga
   try{
     if(nuvemSnap&&nuvemEsc&&assLiberado()){clearTimeout(nuvemTimer);await nuvemEmpurra()}
     const {data:esc,error:e0}=await sb.rpc('meu_escritorio');if(e0)throw e0;nuvemEsc=esc;await assCarrega();
+    try{const {data:mp}=await sb.from('membros').select('papel').eq('escritorio_id',esc).eq('usuario',nuvemUser.id).maybeSingle();MEU_PAPEL=mp?mp.papel:null}catch(e){}
+    let escAntes='';try{escAntes=localStorage.getItem('honra-esc')||''}catch(e){}
     const {data:row,error:e1}=await sb.from('escritorios').select('dados,marca,config,migrado_em').eq('id',esc).maybeSingle();if(e1)throw e1;
     if(!row)throw new Error('não encontrei o escritório');
     if(!row.migrado_em){
       try{localStorage.setItem('lexa-antes-da-nuvem',localStorage.getItem(KEY)||'')}catch(e){}
+      /* o que está neste navegador é de outro escritório (saiu da equipe, trocou de conta): começa vazio */
+      if(escAntes&&escAntes!==esc)S=Object.assign(vazio(),{perfil:S.perfil});
       if(row.dados&&Object.keys(row.dados).length)S=Object.assign(vazio(),row.dados);
       const md=nuvemUser.user_metadata||{};if(!S.perfil.nome&&md.nome){S.perfil.nome=md.nome;if(md.oab&&!S.perfil.oab)S.perfil.oab=md.oab}if(!S.perfil.email&&nuvemUser.email)S.perfil.email=nuvemUser.email;
       const ids=[];['clientes','parcelas','agenda','acoes','avulsos','empresas','devedores','acordos'].forEach(k=>(S[k]||[]).forEach(o=>{ids.push(+o.id||0);(o.parcelas||[]).forEach(p=>ids.push(+p.id||0))}));S.seq=Math.max(S.seq||1,...ids,0)+1;
@@ -2087,14 +2217,20 @@ async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado||ga
       const ac=new Map();n.acordos=T('acordos').map(r=>{const a=Object.assign(rec(r),{parcelas:[]});ac.set(a.id,a);return a});
       T('acordo_parcelas').forEach(r=>{const a=ac.get(+r.acordo_id);a&&a.parcelas.push(rec(r))});n.acordos.forEach(a=>a.parcelas.sort((x,y)=>(x.num||0)-(y.num||0)));
       n.perfil=Object.assign(vazio().perfil,(pf&&pf.dados)||{});
+      if(!pf){const md=nuvemUser.user_metadata||{};if(md.nome)n.perfil.nome=md.nome;if(md.oab)n.perfil.oab=md.oab;if(nuvemUser.email)n.perfil.email=nuvemUser.email}
       const cf=row.config||{};n.marca=row.marca||null;if(cf.google)n.google=cf.google;n.exemplo=!!cf.exemplo;
       const ids=[];NV_ORD.forEach(t=>T(t).forEach(r=>ids.push(+r.id)));n.seq=Math.max(cf.seq||1,...ids,0)+1;
       try{if(!localStorage.getItem('lexa-antes-da-nuvem'))localStorage.setItem('lexa-antes-da-nuvem',localStorage.getItem(KEY)||'')}catch(e){}
       S=n;nuvemSnap=nuvemFoto();salvarLocal();aplicaMarca();nuvemMsg='Dados carregados da nuvem às '+nuvemHora()+'.';
     }
+    try{localStorage.setItem('honra-esc',esc)}catch(e){}nuvemUltima=Date.now();
   }catch(e){nuvemMsg='Não consegui sincronizar: '+(e.message||e)}
   finally{nuvemOcupado=false;nuvemAtualiza();if(!$('#gate')||$('#gate').hidden)go()}
 }
+/* várias pessoas no mesmo escritório: ao voltar para a aba, traz o que os colegas mudaram (sem atrapalhar quem está digitando) */
+let nuvemUltima=0;
+document.addEventListener('visibilitychange',()=>{if(document.hidden||!nuvemUser||!nuvemSnap||Date.now()-nuvemUltima<120e3)return;
+  const a=document.activeElement;if($('#modalRoot').innerHTML||$('#view form')||(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))return;nuvemSincronizar(false)});
 function nuvemAgenda(){if(!sb||!nuvemUser)return;clearTimeout(nuvemTimer);nuvemTimer=setTimeout(nuvemEnviar,1200)}
 async function nuvemEnviar(){if(!sb||!nuvemUser||!nuvemEsc||!nuvemSnap||!assLiberado())return;
   if(nuvemEnviando||nuvemOcupado){nuvemDeNovo=true;return}nuvemEnviando=true;
@@ -2110,7 +2246,7 @@ function nuvemPosLogin(){if(nuvemPos)return nuvemPos;nuvemPos=(async()=>{try{
     if(!error&&!(ac&&ac.length)){const md=nuvemUser.user_metadata||{};
       if(md.aceite_versao===TERMOS_V)await sb.from('aceites').insert({versao:TERMOS_V,agente:nvAgente()});
       else{gateAceite=true;nuvemMsg='';nuvemAtualiza();carregaEsconde(true);return}}
-    carregaMostra();gateAceite=false;nuvemAtualiza();await nuvemSincronizar(false);carregaEsconde();
+    carregaMostra();gateAceite=false;nuvemAtualiza();await conviteAceita();await nuvemSincronizar(false);carregaEsconde();
   }catch(e){carregaEsconde(true)}finally{nuvemPos=null}})();return nuvemPos}
 const nvAgente=()=>String(navigator.userAgent||'').slice(0,250);
 function nuvemLog(ev){if(sb&&nuvemUser)sb.from('acessos').insert({evento:ev,agente:nvAgente()}).then(()=>{},()=>{})}
@@ -2132,7 +2268,7 @@ function painelSeguranca(){if(!nuvemUser||!sb)return'';
     <h3 style="margin:16px 0 6px;font-size:14px">Últimos acessos</h3><div id="acessosBox"><p class="note">Carregando…</p></div></div>
   <div class="panel"><h2>Privacidade</h2><p class="note">Os dados dos seus clientes pertencem ao seu escritório. O Honra só os guarda para você usar o sistema, nunca vende nem compartilha.</p>
     <div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="btn ghost" data-act="legal" data-tipo="privacidade" type="button">Política de Privacidade</button><button class="btn ghost" data-act="legal" data-tipo="termos" type="button">Termos de Uso</button></div>
-    <h3 style="margin:16px 0 6px;font-size:14px">Excluir conta</h3><p class="note">Apaga sua conta, o escritório e todos os clientes, parcelas, agenda e documentos ligados a ela. Baixe uma cópia antes, se quiser guardar.</p>
+    <h3 style="margin:16px 0 6px;font-size:14px">Excluir conta</h3>${MEU_PAPEL&&MEU_PAPEL!=='dono'?'<p class="note">Apaga só a sua conta e tira você da equipe. Os clientes e lançamentos continuam com o escritório.</p>':`<p class="note">Apaga sua conta, o escritório e todos os clientes, parcelas, agenda e documentos ligados a ela. Baixe uma cópia antes, se quiser guardar.</p>`}
     <div class="row" style="margin-top:10px"><button class="btn ghost danger" data-act="excluir-conta" type="button">Excluir minha conta</button></div></div></div>`}
 async function carregaSeguranca(){if(!sb||!nuvemUser)return;
   try{const {data:fs}=await sb.auth.mfa.listFactors();const ativo=((fs&&fs.totp)||[]).find(x=>x.status==='verified');const b=$('#mfaBox');
@@ -2156,7 +2292,7 @@ async function mfaAtivar(){
 function mfaDesativar(fid){confirmar('Desativar a verificação em duas etapas? Depois disso, só a senha será pedida ao entrar.','Desativar',async()=>{
   const {error}=await sb.auth.mfa.unenroll({factorId:fid});if(error){toast('Não consegui desativar: '+error.message);return}
   try{await sb.auth.refreshSession()}catch(e){}nuvemLog('duas etapas desativadas');toast('Verificação em duas etapas desativada');carregaSeguranca()})}
-function excluirConta(){modal(`<h2>Excluir minha conta</h2><p>Isto apaga <strong>definitivamente</strong> sua conta, o escritório e todos os clientes, parcelas, agenda, cobranças e o histórico. Não dá para desfazer.</p>
+function excluirConta(){const membro=MEU_PAPEL&&MEU_PAPEL!=='dono';modal(`<h2>Excluir minha conta</h2>${membro?'<p>Isto apaga <strong>definitivamente</strong> a sua conta e tira você da equipe. Os dados do escritório continuam com o dono.</p>':`<p>Isto apaga <strong>definitivamente</strong> sua conta, o escritório e todos os clientes, parcelas, agenda, cobranças e o histórico. Não dá para desfazer.</p>`}
   <p class="note">Se quiser guardar os dados, use antes "Baixar cópia dos dados".</p>
   <form id="fEx" class="fs"><label>Para confirmar, digite EXCLUIR<input id="ex_c" autocomplete="off" required></label>
   <div class="row" style="justify-content:flex-end"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri danger" type="submit">Excluir tudo</button></div></form>`);
@@ -2201,7 +2337,7 @@ async function nuvemEsqueci(){const em=((($('#gt_email'))||{}).value||'').trim()
     nuvemMsg='Enviamos um link para redefinir a senha para '+em+'.'}catch(e){nuvemMsg='Não consegui enviar: '+e.message}
   nuvemAtualiza()}
 
-async function nuvemSair(){if(!sb)return;clearTimeout(nuvemTimer);if(nuvemSnap&&!gateMfa&&!gateAceite&&assLiberado()){try{await nuvemEmpurra()}catch(e){}}if(nuvemUser){try{await sb.from('acessos').insert({evento:'saída',agente:nvAgente()})}catch(e){}}try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemSnap=null;nuvemEsc=null;gateMfa=false;gateAceite=false;ASS=null;assPinta();
+async function nuvemSair(){if(!sb)return;clearTimeout(nuvemTimer);if(nuvemSnap&&!gateMfa&&!gateAceite&&assLiberado()){try{await nuvemEmpurra()}catch(e){}}if(nuvemUser){try{await sb.from('acessos').insert({evento:'saída',agente:nvAgente()})}catch(e){}}try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemSnap=null;nuvemEsc=null;gateMfa=false;gateAceite=false;ASS=null;assPinta();MEU_PAPEL=null;EQ={membros:null,convites:[],lido:0,erro:''};
   try{localStorage.removeItem(KEY);localStorage.removeItem('lexa-antes-da-nuvem')}catch(e){}
   S=vazio();nuvemMsg='Você saiu. Entre de novo para acessar os dados.';nuvemAtualiza();go()}
 function nuvemPainel(){
@@ -2264,6 +2400,11 @@ document.addEventListener('click',e=>{
     case 'mfa-ativar':mfaAtivar();break;
     case 'mfa-desativar':mfaDesativar(ds.fator);break;
     case 'excluir-conta':excluirConta();break;
+    case 'eq-remover':eqRemover(ds.u);break;
+    case 'eq-cancelar':eqCancelar(ds.u);break;
+    case 'eq-sair':eqSair();break;
+    case 'eq-reenviar':eqConvidar(ds.email,ds.papel,el);break;
+    case 'eq-copiar':copiar(($('#eq_link')||{}).value||'');break;
     case 'nuvem-sincar':nuvemSincronizar(true);break;
     case 'exp-ics':exportaIcs();break;
     case 'g-config':modalGoogle();break;
