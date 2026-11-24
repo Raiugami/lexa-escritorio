@@ -3,7 +3,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 
 const PRECO = 69.9;
-const ORIGENS = ["https://raiugami.github.io", "http://localhost", "http://127.0.0.1"];
+const ORIGENS = ["https://honra.imaguiar.com.br", "https://raiugami.github.io", "http://localhost", "http://127.0.0.1"];
 const MP = "https://api.mercadopago.com";
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     }
 
     let volta = String(body.volta || "");
-    if (!ORIGENS.some((o) => volta.startsWith(o))) volta = "https://raiugami.github.io/lexa-escritorio/#assinatura";
+    if (!ORIGENS.some((o) => volta.startsWith(o))) volta = "https://honra.imaguiar.com.br/#assinatura";
 
     // se ainda há dias de teste, a primeira cobrança só acontece quando o teste acabar
     const agora = Date.now();

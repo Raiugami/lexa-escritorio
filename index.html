@@ -1670,7 +1670,7 @@ const SB_KEY='sb_publishable_uoCXERCLpJy_jHDjaRlSug_nhvEL6vv';
 const SB_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js';
 let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar',gateRec=/[?&]recuperar=1/.test(location.search);
 if(/error_code=/.test(location.href)){gateRec=false;nuvemMsg=/otp_expired/.test(location.href)?'Esse link expirou ou já foi usado. Peça um novo.':'Não foi possível validar o link. Peça um novo.';try{history.replaceState(null,'',location.pathname)}catch(e){}}
-const nuvemDisponivel=()=>/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+const nuvemDisponivel=()=>/github\.io$|^honra\.imaguiar\.com\.br$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const nuvemHora=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 function nuvemAtualiza(){renderGate();try{renderContaNuvem()}catch(e){}if(location.hash.startsWith('#backup'))go()}
 const GL_IC={
