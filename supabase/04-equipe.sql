@@ -195,14 +195,13 @@ grant execute on function public.sair_do_escritorio(uuid) to authenticated;
 --    dono continua apagando o escritório inteiro, como antes.
 --    (sem mudança de código: membros.usuario já cai em cascata e escritorios.dono também)
 
--- 10) Permissões por papel, que o dono liga e desliga na tela Equipe.
---     financeiro: ver Financeiro, Relatórios, Cobrança de empresas e valores (controle na tela)
---     excluir: apagar clientes, compromissos, ações, recebimentos avulsos, empresas, devedores e acordos (controle no banco)
---     aparencia: mudar cor, logo e nome do escritório (controle no banco)
+-- 10) Permissões por papel, que o dono liga e desliga na tela Equipe. O dono sempre pode tudo.
+--     No banco: excluir (apagar clientes, compromissos, ações, avulsos, empresas, devedores, acordos) e aparencia.
+--     Nas telas: financeiro, baixas, relatorios, cobrancas, clientes, documentos, ajuizar, exportar.
 alter table public.escritorios add column if not exists permissoes jsonb not null default '{
-  "advogado":   {"financeiro": true,  "excluir": true,  "aparencia": false},
-  "estagiario": {"financeiro": false, "excluir": false, "aparencia": false},
-  "secretaria": {"financeiro": true,  "excluir": false, "aparencia": false}}'::jsonb;
+  "advogado":   {"financeiro": true,  "baixas": true,  "relatorios": true,  "cobrancas": true,  "clientes": true, "documentos": true, "ajuizar": true,  "excluir": true,  "exportar": false, "aparencia": false},
+  "secretaria": {"financeiro": true,  "baixas": true,  "relatorios": false, "cobrancas": true,  "clientes": true, "documentos": true, "ajuizar": false, "excluir": false, "exportar": false, "aparencia": false},
+  "estagiario": {"financeiro": false, "baixas": false, "relatorios": false, "cobrancas": false, "clientes": true, "documentos": true, "ajuizar": true,  "excluir": false, "exportar": false, "aparencia": false}}'::jsonb;
 
 create or replace function public.pode(esc uuid, permissao text) returns boolean
 language sql stable security definer set search_path = '' as $$
@@ -239,7 +238,7 @@ begin
   if not public.eh_dono(esc) or not public.sessao_ok() then raise exception 'só o dono do escritório muda as permissões'; end if;
   foreach r in array array['advogado','estagiario','secretaria'] loop
     papel := '{}'::jsonb;
-    foreach k in array array['financeiro','excluir','aparencia'] loop
+    foreach k in array array['financeiro','baixas','relatorios','cobrancas','clientes','documentos','ajuizar','excluir','exportar','aparencia'] loop
       papel := papel || jsonb_build_object(k, coalesce((permissoes -> r ->> k)::boolean, false));
     end loop;
     out := out || jsonb_build_object(r, papel);

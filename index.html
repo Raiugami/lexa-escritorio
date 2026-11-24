@@ -208,6 +208,8 @@ label.chk{flex-direction:row;align-items:center;gap:10px;font-size:.88rem;color:
 .eq-exemplo{margin-bottom:14px}
 .eq-perm{margin-top:10px}.eq-perm th.c,.eq-perm td.c{text-align:center;width:16%}
 .eq-perm td .note{margin-top:2px;font-size:.8rem}
+.eq-perm .eq-perm-g th{text-align:left;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:16px}
+.eq-perm-meu{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .eq-chave{display:inline-flex;cursor:pointer;position:relative}
 .eq-chave input{position:absolute;opacity:0;width:1px;height:1px}
 .eq-chave i{width:40px;height:24px;border-radius:99px;background:var(--field);position:relative;transition:background .2s}
@@ -217,8 +219,7 @@ label.chk{flex-direction:row;align-items:center;gap:10px;font-size:.88rem;color:
 .eq-perm-meu{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .eq-perm-meu li{display:flex;gap:10px;align-items:center}.eq-perm-meu li span{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:.75rem;font-weight:800}
 .eq-perm-meu .sim span{background:var(--ok-soft);color:var(--ok)}.eq-perm-meu .nao{color:var(--muted)}.eq-perm-meu .nao span{background:var(--surface-2)}
-.sem-excluir [data-act="excluir-cliente"],.sem-excluir [data-act="del-comp"],.sem-excluir [data-act="del-acao"],.sem-excluir [data-act="del-avulso"]{display:none!important}
-.sem-fin [data-act="toggle-money"]{display:none!important}
+
 .eq-link{display:flex;gap:8px;margin:12px 0}.eq-link input{flex:1 1 auto;min-width:0;font-family:ui-monospace,monospace;font-size:.8rem}
 .eq-envio{flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .gl-convite{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 14px;margin:0 0 16px;background:var(--accent-soft);font-size:.9rem;line-height:1.45}
@@ -1057,9 +1058,9 @@ function go(){
   const r=rota();
   renderNav(r);posInd();renderConta(r);contaAbre(false);$('#side').classList.remove('open');fechar();
   if(r!=='aparencia'&&rascMarca){rascMarca=null;aplicaMarca()}
-  document.body.classList.toggle('hide-money',hideMoney||!podeEu('financeiro'));document.body.classList.toggle('sem-excluir',!podeEu('excluir'));document.body.classList.toggle('sem-fin',!podeEu('financeiro'));
+  document.body.classList.toggle('hide-money',hideMoney||!podeEu('financeiro'));PERMS.forEach(([k])=>{if(k!=='g')document.body.classList.toggle('sem-'+k,!podeEu(k))});
   let fn=ROUTES[r];let arg=null;
-  if(ROTA_PERM[r]&&!podeEu(ROTA_PERM[r]))fn=()=>`<div class="phead"><div><h1>Sem acesso</h1><p>${semPermMsg}</p></div></div><div class="panel"><p class="note">O dono pode liberar isso em Equipe, na parte de Permissões.</p><div class="row" style="margin-top:10px"><a class="btn pri" href="/painel">Voltar para a Pauta</a></div></div>`;
+  if(permDaRota(r)&&!podeEu(permDaRota(r)))fn=()=>`<div class="phead"><div><h1>Sem acesso</h1><p>${semPermMsg}</p></div></div><div class="panel"><p class="note">O dono pode liberar isso em Equipe, na parte de Permissões.</p><div class="row" style="margin-top:10px"><a class="btn pri" href="/painel">Voltar para a Pauta</a></div></div>`;
   const mt=r.match(/^([a-z-]+?)-(\d+)$/);
   if(!fn&&mt&&ROUTES[mt[1]+'-']){fn=ROUTES[mt[1]+'-'];arg=+mt[2]}
   $('#view').dataset.rota=fn?(mt&&!ROUTES[r]?mt[1]:r):'painel';
@@ -1401,7 +1402,7 @@ ROUTES['cliente-']=id=>{
   return `<div class="phead"><div><a href="/clientes" class="note">← Clientes</a><h1>${esc(c.nome)}</h1><p>${areaTag(c.area)} · cliente desde ${br(c.criado)}</p></div>
   <div class="row">${c.tel?`<a class="btn pri" href="https://wa.me/55${c.tel}" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="tel:+55${c.tel}">Ligar</a>`:''}<a class="btn" href="/editar-${c.id}">Editar</a><a class="btn" href="/documentos-${c.id}">Gerar documentos</a><button class="btn" data-act="parcela-extra" data-id="${c.id}" type="button">Lançar parcela</button><button class="btn danger" data-act="excluir-cliente" data-id="${c.id}" type="button">Excluir</button></div></div>
   <div class="kpis">
-    <div class="kpi"><span class="lb">Honorários</span><span class="v">${c.tipoHon==='exito'?esc(c.exitoPct)+'%':m(r.total)}</span><span class="s">${c.tipoHon==='exito'?'sobre o proveito econômico':c.forma==='vista'?'à vista':`${c.entrada?brl(c.entrada)+' de entrada + ':''}${c.nParcelas}x`}</span></div>
+    <div class="kpi"><span class="lb">Honorários</span><span class="v">${c.tipoHon==='exito'?esc(c.exitoPct)+'%':m(r.total)}</span><span class="s">${c.tipoHon==='exito'?'sobre o proveito econômico':c.forma==='vista'?'à vista':`${c.entrada?m(c.entrada)+' de entrada + ':''}${c.nParcelas}x`}</span></div>
     <div class="kpi ok"><span class="lb">Recebido</span><span class="v">${m(r.pago)}</span><span class="s">${r.ps.filter(p=>situacao(p)==='pago').length} parcela(s) quitada(s)</span></div>
     <div class="kpi"><span class="lb">Saldo devedor</span><span class="v">${m(r.saldo)}</span><span class="s">${r.quitado?'quitado':'total − recebido'}</span></div>
     <div class="kpi ${r.valorAtraso?'bad':''}"><span class="lb">Em atraso</span><span class="v">${m(r.valorAtraso)}</span><span class="s">${r.atras.length?`há ${r.diasAtraso} dia(s)`:'em dia'}</span></div>
@@ -1992,13 +1993,37 @@ ROUTES.assinatura=()=>{const lib=assLiberado(),teste=assEmTeste(),d=assDias(),pa
 const PAPEIS={dono:'Dono do escritório',advogado:'Advogado(a)',estagiario:'Estagiário(a)',secretaria:'Secretaria'};
 const PAPEIS_CONVITE=['advogado','estagiario','secretaria'];
 /* permissões que o dono liga e desliga por papel (o dono pode tudo). Mesmo padrão do banco (04-equipe.sql). */
-const PERMS=[['financeiro','Ver o financeiro','Financeiro, Relatórios, Cobrança de empresas e os valores nas telas.'],
+const PERMS=[['g','Dinheiro'],
+  ['financeiro','Ver o financeiro','Tela Financeiro e os valores em todas as telas.'],
+  ['baixas','Dar baixa em pagamentos','Registrar e estornar pagamentos e recebimentos avulsos.'],
+  ['relatorios','Relatórios','Ver, imprimir e copiar os relatórios.'],
+  ['cobrancas','Cobrança de empresas','Empresas, devedores e acordos.'],
+  ['g','Clientes e processos'],
+  ['clientes','Cadastrar e editar clientes','Novo cliente, edição e parcelas extras.'],
+  ['documentos','Gerar documentos','Contrato, procuração, declarações, recibo e extrato.'],
+  ['ajuizar','Ações a ajuizar','Ver e mexer na fila de ações.'],
+  ['g','Dados do escritório'],
   ['excluir','Excluir registros','Apagar clientes, compromissos, ações, recebimentos, empresas e acordos.'],
+  ['exportar','Baixar cópia dos dados','Exportar todos os clientes, parcelas e agenda.'],
   ['aparencia','Mudar a aparência','Cor, logo e nome do escritório.']];
-const PERM_PADRAO={advogado:{financeiro:true,excluir:true,aparencia:false},estagiario:{financeiro:false,excluir:false,aparencia:false},secretaria:{financeiro:true,excluir:false,aparencia:false}};
+const PERM_PADRAO={
+  advogado:{financeiro:true,baixas:true,relatorios:true,cobrancas:true,clientes:true,documentos:true,ajuizar:true,excluir:true,exportar:false,aparencia:false},
+  secretaria:{financeiro:true,baixas:true,relatorios:false,cobrancas:true,clientes:true,documentos:true,ajuizar:false,excluir:false,exportar:false,aparencia:false},
+  estagiario:{financeiro:false,baixas:false,relatorios:false,cobrancas:false,clientes:true,documentos:true,ajuizar:true,excluir:false,exportar:false,aparencia:false}};
 let ESC_PERM=null;
 function podeEu(k){if(!nuvemUser||!MEU_PAPEL||MEU_PAPEL==='dono')return true;const p=(ESC_PERM||PERM_PADRAO)[MEU_PAPEL];return !!(p&&p[k])}
-const ROTA_PERM={financeiro:'financeiro',relatorios:'financeiro',cobrancas:'financeiro',aparencia:'aparencia'};
+const ROTA_PERM={financeiro:'financeiro',relatorios:'relatorios',cobrancas:'cobrancas',aparencia:'aparencia',ajuizar:'ajuizar','novo-cliente':'clientes','editar-':'clientes','documentos-':'documentos'};
+const permDaRota=r=>{if(ROTA_PERM[r])return ROTA_PERM[r];const m=/^([a-z-]+?)-\d+$/.exec(r);return m?ROTA_PERM[m[1]+'-']:null};
+const ACAO_PERM={'excluir-cliente':'excluir','del-comp':'excluir','del-acao':'excluir','del-avulso':'excluir','toggle-money':'financeiro',
+  baixa:'baixas',estornar:'baixas','baixa-acordo':'baixas',avulso:'baixas',recibo:'documentos','copiar-recibo':'documentos','copiar-doc':'documentos','parcela-extra':'clientes',
+  'baixar-backup':'exportar','copiar-backup':'exportar','copiar-rel':'relatorios','nova-acao':'ajuizar','nova-acao-cli':'ajuizar','edit-acao':'ajuizar',ajuizou:'ajuizar','voltar-fila':'ajuizar',
+  'nova-empresa':'cobrancas','edit-empresa':'cobrancas','novo-devedor':'cobrancas','edit-devedor':'cobrancas','novo-acordo':'cobrancas',
+  'marca-exemplo':'aparencia','marca-padrao':'aparencia','marca-tira':'aparencia','marca-salvar':'aparencia'};
+const PERM_LINKS={clientes:['a[href="/novo-cliente"]','a[href^="/editar-"]'],documentos:['a[href^="/documentos-"]'],ajuizar:['a[href="/ajuizar"]'],relatorios:['a[href="/relatorios"]'],cobrancas:['a[href="/cobrancas"]'],financeiro:['a[href="/financeiro"]'],aparencia:['a[href="/aparencia"]']};
+/* quem não tem a permissão nem vê o botão: uma regra por ação (body.sem-<permissão>) */
+(function(){const st=document.createElement('style');const por={};Object.entries(ACAO_PERM).forEach(([a,k])=>(por[k]=por[k]||[]).push(`[data-act="${a}"]`));
+  Object.entries(PERM_LINKS).forEach(([k,l])=>(por[k]=por[k]||[]).push(...l));
+  st.textContent=Object.entries(por).map(([k,l])=>l.map(x=>`.sem-${k} ${x}`).join(',')+'{display:none!important}').join('\n');document.head.appendChild(st)})();
 const semPermMsg='Seu papel não permite isso. Fale com o dono do escritório.';
 const CONV_KEY='honra-convite';
 let EQ={membros:null,convites:[],lido:0,erro:''},MEU_PAPEL=null,CONVITE_INFO=null,conviteGateFeito=false;
@@ -2069,10 +2094,10 @@ ROUTES.equipe=()=>{const ex=eqExemplo(),M=EQ.membros,dono=MEU_PAPEL==='dono';
       <p class="note eq-rodape">Todos veem e cadastram clientes, agenda e parcelas. O que cada papel pode além disso está em Permissões. Só o dono convida, remove e assina.</p></div>
     ${lado}</div>${eqPermsHtml(dono)}`};
 function eqPermsHtml(dono){const P=ESC_PERM||PERM_PADRAO;
-  if(!dono){const meu=P[MEU_PAPEL]||{};return `<div class="panel" style="margin-top:14px"><h2>O que o seu papel permite</h2><ul class="eq-perm-meu">${PERMS.map(([k,t])=>`<li class="${meu[k]?'sim':'nao'}"><span aria-hidden="true">${meu[k]?'✓':'✕'}</span>${t}</li>`).join('')}</ul></div>`}
+  if(!dono){const meu=P[MEU_PAPEL]||{};return `<div class="panel" style="margin-top:14px"><h2>O que o seu papel permite</h2><ul class="eq-perm-meu">${PERMS.filter(([k])=>k!=='g').map(([k,t])=>`<li class="${meu[k]?'sim':'nao'}"><span aria-hidden="true">${meu[k]?'✓':'✕'}</span>${t}</li>`).join('')}</ul></div>`}
   return `<div class="panel" style="margin-top:14px"><h2>Permissões</h2><p class="note">Escolha o que cada papel pode fazer. Vale na hora para todos com esse papel. O dono do escritório sempre pode tudo.</p>
     <div class="tbl eq-perm"><table><thead><tr><th>Permissão</th>${PAPEIS_CONVITE.map(r=>`<th class="c">${PAPEIS[r]}</th>`).join('')}</tr></thead><tbody>
-    ${PERMS.map(([k,t,d])=>`<tr><td><b>${t}</b><div class="note">${d}</div></td>${PAPEIS_CONVITE.map(r=>`<td class="c"><label class="eq-chave" title="${esc(t)}: ${PAPEIS[r]}"><input type="checkbox" data-perm="${r}.${k}" ${P[r]&&P[r][k]?'checked':''} aria-label="${esc(t)} para ${PAPEIS[r]}"><i aria-hidden="true"></i></label></td>`).join('')}</tr>`).join('')}
+    ${PERMS.map(([k,t,d])=>k==='g'?`<tr class="eq-perm-g"><th colspan="4">${t}</th></tr>`:`<tr><td><b>${t}</b><div class="note">${d}</div></td>${PAPEIS_CONVITE.map(r=>`<td class="c"><label class="eq-chave" title="${esc(t)}: ${PAPEIS[r]}"><input type="checkbox" data-perm="${r}.${k}" ${P[r]&&P[r][k]?'checked':''} aria-label="${esc(t)} para ${PAPEIS[r]}"><i aria-hidden="true"></i></label></td>`).join('')}</tr>`).join('')}
     </tbody></table></div></div>`}
 async function eqPermMuda(inp){const [r,k]=inp.dataset.perm.split('.');const nova=JSON.parse(JSON.stringify(ESC_PERM||PERM_PADRAO));nova[r]=Object.assign({},nova[r],{[k]:inp.checked});
   if(eqExemplo()){ESC_PERM=nova;toast('Permissão salva');return}
@@ -2400,9 +2425,7 @@ document.addEventListener('click',e=>{
   if(ds.cob){cobTab=ds.cob;go();return}
   if(ds.doc){docAtual=ds.doc;go();return}
   const a=ds.act;
-  if(['excluir-cliente','del-comp','del-acao','del-avulso'].includes(a)&&!podeEu('excluir')){toast(semPermMsg);return}
-  if(a==='toggle-money'&&!podeEu('financeiro')){toast(semPermMsg);return}
-  if(/^marca-/.test(a)&&!podeEu('aparencia')){toast(semPermMsg);return}
+  if(ACAO_PERM[a]&&!podeEu(ACAO_PERM[a])){toast(semPermMsg);return}
   const P=()=>S.parcelas.find(p=>p.id===id);
   switch(a){
     case 'toggle-money':hideMoney=!hideMoney;try{localStorage.setItem('lexa-hide',hideMoney?'1':'0')}catch(_){}go();break;
