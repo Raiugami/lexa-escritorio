@@ -2005,16 +2005,17 @@ const PERMS=[['g','Dinheiro'],
   ['g','Dados do escritório'],
   ['excluir','Excluir registros','Apagar clientes, compromissos, ações, recebimentos, empresas e acordos.'],
   ['exportar','Baixar cópia dos dados','Exportar todos os clientes, parcelas e agenda.'],
-  ['aparencia','Mudar a aparência','Cor, logo e nome do escritório.']];
+  ['aparencia','Mudar a aparência','Cor, logo e nome do escritório.'],
+  ['equipe','Gerenciar a equipe','Convidar pessoas, mudar o papel e remover da equipe. As permissões continuam só com o dono.']];
 const PERM_PADRAO={
-  advogado:{financeiro:true,baixas:true,relatorios:true,cobrancas:true,clientes:true,documentos:true,ajuizar:true,excluir:true,exportar:false,aparencia:false},
-  secretaria:{financeiro:true,baixas:true,relatorios:false,cobrancas:true,clientes:true,documentos:true,ajuizar:false,excluir:false,exportar:false,aparencia:false},
-  estagiario:{financeiro:false,baixas:false,relatorios:false,cobrancas:false,clientes:true,documentos:true,ajuizar:true,excluir:false,exportar:false,aparencia:false}};
+  advogado:{financeiro:true,baixas:true,relatorios:true,cobrancas:true,clientes:true,documentos:true,ajuizar:true,excluir:true,exportar:false,aparencia:false,equipe:false},
+  secretaria:{financeiro:true,baixas:true,relatorios:false,cobrancas:true,clientes:true,documentos:true,ajuizar:false,excluir:false,exportar:false,aparencia:false,equipe:false},
+  estagiario:{financeiro:false,baixas:false,relatorios:false,cobrancas:false,clientes:true,documentos:true,ajuizar:true,excluir:false,exportar:false,aparencia:false,equipe:false}};
 let ESC_PERM=null;
 function podeEu(k){if(!nuvemUser||!MEU_PAPEL||MEU_PAPEL==='dono')return true;const p=(ESC_PERM||PERM_PADRAO)[MEU_PAPEL];return !!(p&&p[k])}
 const ROTA_PERM={financeiro:'financeiro',relatorios:'relatorios',cobrancas:'cobrancas',aparencia:'aparencia',ajuizar:'ajuizar','novo-cliente':'clientes','editar-':'clientes','documentos-':'documentos'};
 const permDaRota=r=>{if(ROTA_PERM[r])return ROTA_PERM[r];const m=/^([a-z-]+?)-\d+$/.exec(r);return m?ROTA_PERM[m[1]+'-']:null};
-const ACAO_PERM={'excluir-cliente':'excluir','del-comp':'excluir','del-acao':'excluir','del-avulso':'excluir','toggle-money':'financeiro',
+const ACAO_PERM={'eq-remover':'equipe','eq-cancelar':'equipe','eq-reenviar':'equipe','excluir-cliente':'excluir','del-comp':'excluir','del-acao':'excluir','del-avulso':'excluir','toggle-money':'financeiro',
   baixa:'baixas',estornar:'baixas','baixa-acordo':'baixas',avulso:'baixas',recibo:'documentos','copiar-recibo':'documentos','copiar-doc':'documentos','parcela-extra':'clientes',
   'baixar-backup':'exportar','copiar-backup':'exportar','copiar-rel':'relatorios','nova-acao':'ajuizar','nova-acao-cli':'ajuizar','edit-acao':'ajuizar',ajuizou:'ajuizar','voltar-fila':'ajuizar',
   'nova-empresa':'cobrancas','edit-empresa':'cobrancas','novo-devedor':'cobrancas','edit-devedor':'cobrancas','novo-acordo':'cobrancas',
@@ -2064,34 +2065,35 @@ async function eqCarrega(forca){
   if(!sb||!nuvemEsc)return;if(!forca&&EQ.membros&&Date.now()-EQ.lido<30e3)return;
   try{const {data,error}=await sb.rpc('equipe',{esc:nuvemEsc});if(error)throw error;
     const eu=(data||[]).find(m=>m.eu);MEU_PAPEL=eu?eu.papel:MEU_PAPEL;let cv=[];
-    if(MEU_PAPEL==='dono'){const r=await sb.rpc('convites_pendentes',{esc:nuvemEsc});if(r.error)throw r.error;cv=r.data||[]}
+    if(podeEu('equipe')){const r=await sb.rpc('convites_pendentes',{esc:nuvemEsc});if(r.error)throw r.error;cv=r.data||[]}
     EQ={membros:data||[],convites:cv,lido:Date.now(),erro:''}}
   catch(e){EQ.erro=eqMsg(e);EQ.lido=Date.now();if(!EQ.membros)EQ.membros=[]}
   if(rota()==='equipe')go()}
-ROUTES.equipe=()=>{const ex=eqExemplo(),M=EQ.membros,dono=MEU_PAPEL==='dono';
+ROUTES.equipe=()=>{const ex=eqExemplo(),M=EQ.membros,dono=MEU_PAPEL==='dono',gere=podeEu('equipe');
   const head=`<div class="phead"><div><h1>Equipe</h1><p>Cada pessoa entra com o próprio e-mail e senha e trabalha no mesmo escritório. A assinatura é uma só: quem você convida não paga nada a mais.</p></div></div>
     ${ex?'<div class="banner eq-exemplo"><span>Exemplo para visualização. Entre na sua conta para convidar pessoas de verdade.</span></div>':''}`;
   if(!M)return head+'<div class="panel"><p class="note">Carregando a equipe…</p></div>';
   const dn=M.find(m=>m.papel==='dono');
-  const pessoa=m=>{const pode=dono&&!m.eu&&m.papel!=='dono';
+  const pessoa=m=>{const pode=gere&&!m.eu&&m.papel!=='dono';
     return `<li><span class="av">${esc(eqIni(m.nome))}</span><span class="eq-quem"><b>${esc(m.nome||m.email)}${m.eu?'<span class="eq-voce">Você</span>':''}</b><small>${esc(m.email||'')}</small></span>
       <span class="eq-acoes">${pode?`<select data-eq-papel="${esc(m.usuario)}" aria-label="Papel de ${esc(m.nome||m.email)}">${PAPEIS_CONVITE.map(k=>`<option value="${k}" ${m.papel===k?'selected':''}>${PAPEIS[k]}</option>`).join('')}</select>
         <button class="btn sm ghost danger ico-btn" data-act="eq-remover" data-u="${esc(m.usuario)}" type="button" title="Remover da equipe" aria-label="Remover ${esc(m.nome||m.email)} da equipe">✕</button>`
         :`<span class="pill ${m.papel==='dono'?'p-pago':'p-pendente'}">${PAPEIS[m.papel]||esc(m.papel)}</span>`}</span></li>`};
   const pend=EQ.convites||[];
-  const lado=dono?`<form class="panel" id="fEq"><h2>Convidar pessoa</h2><p class="note">Geramos um link para você mandar por WhatsApp ou e-mail. Ele vale 7 dias, funciona uma vez só e apenas para o e-mail informado.</p>
+  const sair=`<h3 class="eq-sub">Sair do escritório</h3><p class="note">Você deixa de ver os clientes e a agenda deste escritório. Os dados continuam com o escritório.</p>
+      <div class="row" style="margin-top:10px"><button class="btn ghost danger" data-act="eq-sair" type="button">Sair do escritório</button></div>`;
+  const lado=gere?`<form class="panel" id="fEq"><h2>Convidar pessoa</h2><p class="note">Geramos um link para você mandar por WhatsApp ou e-mail. Ele vale 7 dias, funciona uma vez só e apenas para o e-mail informado.</p>
       <div class="fs" style="margin-top:10px"><label class="c2">E-mail da pessoa<input id="eq_email" type="email" required autocomplete="off" placeholder="nome@escritorio.com.br"></label>
       <label class="c2">Papel<select id="eq_papel">${PAPEIS_CONVITE.map(k=>`<option value="${k}">${PAPEIS[k]}</option>`).join('')}</select></label></div>
       <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn pri" type="submit">Gerar convite</button></div>
       ${pend.length?`<h3 class="eq-sub">Aguardando resposta</h3><ul class="eq-lista">${pend.map(c=>`<li><span class="av eq-av-conv">${svg(IC.convite)}</span><span class="eq-quem"><b>${esc(c.email)}</b><small>${PAPEIS[c.papel]||esc(c.papel)} · vale até ${new Date(c.expira_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</small></span>
-        <span class="eq-acoes"><button class="btn sm" data-act="eq-reenviar" data-email="${esc(c.email)}" data-papel="${esc(c.papel)}" type="button">Novo link</button><button class="btn sm ghost danger ico-btn" data-act="eq-cancelar" data-u="${esc(c.id)}" type="button" title="Cancelar convite" aria-label="Cancelar convite de ${esc(c.email)}">✕</button></span></li>`).join('')}</ul>`:''}</form>`
-    :`<div class="panel"><h2>Sobre a equipe</h2><p class="note">Quem convida, muda papéis e cuida da assinatura é ${dn?'<strong>'+esc(dn.nome)+'</strong>, ':''}o dono do escritório.</p>
-      <h3 class="eq-sub">Sair do escritório</h3><p class="note">Você deixa de ver os clientes e a agenda deste escritório. Os dados continuam com o escritório.</p>
-      <div class="row" style="margin-top:10px"><button class="btn ghost danger" data-act="eq-sair" type="button">Sair do escritório</button></div></div>`;
+        <span class="eq-acoes"><button class="btn sm" data-act="eq-reenviar" data-email="${esc(c.email)}" data-papel="${esc(c.papel)}" type="button">Novo link</button><button class="btn sm ghost danger ico-btn" data-act="eq-cancelar" data-u="${esc(c.id)}" type="button" title="Cancelar convite" aria-label="Cancelar convite de ${esc(c.email)}">✕</button></span></li>`).join('')}</ul>`:''}${dono?'':sair}</form>`
+    :`<div class="panel"><h2>Sobre a equipe</h2><p class="note">Quem cuida da equipe e da assinatura é ${dn?'<strong>'+esc(dn.nome)+'</strong>, ':''}o dono do escritório.</p>
+      ${sair}</div>`;
   return head+`${EQ.erro?`<p class="note eq-erro">Não consegui atualizar a equipe: ${esc(EQ.erro)}</p>`:''}<div class="grid2 eq-grade">
     <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Pessoas</h2><span class="note">${M.length} ${M.length===1?'pessoa':'pessoas'}</span></div>
       <ul class="eq-lista">${M.map(pessoa).join('')}</ul>
-      <p class="note eq-rodape">Todos veem e cadastram clientes, agenda e parcelas. O que cada papel pode além disso está em Permissões. Só o dono convida, remove e assina.</p></div>
+      <p class="note eq-rodape">Todos veem e cadastram clientes, agenda e parcelas. O que cada papel pode além disso está em Permissões. Só o dono assina e muda as permissões.</p></div>
     ${lado}</div>${eqPermsHtml(dono)}`};
 function eqPermsHtml(dono){const P=ESC_PERM||PERM_PADRAO;
   if(!dono){const meu=P[MEU_PAPEL]||{};return `<div class="panel" style="margin-top:14px"><h2>O que o seu papel permite</h2><ul class="eq-perm-meu">${PERMS.filter(([k])=>k!=='g').map(([k,t])=>`<li class="${meu[k]?'sim':'nao'}"><span aria-hidden="true">${meu[k]?'✓':'✕'}</span>${t}</li>`).join('')}</ul></div>`}

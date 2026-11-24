@@ -29,6 +29,23 @@ $$;
 revoke all on function public.eh_dono(uuid) from public, anon;
 grant execute on function public.eh_dono(uuid) to authenticated;
 
+-- Permissões por papel (detalhes na seção 10)
+alter table public.escritorios add column if not exists permissoes jsonb not null default '{
+  "advogado":   {"financeiro": true,  "baixas": true,  "relatorios": true,  "cobrancas": true,  "clientes": true, "documentos": true, "ajuizar": true,  "excluir": true,  "exportar": false, "aparencia": false, "equipe": false},
+  "secretaria": {"financeiro": true,  "baixas": true,  "relatorios": false, "cobrancas": true,  "clientes": true, "documentos": true, "ajuizar": false, "excluir": false, "exportar": false, "aparencia": false, "equipe": false},
+  "estagiario": {"financeiro": false, "baixas": false, "relatorios": false, "cobrancas": false, "clientes": true, "documentos": true, "ajuizar": true,  "excluir": false, "exportar": false, "aparencia": false, "equipe": false}}'::jsonb;
+
+create or replace function public.pode(esc uuid, permissao text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select coalesce((
+    select case when m.papel = 'dono' then true
+                else coalesce((e.permissoes -> m.papel ->> permissao)::boolean, false) end
+    from public.membros m join public.escritorios e on e.id = m.escritorio_id
+    where m.escritorio_id = esc and m.usuario = auth.uid()), false);
+$$;
+revoke all on function public.pode(uuid, text) from public, anon;
+grant execute on function public.pode(uuid, text) to authenticated;
+
 create or replace function public.convite_hash(token text) returns text
 language sql immutable set search_path = '' as $$
   select encode(extensions.digest(convert_to(coalesce(token, ''), 'UTF8'), 'sha256'), 'hex');
@@ -57,7 +74,7 @@ returns table (id uuid, email text, papel text, criado_em timestamptz, expira_em
 language sql stable security definer set search_path = '' as $$
   select c.id, c.email, c.papel, c.criado_em, c.expira_em
   from public.convites c
-  where c.escritorio_id = esc and public.eh_dono(esc)
+  where c.escritorio_id = esc and public.pode(esc, 'equipe')
     and c.usado_em is null and c.cancelado_em is null and c.expira_em > now()
   order by c.criado_em desc;
 $$;
@@ -69,7 +86,7 @@ create or replace function public.convidar(esc uuid, email text, papel text) ret
 language plpgsql security definer set search_path = '' as $$
 declare em text := lower(trim(coalesce(email, ''))); tk text;
 begin
-  if not public.eh_dono(esc) or not public.sessao_ok() then raise exception 'só o dono do escritório pode convidar'; end if;
+  if not public.pode(esc, 'equipe') or not public.sessao_ok() then raise exception 'sem permissão para convidar'; end if;
   if em !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' or length(em) > 254 then raise exception 'e-mail inválido'; end if;
   if papel not in ('advogado','estagiario','secretaria') then raise exception 'papel inválido'; end if;
   if exists (select 1 from public.membros m join auth.users u on u.id = m.usuario where m.escritorio_id = esc and lower(u.email) = em) then
@@ -94,7 +111,7 @@ language plpgsql security definer set search_path = '' as $$
 declare esc uuid;
 begin
   select c.escritorio_id into esc from public.convites c where c.id = convite;
-  if esc is null or not public.eh_dono(esc) or not public.sessao_ok() then raise exception 'convite não encontrado'; end if;
+  if esc is null or not public.pode(esc, 'equipe') or not public.sessao_ok() then raise exception 'convite não encontrado'; end if;
   update public.convites c set cancelado_em = now() where c.id = convite and c.usado_em is null;
 end $$;
 revoke all on function public.cancelar_convite(uuid) from public, anon;
@@ -163,7 +180,8 @@ grant execute on function public.aceitar_convite(text) to authenticated;
 create or replace function public.mudar_papel(esc uuid, membro uuid, papel text) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
-  if not public.eh_dono(esc) or not public.sessao_ok() then raise exception 'só o dono do escritório pode mudar papéis'; end if;
+  if not public.pode(esc, 'equipe') or not public.sessao_ok() then raise exception 'sem permissão para mudar papéis'; end if;
+  if membro = auth.uid() then raise exception 'você não pode mudar o próprio papel'; end if;
   if papel not in ('advogado','estagiario','secretaria') then raise exception 'papel inválido'; end if;
   update public.membros m set papel = mudar_papel.papel
    where m.escritorio_id = esc and m.usuario = membro and m.papel <> 'dono';
@@ -175,7 +193,8 @@ grant execute on function public.mudar_papel(uuid, uuid, text) to authenticated;
 create or replace function public.remover_membro(esc uuid, membro uuid) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
-  if not public.eh_dono(esc) or not public.sessao_ok() then raise exception 'só o dono do escritório pode remover pessoas'; end if;
+  if not public.pode(esc, 'equipe') or not public.sessao_ok() then raise exception 'sem permissão para remover pessoas'; end if;
+  if membro = auth.uid() then raise exception 'para sair, use Sair do escritório'; end if;
   delete from public.membros m where m.escritorio_id = esc and m.usuario = membro and m.papel <> 'dono';
   if not found then raise exception 'membro não encontrado'; end if;
 end $$;
@@ -197,22 +216,8 @@ grant execute on function public.sair_do_escritorio(uuid) to authenticated;
 
 -- 10) Permissões por papel, que o dono liga e desliga na tela Equipe. O dono sempre pode tudo.
 --     No banco: excluir (apagar clientes, compromissos, ações, avulsos, empresas, devedores, acordos) e aparencia.
+--     equipe: convidar, mudar papel e remover (no banco). Permissões continuam só com o dono.
 --     Nas telas: financeiro, baixas, relatorios, cobrancas, clientes, documentos, ajuizar, exportar.
-alter table public.escritorios add column if not exists permissoes jsonb not null default '{
-  "advogado":   {"financeiro": true,  "baixas": true,  "relatorios": true,  "cobrancas": true,  "clientes": true, "documentos": true, "ajuizar": true,  "excluir": true,  "exportar": false, "aparencia": false},
-  "secretaria": {"financeiro": true,  "baixas": true,  "relatorios": false, "cobrancas": true,  "clientes": true, "documentos": true, "ajuizar": false, "excluir": false, "exportar": false, "aparencia": false},
-  "estagiario": {"financeiro": false, "baixas": false, "relatorios": false, "cobrancas": false, "clientes": true, "documentos": true, "ajuizar": true,  "excluir": false, "exportar": false, "aparencia": false}}'::jsonb;
-
-create or replace function public.pode(esc uuid, permissao text) returns boolean
-language sql stable security definer set search_path = '' as $$
-  select coalesce((
-    select case when m.papel = 'dono' then true
-                else coalesce((e.permissoes -> m.papel ->> permissao)::boolean, false) end
-    from public.membros m join public.escritorios e on e.id = m.escritorio_id
-    where m.escritorio_id = esc and m.usuario = auth.uid()), false);
-$$;
-revoke all on function public.pode(uuid, text) from public, anon;
-grant execute on function public.pode(uuid, text) to authenticated;
 
 create or replace function public.protege_permissoes() returns trigger
 language plpgsql set search_path = '' as $$
@@ -238,7 +243,7 @@ begin
   if not public.eh_dono(esc) or not public.sessao_ok() then raise exception 'só o dono do escritório muda as permissões'; end if;
   foreach r in array array['advogado','estagiario','secretaria'] loop
     papel := '{}'::jsonb;
-    foreach k in array array['financeiro','baixas','relatorios','cobrancas','clientes','documentos','ajuizar','excluir','exportar','aparencia'] loop
+    foreach k in array array['financeiro','baixas','relatorios','cobrancas','clientes','documentos','ajuizar','excluir','exportar','aparencia','equipe'] loop
       papel := papel || jsonb_build_object(k, coalesce((permissoes -> r ->> k)::boolean, false));
     end loop;
     out := out || jsonb_build_object(r, papel);
