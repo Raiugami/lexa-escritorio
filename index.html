@@ -239,6 +239,23 @@ textarea{min-height:70px;resize:vertical}
 .area i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .av{flex:0 0 34px;width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;background:var(--accent-soft);color:var(--accent-ink)}
 .who{display:flex;align-items:center;gap:10px;min-width:0}
+.ass-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;font-size:.8rem;font-weight:700;text-decoration:none;background:var(--accent-soft);color:var(--fg);white-space:nowrap;transition:transform .15s}
+.ass-pill:hover{transform:translateY(-1px)}
+.ass-pill i{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.7}
+.ass-pill.aviso{background:var(--warn-soft);color:var(--warn)}
+.ass-pill.fim{background:var(--bad-soft);color:var(--bad)}
+.ass-grade{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.ass-preco{font-size:2.6rem;font-weight:800;letter-spacing:-.02em;line-height:1}
+.ass-preco small{font-size:1rem;font-weight:600;opacity:.75}
+.ass-lista{list-style:none;padding:0;margin:8px 0 4px;display:grid;gap:7px}
+.ass-lista li{display:flex;gap:8px;align-items:flex-start}
+.ass-lista li::before{content:"";flex:none;width:16px;height:16px;margin-top:2px;border-radius:50%;background:rgba(255,255,255,.18) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center/11px no-repeat}
+.ass-barra{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:10px 0 6px}
+.ass-barra i{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.ass-sit{display:inline-flex;padding:4px 10px;border-radius:99px;font-size:.78rem;font-weight:700;background:var(--accent-soft)}
+.ass-sit.ok{background:var(--ok-soft);color:var(--ok)}.ass-sit.aviso{background:var(--warn-soft);color:var(--warn)}.ass-sit.fim{background:var(--bad-soft);color:var(--bad)}
+.dark-card .btn.ass-btn{background:#fff;color:#151515;border-color:#fff;justify-content:center;margin-top:6px}
+@media (max-width:760px){.ass-grade{grid-template-columns:1fr}.ass-pill{padding:6px 10px;font-size:.74rem}}
 .banner{background:var(--info-soft);color:var(--info);border-radius:16px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
 .banner .btn{border-color:var(--info);color:var(--info)}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
@@ -638,11 +655,11 @@ body.entrando .main>*:nth-child(n+4){animation-delay:.24s}
   </aside>
   <main class="main">
     <div class="top"><div class="row brand-top" id="brandTop" style="gap:10px"><span class="logo" aria-hidden="true">H</span><strong class="mk-nome">Honra</strong></div>
-      <div class="row top-dir"><button class="btn sm soft so-mob" id="menuBtn" type="button">Mais</button>
+      <div class="row top-dir"><a class="ass-pill" id="assPill" href="#assinatura" hidden></a><button class="btn sm soft so-mob" id="menuBtn" type="button">Mais</button>
         <div class="conta"><button class="conta-btn" id="contaBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="contaMenu"></button>
           <div class="conta-menu" id="contaMenu" role="menu" aria-label="Conta e ajustes">
             <div class="conta-cab" id="contaCab"></div>
-            <a href="#perfil" role="menuitem" data-conta="perfil"></a><a href="#aparencia" role="menuitem" data-conta="aparencia"></a>
+            <a href="#perfil" role="menuitem" data-conta="perfil"></a><a href="#aparencia" role="menuitem" data-conta="aparencia"></a><a href="#assinatura" role="menuitem" data-conta="assinatura"></a>
             <div class="conta-nuvem" id="contaNuvem" hidden></div>
             <hr>
             <button class="conta-item tema" id="themeBtn" type="button" role="switch" aria-checked="false"></button>
@@ -698,7 +715,7 @@ function extenso(c){ // valor por extenso (reais e centavos)
 const KEY='lexa-escritorio-v1';
 let S;
 function vazio(){return{perfil:{nome:'',oab:'',cpf:'',rg:'',nac:'brasileiro(a)',civil:'',tel:'',email:'',end:'',cidade:'',pix:''},clientes:[],parcelas:[],agenda:[],acoes:[],avulsos:[],empresas:[],devedores:[],acordos:[],seq:1,exemplo:false,marca:null}}
-function salvar(){salvarLocal();nuvemAgenda()}
+function salvar(){if(!assLiberado()){assTrava();return}salvarLocal();nuvemAgenda()}
 function carregar(){try{const r=localStorage.getItem(KEY);if(r){S=Object.assign(vazio(),JSON.parse(r));return}}catch(e){}S=exemplo()}
 const nid=()=>{let v=Date.now()*1000+Math.floor(Math.random()*1000);if(v<=(S.seq||0))v=S.seq+1;S.seq=v+1;return v};
 
@@ -779,6 +796,7 @@ const IC={
   perfil:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
   aparencia:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.7 0 2-1.3 1.3-2.4-.7-1.1-.2-2.6 1.3-2.6H17a5 5 0 0 0 5-5c0-5.5-4.5-10-10-10z"/>',
   backup:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+  assinatura:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
   sol:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   lua:'<path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/>',
   auto:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'
@@ -840,7 +858,7 @@ function renderConta(r){const p=S.perfil,mk=marca();const nome=(p.nome||'Minha c
   $('#contaBtn').innerHTML=`<span class="av conta-av">${esc(ini)}</span><span class="conta-txt"><b>${esc(nome)}</b><small>${esc(p.oab||mk.nome)}</small></span><svg class="conta-seta" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>`;
   $('#contaBtn').setAttribute('aria-label',`Conta de ${nome}`);
   $('#contaCab').innerHTML=`<span class="av conta-av">${esc(ini)}</span><div style="min-width:0"><b>${esc(nome)}</b><small>${esc(p.email||p.oab||'Preencha seus dados')}</small></div>`;
-  [['perfil','Meus dados'],['aparencia','Aparência']].forEach(([k,t])=>{const a=document.querySelector(`[data-conta="${k}"]`);a.innerHTML=`${svg(IC[k])}<span>${t}</span>`;a.classList.toggle('on',r===k);a.toggleAttribute('aria-current',r===k)});renderContaNuvem()}
+  [['perfil','Meus dados'],['aparencia','Aparência'],['assinatura','Assinatura']].forEach(([k,t])=>{const a=document.querySelector(`[data-conta="${k}"]`);a.innerHTML=`${svg(IC[k])}<span>${t}</span>`;a.classList.toggle('on',r===k);a.toggleAttribute('aria-current',r===k)});renderContaNuvem()}
 function renderContaNuvem(){const el=$('#contaNuvem');if(!el)return;
   if(!nuvemUser){el.hidden=true;el.innerHTML='';return}
   el.hidden=false;
@@ -1723,6 +1741,74 @@ function renderGate(){const g=$('#gate');if(!g)return;
   const f=$('#gate input');if(f&&!('ontouchstart' in window))setTimeout(()=>{try{($('#gate input:placeholder-shown')||f).focus({preventScroll:true})}catch(e){}},50);
 }
 
+/* ===================== Assinatura: teste grátis de 7 dias + Mercado Pago ===================== */
+const PLANO={preco:'69,90',periodo:'mês'};
+let ASS=null,assAvisado=false;
+const assAgora=()=>ASS&&ASS._dif!=null?Date.now()+ASS._dif:Date.now();
+/* mesma regra do banco (assinatura_ok): teste no prazo, cortesia ou pago até a data + 3 dias */
+function assLiberado(){if(!ASS)return true;if(ASS.status==='cortesia')return true;const t=assAgora();
+  if(ASS.teste_ate&&new Date(ASS.teste_ate).getTime()>t)return true;
+  if(ASS.pago_ate&&new Date(ASS.pago_ate).getTime()+3*864e5>t)return true;return false}
+function assDias(){if(!ASS||!ASS.teste_ate)return 0;return Math.max(0,Math.ceil((new Date(ASS.teste_ate).getTime()-assAgora())/864e5))}
+const assEmTeste=()=>!!ASS&&ASS.status==='teste'&&assLiberado()&&!(ASS.pago_ate&&new Date(ASS.pago_ate).getTime()>assAgora());
+const assData=d=>d?new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'long'}):'';
+async function assCarrega(){if(!sb||!nuvemEsc)return;
+  try{const {data,error}=await sb.rpc('minha_assinatura',{esc:nuvemEsc});if(error)throw error;ASS=data||null;if(ASS&&ASS.agora)ASS._dif=new Date(ASS.agora).getTime()-Date.now();if(ASS)ASS._lido=Date.now()}
+  catch(e){ASS=null}
+  assPinta()}
+function assPinta(){const el=$('#assPill');if(!el)return;
+  if(!ASS||ASS.status==='cortesia'||(!assEmTeste()&&assLiberado())){el.hidden=true;return}
+  el.hidden=false;
+  if(!assLiberado()){el.className='ass-pill fim';el.innerHTML='<i></i>Teste encerrado · Assinar';el.title='Seu teste grátis terminou'}
+  else{const d=assDias();el.className='ass-pill'+(d<=2?' aviso':'');el.innerHTML=`<i></i>${d<=1?'Último dia':d+' dias'} de teste`;el.title='Teste grátis: termina em '+assData(ASS.teste_ate)}
+  if(!assLiberado()&&!assAvisado&&!location.hash.startsWith('#assinatura')){assAvisado=true;setTimeout(assBloqueio,600)}}
+function assBloqueio(){modal(`<h2>Seu teste grátis terminou</h2>
+  <p>Seus dados continuam guardados. Você pode consultar tudo e baixar uma cópia em Meus dados. Para voltar a cadastrar e editar, assine o Honra por <strong>R$ ${PLANO.preco} por ${PLANO.periodo}</strong>.</p>
+  <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-close="1" type="button">Só consultar</button><a class="btn pri" href="#assinatura">Ver assinatura</a></div>`)}
+let assTravando=false;
+async function assTrava(){if(assTravando)return;assTravando=true;toast('Assine para salvar alterações');
+  try{await nuvemSincronizar(false)}finally{assTravando=false}assBloqueio()}
+async function assAssinar(btn){if(!sb||!nuvemUser){toast('Entre na sua conta para assinar');return}
+  const txt=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='Abrindo o Mercado Pago…'}
+  try{const volta=location.origin+location.pathname+'?assinatura=voltou#assinatura';
+    const {data,error}=await sb.functions.invoke('assinar',{body:{volta}});
+    if(error||!data||!data.url)throw error||new Error('sem link');
+    location.href=data.url}
+  catch(e){toast('O pagamento ainda está sendo configurado. Tente de novo mais tarde.');if(btn){btn.disabled=false;btn.textContent=txt}}}
+function assCancelar(){confirmar('Cancelar a assinatura? Você continua com acesso até o fim do período já pago e pode assinar de novo quando quiser.','Cancelar assinatura',async()=>{
+  try{const {data,error}=await sb.functions.invoke('assinar',{body:{acao:'cancelar'}});if(error)throw error;toast('Assinatura cancelada');await assCarrega();go()}
+  catch(e){toast('Não consegui cancelar agora. Tente de novo em instantes.')}})}
+/* voltando do Mercado Pago: o aviso de pagamento pode levar alguns segundos */
+if(/[?&]assinatura=voltou/.test(location.search)){try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}
+  let n=0;const tenta=async()=>{if(!nuvemEsc){if(++n<20)setTimeout(tenta,1500);return}await assCarrega();if(location.hash.startsWith('#assinatura'))go();
+    if(ASS&&ASS.pago_ate&&new Date(ASS.pago_ate).getTime()>assAgora()){toast('Assinatura confirmada. Obrigado!');return}if(++n<12)setTimeout(tenta,5000)};setTimeout(tenta,1500)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ASS&&Date.now()-(ASS._lido||0)>10*60e3)assCarrega()});
+setInterval(()=>{if(ASS)assPinta()},60e3);
+ROUTES.assinatura=()=>{const lib=assLiberado(),teste=assEmTeste(),d=assDias(),pago=ASS&&ASS.pago_ate&&new Date(ASS.pago_ate).getTime()>assAgora();
+  let sit,det,barra='';
+  if(!ASS){sit='<span class="ass-sit">Sem informação</span>';det='<p class="note">Entre na sua conta para ver a situação da assinatura.</p>'}
+  else if(ASS.status==='cortesia'){sit='<span class="ass-sit ok">Cortesia</span>';det='<p class="note">Este escritório tem acesso liberado, sem cobrança.</p>'}
+  else if(teste){sit=`<span class="ass-sit ${d<=2?'aviso':''}">Teste grátis</span>`;const pct=Math.round(Math.min(7,Math.max(0,7-d))/7*100);
+    barra=`<div class="ass-barra"><i style="width:${pct}%"></i></div>`;
+    det=`<p style="margin:0"><strong>${d<=1?'Hoje é o último dia':'Faltam '+d+' dias'}</strong> do seu teste, que termina em ${assData(ASS.teste_ate)}.</p><p class="note">Assine quando quiser. Nada é cobrado até você confirmar.</p>`}
+  else if(pago&&ASS.status==='cancelada'){sit='<span class="ass-sit aviso">Cancelada</span>';det=`<p style="margin:0">Você tem acesso até ${assData(ASS.pago_ate)}. Depois disso, os dados ficam só para consulta.</p>`}
+  else if(lib){sit=`<span class="ass-sit ${ASS.status==='atrasada'?'aviso':'ok'}">${ASS.status==='atrasada'?'Pagamento pendente':'Ativa'}</span>`;
+    det=`<p style="margin:0">${ASS.status==='atrasada'?'Não conseguimos cobrar o cartão. Confira o pagamento no Mercado Pago para não perder o acesso.':'Tudo certo. Próxima renovação em '+assData(ASS.pago_ate)+'.'}</p>`}
+  else{sit='<span class="ass-sit fim">Teste encerrado</span>';det='<p style="margin:0">Seus dados estão guardados e você pode consultá-los e baixar uma cópia. Para voltar a cadastrar e editar, assine.</p>'}
+  const ativa=ASS&&lib&&pago&&ASS.status!=='cancelada';
+  return `<div class="phead"><div><h1>Assinatura</h1><p>Um plano só, com tudo incluído e sem fidelidade.</p></div></div>
+  <div class="ass-grade">
+    <div class="dark-card"><small style="opacity:.75;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Honra completo</small>
+      <div class="ass-preco">R$ ${PLANO.preco} <small>/ ${PLANO.periodo}</small></div>
+      <ul class="ass-lista"><li>Clientes, honorários e parcelas sem limite</li><li>Pauta, prazos e Google Agenda</li><li>Contrato, procuração, recibo e extrato prontos</li><li>Cobranças, acordos e relatórios</li><li>Dados na nuvem, com verificação em duas etapas</li></ul>
+      ${ASS&&ASS.status==='cortesia'?'':ativa?'<button class="btn ass-btn" data-act="ass-cancelar" type="button">Cancelar assinatura</button>':`<button class="btn ass-btn" data-act="assinar" type="button">Assinar com Mercado Pago</button>`}
+      <small style="opacity:.75">Cobrança mensal no cartão de crédito, pelo Mercado Pago. Cancele quando quiser.</small></div>
+    <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Sua situação</h2>${sit}</div>${barra}<div style="margin-top:10px">${det}</div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+      <h2 style="font-size:1rem;margin:0 0 6px">Como funciona</h2>
+      <p class="note" style="margin:0">Todo escritório começa com 7 dias grátis, com tudo liberado. Se o teste acabar sem assinatura, nada é apagado: os dados ficam para consulta e exportação, e voltam a ser editáveis assim que o pagamento é confirmado.</p></div>
+  </div>`};
+
 function salvarLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function nuvemLib(){if(window.supabase)return Promise.resolve();return new Promise((ok,er)=>{const sc=document.createElement('script');sc.src=SB_SRC;sc.onload=ok;sc.onerror=()=>er(new Error('não consegui carregar o serviço de login'));document.head.appendChild(sc)})}
 async function nuvemIniciar(){if(!nuvemDisponivel())return;
@@ -1839,8 +1925,8 @@ async function nuvemEmpurra(){
 async function nuvemTudo(t,cols){let out=[],i=0;for(;;){const {data,error}=await sb.from(t).select(cols).eq('escritorio_id',nuvemEsc).order('id').range(i,i+999);if(error)throw error;out=out.concat(data);if(data.length<1000)return out;i+=1000}}
 async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado||gateMfa||gateAceite)return;nuvemOcupado=true;nuvemMsg='Sincronizando…';nuvemAtualiza();
   try{
-    if(nuvemSnap&&nuvemEsc){clearTimeout(nuvemTimer);await nuvemEmpurra()}
-    const {data:esc,error:e0}=await sb.rpc('meu_escritorio');if(e0)throw e0;nuvemEsc=esc;
+    if(nuvemSnap&&nuvemEsc&&assLiberado()){clearTimeout(nuvemTimer);await nuvemEmpurra()}
+    const {data:esc,error:e0}=await sb.rpc('meu_escritorio');if(e0)throw e0;nuvemEsc=esc;await assCarrega();
     const {data:row,error:e1}=await sb.from('escritorios').select('dados,marca,config,migrado_em').eq('id',esc).maybeSingle();if(e1)throw e1;
     if(!row)throw new Error('não encontrei o escritório');
     if(!row.migrado_em){
@@ -1869,7 +1955,7 @@ async function nuvemSincronizar(interativo){if(!sb||!nuvemUser||nuvemOcupado||ga
   finally{nuvemOcupado=false;nuvemAtualiza();if(!$('#gate')||$('#gate').hidden)go()}
 }
 function nuvemAgenda(){if(!sb||!nuvemUser)return;clearTimeout(nuvemTimer);nuvemTimer=setTimeout(nuvemEnviar,1200)}
-async function nuvemEnviar(){if(!sb||!nuvemUser||!nuvemEsc||!nuvemSnap)return;
+async function nuvemEnviar(){if(!sb||!nuvemUser||!nuvemEsc||!nuvemSnap||!assLiberado())return;
   if(nuvemEnviando||nuvemOcupado){nuvemDeNovo=true;return}nuvemEnviando=true;
   try{await nuvemEmpurra();nuvemMsg='Salvo na nuvem às '+nuvemHora()+'.'}
   catch(e){nuvemMsg='Não foi possível salvar na nuvem agora ('+(e.message||e)+'). Os dados continuam neste navegador e tentam de novo na próxima alteração.'}
@@ -1974,7 +2060,7 @@ async function nuvemEsqueci(){const em=((($('#gt_email'))||{}).value||'').trim()
     nuvemMsg='Enviamos um link para redefinir a senha para '+em+'.'}catch(e){nuvemMsg='Não consegui enviar: '+e.message}
   nuvemAtualiza()}
 
-async function nuvemSair(){if(!sb)return;clearTimeout(nuvemTimer);if(nuvemSnap&&!gateMfa&&!gateAceite){try{await nuvemEmpurra()}catch(e){}}if(nuvemUser){try{await sb.from('acessos').insert({evento:'saída',agente:nvAgente()})}catch(e){}}try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemSnap=null;nuvemEsc=null;gateMfa=false;gateAceite=false;
+async function nuvemSair(){if(!sb)return;clearTimeout(nuvemTimer);if(nuvemSnap&&!gateMfa&&!gateAceite&&assLiberado()){try{await nuvemEmpurra()}catch(e){}}if(nuvemUser){try{await sb.from('acessos').insert({evento:'saída',agente:nvAgente()})}catch(e){}}try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemSnap=null;nuvemEsc=null;gateMfa=false;gateAceite=false;ASS=null;assPinta();
   try{localStorage.removeItem(KEY);localStorage.removeItem('lexa-antes-da-nuvem')}catch(e){}
   S=vazio();nuvemMsg='Você saiu. Entre de novo para acessar os dados.';nuvemAtualiza();go()}
 function nuvemPainel(){
@@ -2030,6 +2116,8 @@ document.addEventListener('click',e=>{
     case 'gate-esqueci':nuvemEsqueci();break;
     case 'gate-olho':{const i=$('#'+ds.alvo);if(i){const v=i.type==='password';i.type=v?'text':'password';el.setAttribute('aria-label',v?'Ocultar senha':'Mostrar senha')}break}
     case 'nuvem-sair':nuvemSair();break;
+    case 'assinar':assAssinar(el);break;
+    case 'ass-cancelar':assCancelar();break;
     case 'legal':abrirLegal(ds.tipo);break;
     case 'legal-fechar':fecharLegal();break;
     case 'mfa-ativar':mfaAtivar();break;
