@@ -2,7 +2,7 @@
 <html lang="pt-BR" class="tema-neutro">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://dwyalxrzljotekooqpto.supabase.co wss://dwyalxrzljotekooqpto.supabase.co https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://cloudflareinsights.com https://dwyalxrzljotekooqpto.supabase.co wss://dwyalxrzljotekooqpto.supabase.co https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/logo.svg" type="image/svg+xml">
@@ -1669,7 +1669,7 @@ ROUTES.backup=()=>`<div class="phead"><div><h1>Backup</h1><p>Nesta versão os da
 /* ===================== Sincronização na nuvem (Supabase) ===================== */
 const SB_URL='https://dwyalxrzljotekooqpto.supabase.co';
 const SB_KEY='sb_publishable_uoCXERCLpJy_jHDjaRlSug_nhvEL6vv';
-const SB_SRC='vendor/supabase.js'; /* cópia local da supabase-js 2.45.0: o login não depende de CDN de terceiros */
+const SB_SRC='js/supabase.js'; /* cópia local da supabase-js 2.45.0: o login não depende de CDN de terceiros */
 let sb=null,nuvemUser=null,nuvemMsg='',nuvemTimer=null,nuvemOcupado=false,gateModo='entrar',gateRec=/[?&]recuperar=1/.test(location.search);
 if(/error_code=/.test(location.href)){gateRec=false;nuvemMsg=/otp_expired/.test(location.href)?'Esse link expirou ou já foi usado. Peça um novo.':'Não foi possível validar o link. Peça um novo.';try{history.replaceState(null,'',location.pathname)}catch(e){}}
 const nuvemDisponivel=()=>/github\.io$|^honra\.imaguiar\.com\.br$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
