@@ -12,22 +12,31 @@ async function mp(path: string) {
   return await r.json();
 }
 
+// comparação em tempo constante (não revela quantos caracteres batem)
+function iguais(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+
 // confere a assinatura x-signature: HMAC-SHA256 de "id:<data.id>;request-id:<x-request-id>;ts:<ts>;"
+// sem o segredo configurado o aviso é recusado (antes era aceito sem conferir)
 async function assinaturaValida(req: Request, dataId: string) {
   const segredo = Deno.env.get("MP_WEBHOOK_SECRET");
-  if (!segredo) return true;
+  if (!segredo) { console.error("MP_WEBHOOK_SECRET não configurado: aviso recusado"); return false; }
   const sig = req.headers.get("x-signature") || "";
   const partes = Object.fromEntries(sig.split(",").map((p) => p.trim().split("=", 2)));
   if (!partes.ts || !partes.v1) return false;
   let manifesto = "";
-  if (dataId) manifesto += `id:${dataId.toLowerCase()};`;
+  if (dataId) manifesto += `id:${/^[a-z0-9]+$/i.test(dataId) ? dataId.toLowerCase() : dataId};`;
   const rid = req.headers.get("x-request-id");
   if (rid) manifesto += `request-id:${rid};`;
   manifesto += `ts:${partes.ts};`;
   const chave = await crypto.subtle.importKey("raw", new TextEncoder().encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const bin = new Uint8Array(await crypto.subtle.sign("HMAC", chave, new TextEncoder().encode(manifesto)));
   const hex = [...bin].map((b) => b.toString(16).padStart(2, "0")).join("");
-  return hex === partes.v1;
+  return iguais(hex, String(partes.v1).toLowerCase());
 }
 
 const maisUmMes = (d: string | number | Date) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString(); };
@@ -38,7 +47,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const tipo = String(body.type || body.topic || u.searchParams.get("type") || u.searchParams.get("topic") || "");
   const id = String(body?.data?.id || u.searchParams.get("data.id") || u.searchParams.get("id") || "");
-  if (!id) return ok();
+  if (!id || !/^[A-Za-z0-9_-]{1,64}$/.test(id)) return ok();
   if (!(await assinaturaValida(req, u.searchParams.get("data.id") || id))) return new Response("assinatura inválida", { status: 401 });
 
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -46,17 +55,19 @@ Deno.serve(async (req) => {
     // os dados vêm sempre da API do Mercado Pago, nunca do corpo do aviso
     let preId = "", pagamento: any = null;
     if (tipo.includes("authorized_payment")) {
-      pagamento = await mp(`/authorized_payments/${id}`);
+      pagamento = await mp(`/authorized_payments/${encodeURIComponent(id)}`);
       preId = pagamento.preapproval_id;
     } else if (tipo.includes("preapproval")) {
       preId = id;
     } else return ok();
 
-    const pre = await mp(`/preapproval/${preId}`);
+    const pre = await mp(`/preapproval/${encodeURIComponent(String(preId))}`);
     const esc = pre.external_reference;
     if (!esc) return ok();
     const { data: ass } = await admin.from("assinaturas").select("*").eq("escritorio_id", esc).maybeSingle();
     if (!ass) return ok();
+    // aviso de uma assinatura antiga (já substituída) não pode mudar a situação atual
+    if (ass.gateway_assinatura && ass.gateway_assinatura !== pre.id && pre.status !== "authorized") return ok();
 
     const mud: Record<string, unknown> = { gateway: "mercadopago", gateway_assinatura: pre.id, atualizado_em: new Date().toISOString() };
     if (pre.payer_id) mud.gateway_cliente = String(pre.payer_id);
