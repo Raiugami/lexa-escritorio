@@ -194,3 +194,69 @@ grant execute on function public.sair_do_escritorio(uuid) to authenticated;
 -- 9) Excluir a própria conta: membro sai do escritório (não apaga os dados do escritório);
 --    dono continua apagando o escritório inteiro, como antes.
 --    (sem mudança de código: membros.usuario já cai em cascata e escritorios.dono também)
+
+-- 10) Permissões por papel, que o dono liga e desliga na tela Equipe.
+--     financeiro: ver Financeiro, Relatórios, Cobrança de empresas e valores (controle na tela)
+--     excluir: apagar clientes, compromissos, ações, recebimentos avulsos, empresas, devedores e acordos (controle no banco)
+--     aparencia: mudar cor, logo e nome do escritório (controle no banco)
+alter table public.escritorios add column if not exists permissoes jsonb not null default '{
+  "advogado":   {"financeiro": true,  "excluir": true,  "aparencia": false},
+  "estagiario": {"financeiro": false, "excluir": false, "aparencia": false},
+  "secretaria": {"financeiro": true,  "excluir": false, "aparencia": false}}'::jsonb;
+
+create or replace function public.pode(esc uuid, permissao text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select coalesce((
+    select case when m.papel = 'dono' then true
+                else coalesce((e.permissoes -> m.papel ->> permissao)::boolean, false) end
+    from public.membros m join public.escritorios e on e.id = m.escritorio_id
+    where m.escritorio_id = esc and m.usuario = auth.uid()), false);
+$$;
+revoke all on function public.pode(uuid, text) from public, anon;
+grant execute on function public.pode(uuid, text) to authenticated;
+
+create or replace function public.protege_permissoes() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if coalesce(auth.role(), '') = 'service_role' or current_user in ('postgres', 'supabase_admin') then return new; end if;
+  if new.permissoes is distinct from old.permissoes and not public.eh_dono(old.id) then
+    raise exception 'só o dono do escritório muda as permissões';
+  end if;
+  if (new.marca is distinct from old.marca or new.nome is distinct from old.nome) and not public.pode(old.id, 'aparencia') then
+    raise exception 'sem permissão para mudar a aparência do escritório';
+  end if;
+  return new;
+end $$;
+revoke all on function public.protege_permissoes() from public, anon, authenticated;
+drop trigger if exists escritorio_protege_permissoes on public.escritorios;
+create trigger escritorio_protege_permissoes before update on public.escritorios
+  for each row execute function public.protege_permissoes();
+
+create or replace function public.definir_permissoes(esc uuid, permissoes jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare r text; k text; out jsonb := '{}'::jsonb; papel jsonb;
+begin
+  if not public.eh_dono(esc) or not public.sessao_ok() then raise exception 'só o dono do escritório muda as permissões'; end if;
+  foreach r in array array['advogado','estagiario','secretaria'] loop
+    papel := '{}'::jsonb;
+    foreach k in array array['financeiro','excluir','aparencia'] loop
+      papel := papel || jsonb_build_object(k, coalesce((permissoes -> r ->> k)::boolean, false));
+    end loop;
+    out := out || jsonb_build_object(r, papel);
+  end loop;
+  update public.escritorios e set permissoes = out where e.id = esc;
+  return out;
+end $$;
+revoke all on function public.definir_permissoes(uuid, jsonb) from public, anon;
+grant execute on function public.definir_permissoes(uuid, jsonb) to authenticated;
+
+-- Exclusão só para quem tem a permissão (sem ela, o DELETE simplesmente não apaga nada).
+-- Parcelas ficam de fora: são refeitas ao editar o cliente.
+do $$
+declare t text;
+begin
+  foreach t in array array['clientes','compromissos','acoes','avulsos','empresas','devedores','acordos'] loop
+    execute format('drop policy if exists "permissao para excluir" on public.%I', t);
+    execute format('create policy "permissao para excluir" on public.%I as restrictive for delete to authenticated using (public.pode(escritorio_id, %L))', t, 'excluir');
+  end loop;
+end $$;
