@@ -27,14 +27,32 @@
 <link rel="alternate icon" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <script>
-/* Mantém 100% compatíveis os links de convite, confirmação de e-mail, redefinição de senha,
-   retorno do Mercado Pago e abertura do app instalado (PWA). */
+/* Auto-cura para navegadores que ainda estavam com o Service Worker antigo (honra-v12),
+   que interceptava /app/, /privacidade/ e /termos/ devolvendo o ./index.html da raiz. */
 (function () {
-  var s = location.search || '', h = location.hash || '';
+  var p = location.pathname || '/', s = location.search || '', h = location.hash || '';
+  if (/^\/(?:app|privacidade|termos)(?:\/|$)/.test(p)) {
+    var destino = /^\/app(?:\/|$)/.test(p) ? '/app/index.html' + s + h : p.replace(/\/?$/, '/index.html') + s + h;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (rs) {
+        return Promise.all(rs.map(function (r) { return r.unregister(); }));
+      }).catch(function () {}).then(function () { location.replace(destino); });
+    } else {
+      location.replace(destino);
+    }
+    return;
+  }
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.getRegistrations().then(function (rs) {
+        rs.forEach(function (r) { r.update().catch(function () {}); });
+      });
+    } catch (e) {}
+  }
   var ehApp = /[?&](convite|recuperar|code|error_code|assinatura)=/.test(s)
     || /^#(access_token|refresh_token|error|type=|painel|clientes|novo-cliente|atraso|quitados|aniversariantes|agenda|ajuizar|financeiro|cobrancas|relatorios|perfil|aparencia|backup|assinatura|equipe|cliente-|editar-|documentos-)/.test(h)
     || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  if (ehApp) location.replace('/app/' + s + h);
+  if (ehApp) location.replace('/app/index.html' + s + h);
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -473,8 +491,8 @@
       <a href="#duvidas">Dúvidas</a>
     </nav>
     <div class="hdr-acts">
-      <a id="hdrEntrar" class="btn btn-ghost" href="/app/?modo=entrar">Entrar</a>
-      <a id="hdrCriar" class="btn btn-pri" href="/app/?modo=criar" data-cta="header">Testar 7 dias grátis</a>
+      <a id="hdrEntrar" class="btn btn-ghost" href="/app/index.html?modo=entrar">Entrar</a>
+      <a id="hdrCriar" class="btn btn-pri" href="/app/index.html?modo=criar" data-cta="header">Testar 7 dias grátis</a>
     </div>
   </div>
 </header>
@@ -487,7 +505,7 @@
         <h1>Pare de perder <em>honorários e prazos</em> em planilhas soltas.</h1>
         <p class="hero-sub">O Honra reúne clientes, parcelas, pauta de audiências, contratos prontos e toda a sua equipe em um sistema rápido e fácil de usar — no computador ou no celular.</p>
         <div class="hero-ctas">
-          <a id="heroCriar" class="btn btn-pri btn-lg" href="/app/?modo=criar" data-cta="hero">Começar 7 dias grátis</a>
+          <a id="heroCriar" class="btn btn-pri btn-lg" href="/app/index.html?modo=criar" data-cta="hero">Começar 7 dias grátis</a>
           <a class="btn btn-sec btn-lg" href="#recursos">Ver por dentro</a>
         </div>
         <ul class="hero-proof">
@@ -784,7 +802,7 @@
           </ul>
 
           <div>
-            <a id="precoCriar" class="btn btn-light btn-lg" style="width:100%" href="/app/?modo=criar" data-cta="pricing">Começar 7 dias grátis agora</a>
+            <a id="precoCriar" class="btn btn-light btn-lg" style="width:100%" href="/app/index.html?modo=criar" data-cta="pricing">Começar 7 dias grátis agora</a>
             <p class="price-note">Não pedimos cartão de crédito para criar sua conta.</p>
           </div>
         </div>
@@ -862,7 +880,7 @@
           <p>Teste o Honra com calma, veja seus honorários e prazos em ordem e só assine se fizer sentido para a sua advocacia.</p>
         </div>
         <div class="cta-final-acts">
-          <a id="finalCriar" class="btn btn-pri btn-lg" href="/app/?modo=criar" data-cta="footer">Criar conta grátis</a>
+          <a id="finalCriar" class="btn btn-pri btn-lg" href="/app/index.html?modo=criar" data-cta="footer">Criar conta grátis</a>
           <a id="finalWa" class="btn btn-wa btn-lg" href="#" target="_blank" rel="noopener noreferrer" hidden>Falar no WhatsApp</a>
         </div>
       </div>
@@ -879,7 +897,7 @@
     <div class="ftr-links">
       <a href="/privacidade/">Política de Privacidade</a>
       <a href="/termos/">Termos de Uso</a>
-      <a href="/app/?modo=entrar">Entrar no sistema</a>
+      <a href="/app/index.html?modo=entrar">Entrar no sistema</a>
     </div>
   </div>
 </footer>
@@ -915,7 +933,7 @@
     var logado = Object.keys(localStorage).some(function (k) { return /^sb-.*-auth-token$/.test(k); });
     if (logado) {
       var bt = document.getElementById('hdrEntrar');
-      if (bt) { bt.textContent = 'Abrir escritório'; bt.href = '/app/'; }
+      if (bt) { bt.textContent = 'Abrir escritório'; bt.href = '/app/index.html'; }
     }
   } catch (e) {}
 
