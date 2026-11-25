@@ -7,7 +7,7 @@ window.HONRA_CONFIG = Object.freeze({
 
   /* WhatsApp comercial com DDI + DDD, só números (ex: '5543999990000').
    * Quando preenchido, ativa o botão de atendimento no site e na página de assinatura. */
-  whatsappNumero: '',
+  whatsappNumero: '5511966360508',
   whatsappMensagem: 'Olá! Vi o Honra e quero tirar uma dúvida sobre o sistema para advogados.',
 
   /* Contato oficial (exibido na Política de Privacidade, Termos de Uso e rodapé). */
