@@ -1611,68 +1611,174 @@ function montaImpressao(){const alvo=$('#modalRoot .doc')||$('#view .doc');let m
   document.body.classList.add('imprimindo');const t=document.title;document.title=' ';r.dataset.titulo=t}
 function desmontaImpressao(){document.body.classList.remove('imprimindo');const r=$('#printRoot');if(r){if(r.dataset.titulo)document.title=r.dataset.titulo;r.innerHTML=''}}
 window.addEventListener('beforeprint',montaImpressao);window.addEventListener('afterprint',desmontaImpressao);
-/* ---------- Google Agenda ---------- */
+/* ---------- Google Agenda (1 clique + refresh_token no Supabase) ---------- */
 const TZ=(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Sao_Paulo'}catch(e){return'America/Sao_Paulo'}})();
 const gcfg=()=>S.google||(S.google={});
 const compactDT=(d,h)=>d.replace(/-/g,'')+'T'+(h||'00:00').replace(':','')+'00';
+const gTitulo=a=>(a.tipo==='prazo'?'[Prazo] ':'')+(a.titulo||'');
+const gDesc=a=>[a.cliNome?'Cliente: '+a.cliNome:'',a.desc||''].filter(Boolean).join('\n');
 function fimDe(a){const t=new Date(a.data+'T'+(a.hora||'00:00')+':00');t.setHours(t.getHours()+1);return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate())+'T'+pad(t.getHours())+':'+pad(t.getMinutes())}
 function gcalLink(a){
   let datas;if(a.hora){const f=fimDe(a);datas=compactDT(a.data,a.hora)+'/'+compactDT(f.slice(0,10),f.slice(11))}else{datas=a.data.replace(/-/g,'')+'/'+addDias(a.data,1).replace(/-/g,'')}
-  const q=new URLSearchParams({action:'TEMPLATE',text:a.titulo,dates:datas,details:a.desc||'',ctz:TZ});
+  const q=new URLSearchParams({action:'TEMPLATE',text:gTitulo(a),dates:datas,details:gDesc(a),ctz:TZ});
   return 'https://calendar.google.com/calendar/render?'+q.toString()}
-function icsEsc(t){return String(t||'').replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
+function icsEsc(t){return String(t||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
 function exportaIcs(){
   const l=S.agenda;if(!l.length){toast('A agenda está vazia');return}
   const agora=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
-  const ev=l.map(a=>{const f=a.hora?fimDe(a):null;return['BEGIN:VEVENT','UID:honra-'+a.id+'@honra',
+  const ev=l.map(a=>{const f=a.hora?fimDe(a):null,dc=gDesc(a);return['BEGIN:VEVENT','UID:honra-'+a.id+'@honra',
     'DTSTAMP:'+agora,
     a.hora?'DTSTART;TZID='+TZ+':'+compactDT(a.data,a.hora):'DTSTART;VALUE=DATE:'+a.data.replace(/-/g,''),
     a.hora?'DTEND;TZID='+TZ+':'+compactDT(f.slice(0,10),f.slice(11)):'DTEND;VALUE=DATE:'+addDias(a.data,1).replace(/-/g,''),
-    'SUMMARY:'+icsEsc(a.titulo),a.desc?'DESCRIPTION:'+icsEsc(a.desc):null,'END:VEVENT'].filter(Boolean).join('\r\n')});
+    'SUMMARY:'+icsEsc(gTitulo(a)),dc?'DESCRIPTION:'+icsEsc(dc):null,'END:VEVENT'].filter(Boolean).join('\r\n')});
   const txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Honra//Agenda//PT-BR','CALSCALE:GREGORIAN','X-WR-CALNAME:'+icsEsc(marca().nome+' · agenda'),...ev,'END:VCALENDAR'].join('\r\n');
   const b=new Blob([txt],{type:'text/calendar'});const x=document.createElement('a');x.href=URL.createObjectURL(b);x.download=`agenda-${hoje()}.ics`;x.click();
   toast('Arquivo da agenda baixado')}
 
-/* Sincronização nos dois sentidos (precisa do ID de cliente OAuth do Google Cloud) */
-let gToken=null,gTokenFim=0,gCliente=null,gOcupado=false,gUltErro='';
-const gHash=a=>[a.titulo,a.data,a.hora,a.desc||''].join('|');
-function painelGoogle(){const c=gcfg();
-  if(!c.clientId)return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">Use "+ Google" em cada compromisso, ou exporte a agenda. Para sincronizar automaticamente nos dois sentidos, configure a conexão.</div></div><button class="btn" data-act="g-config" type="button">Configurar sincronização</button></div></div>`;
-  const quando=c.ultima?new Date(c.ultima).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'nunca';
-  return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">${c.ligado?`Sincronizando com ${c.conta?esc(c.conta):'sua conta Google'}. Última vez: ${quando}.`:'Conexão configurada. Entre com a conta Google para começar.'}${gUltErro?`<br><span style="color:var(--danger)">${esc(gUltErro)}</span>`:''}</div></div><div class="row"><button class="btn pri" data-act="g-sync" type="button">${gOcupado?'Sincronizando…':c.ligado?'Sincronizar agora':'Entrar com Google'}</button><button class="btn ghost" data-act="g-config" type="button">Ajustes</button>${c.ligado?'<button class="btn ghost" data-act="g-sair" type="button">Desligar</button>':''}</div></div></div>`}
-function modalGoogle(){const c=gcfg();
-  modal(`<h2>Sincronizar com o Google Agenda</h2><p class="note">Cole o ID de cliente OAuth criado no Google Cloud (termina em <code>.apps.googleusercontent.com</code>). Ele não é senha: só diz ao Google qual aplicativo está pedindo acesso. Cada pessoa entra com a própria conta.</p><form id="fG" class="fs"><label>ID de cliente OAuth<input id="g_id" value="${esc(c.clientId||'')}" placeholder="123456-abc.apps.googleusercontent.com"></label><label>Agenda<select id="g_cal"><option value="primary">Agenda principal da conta</option></select></label><div class="row" style="justify-content:flex-end">${c.clientId?'<button class="btn ghost danger" id="g_rm" type="button">Remover</button>':''}<button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div></form>`);
-  $('#fG').onsubmit=e=>{e.preventDefault();const v=$('#g_id').value.trim();if(v&&!/\.apps\.googleusercontent\.com$/.test(v)){toast('Esse ID não parece um ID de cliente do Google');return}c.clientId=v;c.cal='primary';salvar();fechar();toast(v?'Conexão configurada':'Conexão removida');go()};
-  const rm=$('#g_rm');if(rm)rm.onclick=()=>{S.google={};gToken=null;salvar();fechar();toast('Conexão removida');go()}}
+/* Sincronização definitiva por usuário (refresh_token salvo no servidor pela Edge Function google-agenda) */
+const G_SCOPES='openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly';
+let G_ST={lido:false,carregando:false,configurado:false,clientId:'',conectado:false,conta:'',cal:'primary',calNome:'Agenda principal',modo:'enviar',ultima:null};
+let gToken=null,gTokenFim=0,gOcupado=false,gUltErro='';
+const gHash=a=>[a.tipo||'',a.titulo,a.data,a.hora||'',a.cliNome||'',a.desc||''].join('|');
+function gResetLocal(){G_ST={lido:false,carregando:false,configurado:false,clientId:'',conectado:false,conta:'',cal:'primary',calNome:'Agenda principal',modo:'enviar',ultima:null};gToken=null;gTokenFim=0;gOcupado=false;gUltErro=''}
+
+async function gCarregaStatus(forcar){
+  if(!sb||!nuvemUser)return;
+  if(G_ST.carregando||(G_ST.lido&&!forcar))return;
+  G_ST.carregando=true;
+  try{
+    const {data,error}=await sb.functions.invoke('google-agenda',{body:{acao:'status'}});
+    if(error||!data)throw error||new Error('sem resposta');
+    G_ST.configurado=!!data.configurado;
+    G_ST.clientId=data.client_id||'';
+    G_ST.conectado=!!data.conectado;
+    G_ST.conta=data.conta||'';
+    G_ST.cal=data.calendario_id||'primary';
+    G_ST.calNome=data.calendario_nome||'Agenda principal';
+    G_ST.modo=data.modo==='ambos'?'ambos':'enviar';
+    G_ST.ultima=data.ultima_sync||null;
+  }catch(e){G_ST.configurado=false;G_ST.conectado=false}
+  finally{G_ST.lido=true;G_ST.carregando=false;if(rota().startsWith('agenda'))go()}
+}
+
+function painelGoogle(){
+  if(!nuvemUser)return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">Entre na sua conta para conectar o Google Agenda em um clique.</div></div></div></div>`;
+  if(!G_ST.lido){gCarregaStatus();return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">Verificando conexão…</div></div></div></div>`}
+  if(!G_ST.configurado)return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">Use <strong>+ Google</strong> em cada compromisso ou exporte o arquivo <code>.ics</code>. A sincronização automática em 1 clique será liberada assim que a integração do servidor estiver ativa.</div></div><button class="btn" data-act="exp-ics" type="button">Exportar .ics</button></div></div>`;
+  if(!G_ST.conectado)return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong><div class="note">Conecte sua conta Google uma única vez para enviar audiências e prazos direto para o seu celular.${gUltErro?`<br><span style="color:var(--bad)">${esc(gUltErro)}</span>`:''}</div></div><button class="btn pri" data-act="g-sync" type="button">${gOcupado?'Conectando…':'Conectar com Google'}</button></div></div>`;
+  const quando=G_ST.ultima?new Date(G_ST.ultima).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'agora há pouco';
+  const modoTxt=G_ST.modo==='ambos'?'Dois sentidos (Honra ⇄ Google)':'Só enviar (Honra → Google)';
+  return `<div class="panel g-panel"><div class="g-row"><div><strong>Google Agenda</strong> <span class="pill p-pago" style="margin-left:6px;vertical-align:1px">Conectado</span><div class="note">${G_ST.conta?esc(G_ST.conta)+' · ':''}${esc(G_ST.calNome||'Agenda principal')} · ${modoTxt} · Última vez: ${quando}.${gUltErro?`<br><span style="color:var(--bad)">${esc(gUltErro)}</span>`:''}</div></div><div class="row"><button class="btn pri" data-act="g-sync" type="button">${gOcupado?'Sincronizando…':'Sincronizar agora'}</button><button class="btn ghost" data-act="g-config" type="button">Ajustes</button><button class="btn ghost danger" data-act="g-sair" type="button">Desconectar</button></div></div></div>`}
+
+async function modalGoogle(){
+  if(!G_ST.conectado){gSync(true);return}
+  modal(`<h2>Ajustes do Google Agenda</h2>
+    <p class="note">Conta conectada: <strong>${esc(G_ST.conta||'sua conta Google')}</strong>. A conexão renova sozinha sem pedir login de novo.</p>
+    <form id="fG" class="fs">
+      <label class="c2">Qual agenda do Google usar<select id="g_cal"><option value="${esc(G_ST.cal)}">${esc(G_ST.calNome||'Agenda principal')}</option></select></label>
+      <label class="c2">Modo de sincronização<select id="g_modo">
+        <option value="enviar"${G_ST.modo==='enviar'?' selected':''}>Só enviar do Honra para o Google (recomendado — não traz eventos pessoais)</option>
+        <option value="ambos"${G_ST.modo==='ambos'?' selected':''}>Sincronizar nos dois sentidos (Honra ⇄ Google)</option>
+      </select></label>
+      <div class="row c4" style="justify-content:flex-end;margin-top:6px"><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn pri" type="submit">Salvar</button></div>
+    </form>`);
+  /* Carrega a lista real de agendas da conta Google para o advogado escolher */
+  try{
+    const tk=await gPedeToken(false);
+    const r=await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=writer',{headers:{Authorization:'Bearer '+tk}});
+    if(r.ok){
+      const j=await r.json();const sel=$('#g_cal');
+      if(sel&&j.items&&j.items.length){
+        sel.innerHTML=j.items.map(it=>{const id=it.primary?'primary':it.id;const nm=it.primary?'Agenda principal ('+(it.summary||G_ST.conta||'')+')':(it.summary||it.id);
+          return `<option value="${esc(id)}" data-nome="${esc(it.primary?'Agenda principal':(it.summary||it.id))}"${id===G_ST.cal?' selected':''}>${esc(nm)}</option>`}).join('');
+      }
+    }
+  }catch(e){}
+  $('#fG').onsubmit=async e=>{e.preventDefault();
+    const sel=$('#g_cal'),op=sel.options[sel.selectedIndex];
+    const calId=sel.value||'primary',calNome=(op&&op.dataset&&op.dataset.nome)||op.textContent||'Agenda principal';
+    const modo=$('#g_modo').value==='ambos'?'ambos':'enviar';
+    try{
+      const {data,error}=await sb.functions.invoke('google-agenda',{body:{acao:'configurar',calendario_id:calId,calendario_nome:calNome,modo}});
+      if(error||!data||!data.ok)throw error||new Error('não consegui salvar');
+      const trocouCal=calId!==G_ST.cal;
+      G_ST.cal=calId;G_ST.calNome=calNome;G_ST.modo=modo;
+      if(trocouCal)S.agenda.forEach(a=>{delete a.gid;delete a.gsync;delete a.gupd});
+      salvar();fechar();toast('Ajustes salvos');go();gSync(true);
+    }catch(err){toast('Não consegui salvar os ajustes agora')}
+  }}
+
 function gScript(){return new Promise((ok,erro)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.onload=()=>ok();sc.onerror=()=>erro(new Error('Não foi possível carregar o login do Google'));document.head.appendChild(sc)})}
-function gPedeToken(interativo){const c=gcfg();
-  if(window.__gMock)return Promise.resolve(window.__gMock.token);
-  if(gToken&&Date.now()<gTokenFim)return Promise.resolve(gToken);
-  if(!interativo)return Promise.reject(new Error('login'));
+
+function gPedeCodigo(){
   return gScript().then(()=>new Promise((ok,erro)=>{
-    gCliente=google.accounts.oauth2.initTokenClient({client_id:c.clientId,scope:'https://www.googleapis.com/auth/calendar.events',
-      callback:r=>{if(r.error)return erro(new Error('O Google recusou o acesso ('+r.error+')'));gToken=r.access_token;gTokenFim=Date.now()+(r.expires_in-60)*1000;ok(gToken)},
-      error_callback:r=>erro(new Error(r&&r.type==='popup_closed'?'A janela do Google foi fechada':'Não foi possível entrar no Google'))});
-    gCliente.requestAccessToken({prompt:c.ligado?'':'consent'})}))}
+    const cli=google.accounts.oauth2.initCodeClient({
+      client_id:G_ST.clientId,
+      scope:G_SCOPES,
+      ux_mode:'popup',
+      callback:r=>{if(r.error)return erro(new Error('O Google recusou o acesso ('+r.error+')'));if(!r.code)return erro(new Error('O Google não retornou a autorização'));ok(r.code)},
+      error_callback:r=>erro(new Error(r&&r.type==='popup_closed'?'A janela do Google foi fechada':'Não foi possível abrir o login do Google'))
+    });
+    cli.requestCode();
+  }))
+}
+
+async function gPedeToken(interativo){
+  if(window.__gMock)return window.__gMock.token;
+  if(gToken&&Date.now()<gTokenFim)return gToken;
+  if(!G_ST.lido)await gCarregaStatus();
+  if(!G_ST.configurado)throw new Error('Integração com o Google Agenda ainda não está ativa.');
+  /* Já conectado: renova silenciosamente pelo refresh_token salvo no Supabase */
+  if(G_ST.conectado){
+    const {data,error}=await sb.functions.invoke('google-agenda',{body:{acao:'token'}});
+    if(!error&&data&&data.access_token){
+      gToken=data.access_token;gTokenFim=Date.now()+Math.max(60,(data.expires_in||3500)-60)*1000;
+      if(data.conta)G_ST.conta=data.conta;
+      if(data.calendario_id)G_ST.cal=data.calendario_id;
+      if(data.calendario_nome)G_ST.calNome=data.calendario_nome;
+      if(data.modo)G_ST.modo=data.modo;
+      return gToken;
+    }
+    if(data&&data.reconectar){G_ST.conectado=false;gToken=null;gTokenFim=0;if(!interativo)throw new Error('login')}
+    else if(!interativo)throw new Error('login');
+  }
+  if(!interativo)throw new Error('login');
+  /* Primeira conexão (ou reconexão após revogação): popup 1-clique */
+  const code=await gPedeCodigo();
+  const {data,error}=await sb.functions.invoke('google-agenda',{body:{acao:'conectar',code,modo:G_ST.modo||'enviar'}});
+  if(error||!data||!data.access_token)throw new Error((data&&data.erro)||'Não consegui concluir a conexão com o Google');
+  gToken=data.access_token;gTokenFim=Date.now()+Math.max(60,(data.expires_in||3500)-60)*1000;
+  G_ST.conectado=true;G_ST.conta=data.conta||'';G_ST.cal=data.calendario_id||'primary';G_ST.calNome=data.calendario_nome||'Agenda principal';G_ST.modo=data.modo||'enviar';
+  return gToken;
+}
+
 async function gApi(met,caminho,corpo){
-  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(gcfg().cal||'primary')+caminho;
+  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(G_ST.cal||'primary')+caminho;
   const f=window.__gMock?window.__gMock.fetch:fetch;
   const r=await f(url,{method:met,headers:{Authorization:'Bearer '+gToken,'Content-Type':'application/json'},body:corpo?JSON.stringify(corpo):undefined});
-  if(r.status===401){gToken=null;throw new Error('login')}
+  if(r.status===401){gToken=null;gTokenFim=0;throw new Error('login')}
   if(r.status===404||r.status===410)return null;
   if(!r.ok)throw new Error('O Google respondeu com erro '+r.status);
   return r.status===204?null:r.json()}
-function gEvento(a){const corpo={summary:a.titulo,description:a.desc||'',extendedProperties:{private:{honra:'1'}}};
+
+function gEvento(a){const corpo={summary:gTitulo(a),description:gDesc(a),extendedProperties:{private:{honra:'1',tipo:a.tipo||'comp'}}};
   if(a.hora){const f=fimDe(a);corpo.start={dateTime:a.data+'T'+a.hora+':00',timeZone:TZ};corpo.end={dateTime:f+':00',timeZone:TZ}}
   else{corpo.start={date:a.data};corpo.end={date:addDias(a.data,1)}}return corpo}
+
 function gLocal(g){const st=g.start||{};let data,hora='';
   if(st.dateTime){const t=new Date(st.dateTime);data=t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());hora=pad(t.getHours())+':'+pad(t.getMinutes())}else data=st.date;
-  return{titulo:g.summary||'(sem título)',desc:g.description||'',data,hora}}
-async function gSync(interativo){const c=gcfg();if(!c.clientId||gOcupado)return;
+  const rawTit=g.summary||'(sem título)';
+  const ehPrazo=/^\[Prazo\]\s*/i.test(rawTit)||(g.extendedProperties&&g.extendedProperties.private&&g.extendedProperties.private.tipo==='prazo');
+  return{tipo:ehPrazo?'prazo':'comp',titulo:rawTit.replace(/^\[Prazo\]\s*/i,''),desc:g.description||'',data,hora}}
+
+async function gSync(interativo){
+  if(gOcupado||!sb||!nuvemUser)return;
+  if(!G_ST.lido)await gCarregaStatus();
+  if(!G_ST.configurado)return;
+  const c=gcfg();
   gOcupado=true;gUltErro='';if(rota().startsWith('agenda'))go();
   try{
     gToken=await gPedeToken(interativo);
-    if(!c.conta&&!window.__gMock){try{const u=await (await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList/primary',{headers:{Authorization:'Bearer '+gToken}})).json();c.conta=u.id||''}catch(e){}}
     // 1) apagados aqui
     for(const id of (c.apagar||[]))await gApi('DELETE','/events/'+encodeURIComponent(id));
     c.apagar=[];
@@ -1683,25 +1789,35 @@ async function gSync(interativo){const c=gcfg();if(!c.clientId||gOcupado)return;
     const porId=new Map(lista.map(g=>[g.id,g]));
     let env=0,rec=0;
     for(const a of [...S.agenda]){
-      if(!a.gid){if(a.data<ini.slice(0,10))continue;const g=await gApi('POST','/events',gEvento(a));a.gid=g.id;a.gsync=gHash(a);a.gupd=g.updated;env++;continue}
+      if(!a.gid){if(a.data<ini.slice(0,10))continue;const g=await gApi('POST','/events',gEvento(a));if(g){a.gid=g.id;a.gsync=gHash(a);a.gupd=g.updated;env++}continue}
       const g=porId.get(a.gid);const mudouAqui=gHash(a)!==a.gsync;
       if(!g){if(a.data<ini.slice(0,10)||a.data>fim.slice(0,10))continue;
         const x=await gApi('GET','/events/'+encodeURIComponent(a.gid));
-        if(x&&x.status!=='cancelled'){porId.set(x.id,x)}else{if(mudouAqui){delete a.gid;const n=await gApi('POST','/events',gEvento(a));a.gid=n.id;a.gsync=gHash(a);a.gupd=n.updated;env++}else{S.agenda=S.agenda.filter(y=>y!==a);rec++}continue}}
+        if(x&&x.status!=='cancelled'){porId.set(x.id,x)}else{if(mudouAqui){delete a.gid;const n=await gApi('POST','/events',gEvento(a));if(n){a.gid=n.id;a.gsync=gHash(a);a.gupd=n.updated;env++}}else if(G_ST.modo==='ambos'){S.agenda=S.agenda.filter(y=>y!==a);rec++}continue}}
       const gg=porId.get(a.gid);
-      if(gg.status==='cancelled'){if(mudouAqui){delete a.gid;const n=await gApi('POST','/events',gEvento(a));a.gid=n.id;a.gsync=gHash(a);a.gupd=n.updated;env++}else{S.agenda=S.agenda.filter(y=>y!==a);rec++}continue}
+      if(gg&&gg.status==='cancelled'){if(mudouAqui){delete a.gid;const n=await gApi('POST','/events',gEvento(a));if(n){a.gid=n.id;a.gsync=gHash(a);a.gupd=n.updated;env++}}else if(G_ST.modo==='ambos'){S.agenda=S.agenda.filter(y=>y!==a);rec++}continue}
       if(mudouAqui){const n=await gApi('PATCH','/events/'+encodeURIComponent(a.gid),gEvento(a));a.gsync=gHash(a);a.gupd=n&&n.updated;env++}
-      else if(gg.updated!==a.gupd){Object.assign(a,gLocal(gg));a.gsync=gHash(a);a.gupd=gg.updated;rec++}
+      else if(gg&&gg.updated!==a.gupd&&G_ST.modo==='ambos'){Object.assign(a,gLocal(gg));a.gsync=gHash(a);a.gupd=gg.updated;rec++}
     }
-    // 3) novos no Google
-    const ligados=new Set(S.agenda.map(a=>a.gid).filter(Boolean));
-    for(const g of lista){if(g.status==='cancelled'||ligados.has(g.id)||!g.start)continue;const a=Object.assign({id:nid(),gid:g.id,gupd:g.updated,origem:'google'},gLocal(g));a.gsync=gHash(a);S.agenda.push(a);rec++}
-    c.ligado=true;c.ultima=Date.now();salvar();
-    if(interativo)toast(env||rec?`Sincronizado: ${env} enviado(s), ${rec} recebido(s)`:'Agenda já estava em dia');
-  }catch(e){if(e.message==='login'){if(interativo)gUltErro='Entre de novo com o Google para continuar.'}else{gUltErro=e.message;if(interativo)toast(e.message)}}
+    // 3) novos no Google (somente quando o usuário escolheu "Dois sentidos")
+    if(G_ST.modo==='ambos'){
+      const ligados=new Set(S.agenda.map(a=>a.gid).filter(Boolean));
+      for(const g of lista){if(g.status==='cancelled'||ligados.has(g.id)||!g.start)continue;const a=Object.assign({id:nid(),gid:g.id,gupd:g.updated,origem:'google'},gLocal(g));a.gsync=gHash(a);S.agenda.push(a);rec++}
+    }
+    G_ST.ultima=new Date().toISOString();salvar();
+    sb.functions.invoke('google-agenda',{body:{acao:'marcar_sync'}}).then(()=>{},()=>{});
+    if(interativo)toast(env||rec?`Sincronizado: ${env} enviado(s)${rec?', '+rec+' recebido(s)':''}`:'Google Agenda em dia');
+  }catch(e){
+    if(e.message==='login'){if(interativo)gUltErro='Conecte novamente com o Google para continuar.'}
+    else{gUltErro=e.message;if(interativo)toast(e.message)}
+  }
   finally{gOcupado=false;if(rota().startsWith('agenda')||rota()==='painel')go()}}
-function gAuto(){const c=gcfg();if(c.clientId&&c.ligado&&(gToken||window.__gMock))gSync(false)}
-function gSair(){const c=gcfg();if(gToken&&window.google&&google.accounts)try{google.accounts.oauth2.revoke(gToken,()=>{})}catch(e){}gToken=null;c.ligado=false;c.conta='';salvar();toast('Sincronização desligada');go()}
+
+function gAuto(){if(G_ST.conectado&&!gOcupado)gSync(false)}
+function gSair(){confirmar('Desconectar o Google Agenda? Os compromissos já salvos continuam no Honra e no Google, mas deixam de sincronizar.','Desconectar',async()=>{
+  try{await sb.functions.invoke('google-agenda',{body:{acao:'desconectar'}})}catch(e){}
+  gToken=null;gTokenFim=0;G_ST.conectado=false;G_ST.conta='';G_ST.ultima=null;gUltErro='';
+  toast('Google Agenda desconectado');go()})}
 
 /* ---------- Ações a ajuizar ---------- */
 const PRI={alta:['Alta','p-atrasado',0],media:['Média','p-parcial',1],normal:['Normal','p-pendente',2]};
@@ -2330,7 +2446,7 @@ function nuvemPosLogin(){if(nuvemPos)return nuvemPos;nuvemPos=(async()=>{try{
     if(!error&&!(ac&&ac.length)){const md=nuvemUser.user_metadata||{};
       if(md.aceite_versao===TERMOS_V)await sb.from('aceites').insert({versao:TERMOS_V,agente:nvAgente()});
       else{gateAceite=true;nuvemMsg='';nuvemAtualiza();carregaEsconde(true);return}}
-    carregaMostra();gateAceite=false;nuvemAtualiza();await conviteAceita();await nuvemSincronizar(false);carregaEsconde();
+    carregaMostra();gateAceite=false;nuvemAtualiza();await conviteAceita();await nuvemSincronizar(false);carregaEsconde();gCarregaStatus(true).then(()=>{if(G_ST.conectado)gAuto()});
   }catch(e){carregaEsconde(true)}finally{nuvemPos=null}})();return nuvemPos}
 const nvAgente=()=>String(navigator.userAgent||'').slice(0,250);
 function nuvemLog(ev){if(sb&&nuvemUser)sb.from('acessos').insert({evento:ev,agente:nvAgente()}).then(()=>{},()=>{})}
@@ -2423,7 +2539,7 @@ async function nuvemEsqueci(){const em=((($('#gt_email'))||{}).value||'').trim()
     nuvemMsg='Enviamos um link para redefinir a senha para '+em+'.'}catch(e){nuvemMsg='Não consegui enviar: '+e.message}
   nuvemAtualiza()}
 
-async function nuvemSair(){if(!sb)return;clearTimeout(nuvemTimer);if(nuvemSnap&&!gateMfa&&!gateAceite&&assLiberado()){try{await nuvemEmpurra()}catch(e){}}if(nuvemUser){try{await sb.from('acessos').insert({evento:'saída',agente:nvAgente()})}catch(e){}}try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemSnap=null;nuvemEsc=null;gateMfa=false;gateAceite=false;ASS=null;assPinta();MEU_PAPEL=null;ESC_PERM=null;EQ={membros:null,convites:[],lido:0,erro:''};
+async function nuvemSair(){if(!sb)return;clearTimeout(nuvemTimer);if(nuvemSnap&&!gateMfa&&!gateAceite&&assLiberado()){try{await nuvemEmpurra()}catch(e){}}if(nuvemUser){try{await sb.from('acessos').insert({evento:'saída',agente:nvAgente()})}catch(e){}}try{await sb.auth.signOut()}catch(e){}nuvemUser=null;nuvemSnap=null;nuvemEsc=null;gateMfa=false;gateAceite=false;ASS=null;assPinta();MEU_PAPEL=null;ESC_PERM=null;EQ={membros:null,convites:[],lido:0,erro:''};gResetLocal();
   try{localStorage.removeItem(KEY);localStorage.removeItem('lexa-antes-da-nuvem')}catch(e){}
   S=vazio();nuvemMsg='Você saiu. Entre de novo para acessar os dados.';nuvemAtualiza();go()}
 function nuvemPainel(){
