@@ -2520,6 +2520,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fechar()});
 
+try{if(/\/app\/index\.html$/i.test(location.pathname))history.replaceState(null,'','/app/'+(location.search||'')+(location.hash||''))}catch(e){}
 carregar();aplicaMarca();go();if(nuvemDisponivel()){document.body.classList.add('trancado');renderGate();try{if(Object.keys(localStorage).some(k=>/^sb-.*-auth-token$/.test(k)))carregaMostra()}catch(e){}}
 nuvemIniciar();
 // app instalável: só registra quando servido por https (GitHub Pages), não dentro do visualizador
