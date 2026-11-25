@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /privacidade/
+Allow: /termos/
+Disallow: /app/
+
+Sitemap: https://honra.imaguiar.com.br/sitemap.xml

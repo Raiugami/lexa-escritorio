@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Honra</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;height:100%;background:#151515}</style>
+<script>
+/* GitHub Pages encaminha rotas SPA (/app/clientes ou legadas /clientes) para cá:
+   mandamos para /app/#<rota>, que abre a tela certa e limpa o endereço. */
+(function(){
+  var p=location.pathname.replace(/^\/app(?:\/|$)/,'').replace(/^\/+|\/+$/g,'');
+  var ok=/^[a-z][a-z0-9-]*$/.test(p);
+  location.replace('/app/'+location.search+(ok?'#'+p:''));
+})();
+</script></head><body></body></html>
