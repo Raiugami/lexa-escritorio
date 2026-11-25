@@ -1,5 +1,5 @@
 // Guarda o app para abrir mesmo sem internet. Sempre tenta a versão nova primeiro.
-const CACHE='honra-v13';
+const CACHE='honra-v14';
 const BASE=['/app/','/app/index.html','/manifest.webmanifest','/js/config.js','/js/tracking.js','/js/supabase.js','/js/26.supabase.js','/icons/icon-192.png','/icons/icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(BASE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
