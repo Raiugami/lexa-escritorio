@@ -4,9 +4,11 @@
 <meta name="robots" content="noindex">
 <style>html,body{margin:0;height:100%;background:#151515}</style>
 <script>
-/* GitHub Pages só conhece o index.html. Um endereço como /clientes chega aqui:
-   mandamos para o app, que mostra a tela certa e deixa a barra limpa de novo. */
-(function(){var p=location.pathname.replace(/^\/+|\/+$/g,'');
+/* GitHub Pages encaminha rotas SPA (/app/clientes ou legadas /clientes) para cá:
+   mandamos para /app/#<rota>, que abre a tela certa e limpa o endereço. */
+(function(){
+  var p=location.pathname.replace(/^\/app(?:\/|$)/,'').replace(/^\/+|\/+$/g,'');
   var ok=/^[a-z][a-z0-9-]*$/.test(p);
-  location.replace('/'+location.search+(ok?'#'+p:''));})();
+  location.replace('/app/'+location.search+(ok?'#'+p:''));
+})();
 </script></head><body></body></html>

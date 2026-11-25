@@ -41,6 +41,49 @@ async function assinaturaValida(req: Request, dataId: string) {
 
 const maisUmMes = (d: string | number | Date) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString(); };
 
+async function sha256Hex(v: string) {
+  const bin = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v.trim().toLowerCase())));
+  return [...bin].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Envio opcional para a Meta Conversions API (CAPI) quando META_PIXEL_ID e META_CAPI_TOKEN estiverem configurados.
+// Nunca interrompe o webhook se a Meta estiver indisponível.
+async function enviaMetaCapi(opts: { eventId: string; email?: string | null; valor: number; esc: string }) {
+  const pixelId = Deno.env.get("META_PIXEL_ID");
+  const token = Deno.env.get("META_CAPI_TOKEN");
+  if (!pixelId || !token) return;
+  try {
+    const userData: Record<string, unknown> = {
+      external_id: [await sha256Hex(opts.esc)],
+    };
+    if (opts.email) userData.em = [await sha256Hex(opts.email)];
+    const payload = {
+      data: [{
+        event_name: "Subscribe",
+        event_time: Math.floor(Date.now() / 1000),
+        event_id: opts.eventId,
+        action_source: "website",
+        event_source_url: "https://honra.imaguiar.com.br/app/assinatura",
+        user_data: userData,
+        custom_data: {
+          currency: "BRL",
+          value: opts.valor,
+          predicted_ltv: Number((opts.valor * 12).toFixed(2)),
+          content_name: "Honra Mensal",
+        },
+      }],
+    };
+    const r = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(pixelId)}/events?access_token=${encodeURIComponent(token)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) console.error("Meta CAPI erro:", r.status, (await r.text()).slice(0, 200));
+  } catch (e) {
+    console.error("Meta CAPI falha:", e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return ok();
   const u = new URL(req.url);
@@ -72,18 +115,30 @@ Deno.serve(async (req) => {
     const mud: Record<string, unknown> = { gateway: "mercadopago", gateway_assinatura: pre.id, atualizado_em: new Date().toISOString() };
     if (pre.payer_id) mud.gateway_cliente = String(pre.payer_id);
     const pagoAte = ass.pago_ate ? new Date(ass.pago_ate).getTime() : 0;
+    let dispararCapi = false;
+    let capiEventId = "";
 
     if (pagamento) {
       const st = pagamento?.payment?.status || pagamento.status;
       if (st === "approved" || st === "processed") {
         const novo = maisUmMes(pagamento.debit_date || pagamento.date_created || Date.now());
-        if (new Date(novo).getTime() > pagoAte) mud.pago_ate = novo;
+        if (new Date(novo).getTime() > pagoAte) {
+          mud.pago_ate = novo;
+          dispararCapi = true;
+          capiEventId = `mp_pay_${id}`;
+        }
         mud.status = "ativa";
       } else if (st === "rejected" || st === "recycling") {
         mud.status = "atrasada";
       }
     } else if (pre.status === "authorized") {
-      if (ass.status !== "cortesia") mud.status = ass.status === "atrasada" ? "atrasada" : "ativa";
+      if (ass.status !== "cortesia") {
+        if (ass.status !== "ativa") {
+          dispararCapi = true;
+          capiEventId = `mp_pre_${pre.id}`;
+        }
+        mud.status = ass.status === "atrasada" ? "atrasada" : "ativa";
+      }
       // cartão autorizado: libera até a primeira cobrança (fim do teste) + tolerância do banco
       const inicio = new Date(pre.auto_recurring?.start_date || Date.now()).getTime();
       if (inicio > pagoAte) mud.pago_ate = new Date(inicio).toISOString();
@@ -94,6 +149,11 @@ Deno.serve(async (req) => {
     }
     if (ass.status === "cortesia") delete mud.status;
     await admin.from("assinaturas").update(mud).eq("escritorio_id", esc);
+
+    if (dispararCapi && capiEventId) {
+      const valor = Number(pre.auto_recurring?.transaction_amount || 69.9);
+      await enviaMetaCapi({ eventId: capiEventId, email: pre.payer_email || null, valor, esc: String(esc) });
+    }
   } catch (e) {
     console.error(e);
     return new Response("erro", { status: 500 }); // o Mercado Pago tenta de novo
