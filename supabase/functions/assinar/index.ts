@@ -38,7 +38,7 @@ function voltaSegura(v: unknown) {
     const u = new URL(String(v || ""));
     if (ORIGENS.has(u.origin)) return u.toString();
   } catch (_) { /* endereço inválido */ }
-  return `${SITE}/#assinatura`;
+  return `${SITE}/app/#assinatura`;
 }
 
 Deno.serve(async (req) => {
